@@ -1,0 +1,79 @@
+version: '3'
+
+env:
+  FORCE_COLOR: 1
+
+vars:
+  PILOT_DIR: ../aero-stream/apps/aero-stream-pilot
+
+includes:
+  utils:
+    taskfile: ./utils
+    dir: ./utils
+  pkg-pilot:
+    taskfile: "{{.PILOT_DIR}}"
+    dir: "{{.PILOT_DIR}}"
+
+tasks:
+  name:
+    silent: true
+    cmds:
+      - task: utils:header
+        vars:
+          NAME: APP / EXAMPLE
+
+  deps:
+    silent: true
+    desc: "Build aero-stream-pilot (and its WASM core)"
+    cmds:
+      - task: pkg-pilot:build
+
+  clean:
+    silent: true
+    desc: "Remove build artifacts"
+    cmds:
+      - task: utils:section
+        vars:
+          NAME: clean
+      - cmd: rm -rf .next tsconfig.tsbuildinfo
+
+  clean-all:
+    silent: true
+    desc: "Remove build artifacts and dependencies"
+    cmds:
+      - task: clean
+      - cmd: rm -rf node_modules
+
+  install:
+    silent: true
+    desc: "Clean and install dependencies"
+    cmds:
+      - task: clean
+      - task: utils:section
+        vars:
+          NAME: install
+      - cmd: yarn install
+
+  build:
+    silent: true
+    desc: "Build pilot dependency and example app"
+    cmds:
+      - task: name
+      - task: deps
+      - task: install
+      - task: utils:section
+        vars:
+          NAME: build
+      - cmd: yarn build
+
+  dev:
+    silent: true
+    desc: "Build pilot dependency and start dev server"
+    cmds:
+      - task: name
+      - task: deps
+      - task: install
+      - task: utils:section
+        vars:
+          NAME: dev
+      - cmd: yarn dev

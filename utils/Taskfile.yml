@@ -1,0 +1,20 @@
+version: '3'
+
+vars:
+  STYLE_HEADER: "\x1b[35;43;1m"
+  STYLE_SECTION: "\x1b[33;44;1m"
+  STYLE_NONE: "\x1b[0m"
+
+tasks:
+  header:
+    silent: true
+    cmds:
+      - echo ""
+      - echo ""
+      - echo "{{.STYLE_HEADER}}{{repeat (sub 55 (len .NAME) | int) "="}} {{.NAME}} ==={{.STYLE_NONE}}"
+
+  section:
+    silent: true
+    cmds:
+      - echo ""
+      - echo "{{.STYLE_SECTION}}- {{.NAME}} {{repeat (sub 57 (len .NAME) | int) "-"}}{{.STYLE_NONE}}"

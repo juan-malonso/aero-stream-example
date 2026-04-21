@@ -1,0 +1,165 @@
+'use client';
+
+import { ConnectionStatus } from '@/constants';
+
+import { DoneComponent, KYCComponent, VideoComponent, WelcomeComponent } from '@/components/steps';
+
+import { type AeroStreamComponentParams, type AeroStreamLibrary, AeroStreamPilot } from 'aero-stream-pilot';
+import { useEffect, useRef, useState } from 'react';
+import { Button, Row, Column } from '@/components/ui';
+import { colors, shadows, typography } from '@/styles/tokens';
+
+const token = 'my-super-secret-token';
+const socketUrl = 'ws://localhost:8787/app/sync';
+
+interface PilotConnectionProps {
+  workflowId: string;
+  onSessionId: (id: string | null) => void;
+  onStatusChange: (status: ConnectionStatus) => void;
+  onTimeTick: () => void;
+  onTimeReset: () => void;
+}
+
+export function PilotConnection({ workflowId, onSessionId, onStatusChange, onTimeTick, onTimeReset }: PilotConnectionProps) {
+  const stepLibrary: AeroStreamLibrary<React.ReactNode> = {
+    WelcomeComponent: (props: AeroStreamComponentParams) => <WelcomeComponent {...props} />,
+    VideoComponent: (props: AeroStreamComponentParams) => <VideoComponent {...props} />,
+    KYCComponent: (props: AeroStreamComponentParams) => <KYCComponent {...props} />,
+    DoneComponent: (props: AeroStreamComponentParams) => <DoneComponent {...props} />,
+  };
+
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const [status, setStatus] = useState(ConnectionStatus.closed);
+  const [currentComponent, setCurrentComponent] = useState<React.ReactNode | null>(null);
+
+  useEffect(() => {
+    onStatusChange(status);
+  }, [status, onStatusChange]);
+
+  const pilotRef = useRef<AeroStreamPilot | null>(null);
+
+  const handleConnect = async () => {
+    try {
+      onSessionId(null);
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          frameRate: { ideal: 30, max: 30 }
+        },
+        audio: true,
+      });
+
+      pilotRef.current?.disconnect()
+      pilotRef.current = new AeroStreamPilot<React.ReactNode>({
+        url: socketUrl,
+        secret: token,
+        workflowId,
+        videoStream: stream,
+        library: stepLibrary,
+        renderer: setCurrentComponent,
+        onMessage: (message: unknown) => {
+          const msgSessionId = (message as { sessionId?: string }).sessionId;
+          if (msgSessionId) {
+            onSessionId(msgSessionId);
+          }
+        },
+        onClose: () => {
+          handleDisconnect();
+        }
+      });
+
+      await pilotRef.current.connect();
+
+      if (pilotRef.current.isConnected) {
+        setStatus(ConnectionStatus.active);
+
+        onTimeReset();
+        timerRef.current = setInterval(() => { onTimeTick(); }, 1000);
+      }
+    } catch (error: unknown) {
+      setStatus(ConnectionStatus.error);
+      console.error('Connection error:', error);
+    }
+  };
+
+  const handleDisconnect = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+
+    if (pilotRef.current) {
+      pilotRef.current.disconnect();
+      pilotRef.current = null;
+    }
+
+    setStatus(ConnectionStatus.closed);
+    onSessionId(null);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, []);
+
+  return (
+    <Column style={{ height: '100%', width: '100%', boxSizing: 'border-box' }} gap="0.75rem" align="stretch">
+      {/* Device Stage */}
+      <div style={{
+        position: 'relative',
+        width: '100%',
+        flex: 1,
+        backgroundColor: colors.gray300,
+        border: `1px solid ${colors.gray200}`,
+        borderRadius: '1.25rem',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.04)',
+      }}>
+        <div style={{ flex: 1, position: 'relative', overflow: 'hidden', color: colors.gray600 }}>
+          {currentComponent ?? (
+            <Column align="center" justify="center" style={{ height: '100%' }} gap="1rem">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}>
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+                <path d="m9 12 2 2 4-4" />
+              </svg>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: typography.sizes.md, fontWeight: typography.weights.bold }}>Ready for Sync</div>
+                <div style={{ fontSize: typography.sizes.sm, color: colors.gray500 }}>Select a workflow and click connect</div>
+              </div>
+            </Column>
+          )}
+        </div>
+      </div>
+
+      {/* Control Bar */}
+      <Row gap="0.75rem" align="stretch">
+        <Button
+          onClick={() => { void handleConnect(); }}
+          disabled={status === ConnectionStatus.active || !workflowId}
+          variant="primary"
+          size="lg"
+          style={{ flex: 2, borderRadius: '10px', boxShadow: shadows.sm }}
+        >
+          {status === ConnectionStatus.active ? 'System Active' : 'Start Simulation'}
+        </Button>
+        <Button
+          onClick={() => { handleDisconnect(); }}
+          disabled={status === ConnectionStatus.closed}
+          variant="secondary"
+          size="lg"
+          style={{ flex: 1, borderRadius: '10px' }}
+        >
+          Abort
+        </Button>
+      </Row>
+    </Column>
+  );
+}

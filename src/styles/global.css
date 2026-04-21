@@ -1,0 +1,364 @@
+:root {
+  /* =========================================
+     BASE & GRAYS
+  ========================================= */
+  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --color-white: #ffffff;
+  --color-black: #000000;
+  
+  --color-gray50: #f9fafb;
+  --color-gray100: #f3f4f6;
+  --color-gray200: #e5e7eb;
+  --color-gray300: #d1d5db;
+  --color-gray400: #9ca3af;
+  --color-gray500: #6b7280;
+  --color-gray600: #4b5563;
+  --color-gray700: #374151;
+  --color-gray800: #1f2937;
+  --color-gray900: #111827;
+
+  /* =========================================
+     PRIMARY (Based on Indigo/Brand)
+  ========================================= */
+  --color-primary50: #eef2ff;
+  --color-primary100: #e0e7ff;
+  --color-primary200: #c7d2fe;
+  --color-primary300: #a5b4fc;
+  --color-primary400: #818cf8;
+  --color-primary500: #6366f1;
+  --color-primary600: #4f46e5;
+  --color-primary700: #4338ca;
+  --color-primary800: #3730a3;
+  --color-primary900: #312e81;
+
+  /* =========================================
+     BLUES & CYANS
+  ========================================= */
+  --color-blue50: #eff6ff;
+  --color-blue100: #dbeafe;
+  --color-blue200: #bfdbfe;
+  --color-blue300: #93c5fd;
+  --color-blue400: #60a5fa;
+  --color-blue500: #3b82f6;
+  --color-blue600: #2563eb;
+  --color-blue700: #1d4ed8;
+  --color-blue800: #1e40af;
+  --color-blue900: #1e3a8a;
+
+  --color-cyan50: #ecfeff;
+  --color-cyan100: #cffafe;
+  --color-cyan200: #a5f3fc;
+  --color-cyan300: #67e8f9;
+  --color-cyan400: #22d3ee;
+  --color-cyan500: #06b6d4;
+  --color-cyan600: #0891b2;
+  --color-cyan700: #0e7490;
+  --color-cyan800: #155e75;
+  --color-cyan900: #164e63;
+
+  /* =========================================
+     GREENS & TEALS
+  ========================================= */
+  --color-green50: #f0fdf4;
+  --color-green100: #dcfce3;
+  --color-green200: #bbf7d0;
+  --color-green300: #86efac;
+  --color-green400: #4ade80;
+  --color-green500: #22c55e;
+  --color-green600: #16a34a;
+  --color-green700: #15803d;
+  --color-green800: #166534;
+  --color-green900: #14532d;
+
+  --color-emerald50: #ecfdf5;
+  --color-emerald100: #d1fae5;
+  --color-emerald200: #a7f3d0;
+  --color-emerald300: #6ee7b7;
+  --color-emerald400: #34d399;
+  --color-emerald500: #10b981;
+  --color-emerald600: #059669;
+  --color-emerald700: #047857;
+  --color-emerald800: #065f46;
+  --color-emerald900: #064e3b;
+
+  --color-teal50: #f0fdfa;
+  --color-teal100: #ccfbf1;
+  --color-teal200: #99f6e4;
+  --color-teal300: #5eead4;
+  --color-teal400: #2dd4bf;
+  --color-teal500: #14b8a6;
+  --color-teal600: #0d9488;
+  --color-teal700: #0f766e;
+  --color-teal800: #115e59;
+  --color-teal900: #134e4a;
+
+  /* =========================================
+     YELLOWS, AMBERS & ORANGES
+  ========================================= */
+  --color-yellow50: #fefce8;
+  --color-yellow100: #fef9c3;
+  --color-yellow200: #fef08a;
+  --color-yellow300: #fde047;
+  --color-yellow400: #facc15;
+  --color-yellow500: #eab308;
+  --color-yellow600: #ca8a04;
+  --color-yellow700: #a16207;
+  --color-yellow800: #854d0e;
+  --color-yellow900: #713f12;
+
+  --color-amber50: #fffbeb;
+  --color-amber100: #fef3c7;
+  --color-amber200: #fde68a;
+  --color-amber300: #fcd34d;
+  --color-amber400: #fbbf24;
+  --color-amber500: #f59e0b;
+  --color-amber600: #d97706;
+  --color-amber700: #b45309;
+  --color-amber800: #92400e;
+  --color-amber900: #78350f;
+
+  --color-orange50: #fff7ed;
+  --color-orange100: #ffedd5;
+  --color-orange200: #fed7aa;
+  --color-orange300: #fdba74;
+  --color-orange400: #fb923c;
+  --color-orange500: #f97316;
+  --color-orange600: #ea580c;
+  --color-orange700: #c2410c;
+  --color-orange800: #9a3412;
+  --color-orange900: #7c2d12;
+
+  /* =========================================
+     REDS, PINKS & ROSES
+  ========================================= */
+  --color-red50: #fef2f2;
+  --color-red100: #fee2e2;
+  --color-red200: #fecaca;
+  --color-red300: #fca5a5;
+  --color-red400: #f87171;
+  --color-red500: #ef4444;
+  --color-red600: #dc2626;
+  --color-red700: #b91c1c;
+  --color-red800: #991b1b;
+  --color-red900: #7f1d1d;
+
+  --color-pink50: #fdf2f8;
+  --color-pink100: #fce7f3;
+  --color-pink200: #fbcfe8;
+  --color-pink300: #f9a8d4;
+  --color-pink400: #f472b6;
+  --color-pink500: #ec4899;
+  --color-pink600: #db2777;
+  --color-pink700: #be185d;
+  --color-pink800: #9d174d;
+  --color-pink900: #831843;
+
+  /* =========================================
+     VIOLETS, PURPLES & FUCHSIAS
+  ========================================= */
+  --color-violet50: #f5f3ff;
+  --color-violet100: #ede9fe;
+  --color-violet200: #ddd6fe;
+  --color-violet300: #c4b5fd;
+  --color-violet400: #a78bfa;
+  --color-violet500: #8b5cf6;
+  --color-violet600: #7c3aed;
+  --color-violet700: #6d28d9;
+  --color-violet800: #5b21b6;
+  --color-violet900: #4c1d95;
+
+  --color-fuchsia50: #fdf4ff;
+  --color-fuchsia100: #fae8ff;
+  --color-fuchsia200: #f5d0fe;
+  --color-fuchsia300: #f0abfc;
+  --color-fuchsia400: #e879f9;
+  --color-fuchsia500: #d946ef;
+  --color-fuchsia600: #c026d3;
+  --color-fuchsia700: #a21caf;
+  --color-fuchsia800: #86198f;
+  --color-fuchsia900: #701a75;
+
+  /* =========================================
+     SEMANTICS / ALIASES
+  ========================================= */
+  --color-stepFlow: var(--color-green500);
+  --color-fieldData: var(--color-amber500);
+}
+
+body.dark {
+  /* Grays Inverted */
+  --color-white: #111827;
+  --color-black: #f9fafb;
+  --color-gray50: #1f2937;
+  --color-gray100: #374151;
+  --color-gray200: #4b5563;
+  --color-gray300: #6b7280;
+  --color-gray400: #9ca3af;
+  --color-gray500: #d1d5db;
+  --color-gray600: #e5e7eb;
+  --color-gray700: #f3f4f6;
+  --color-gray800: #f9fafb;
+  --color-gray900: #ffffff;
+
+  /* Primary Inverted */
+  --color-primary50: #312e81;
+  --color-primary100: #3730a3;
+  --color-primary200: #4338ca;
+  --color-primary300: #4f46e5;
+  --color-primary400: #6366f1;
+  --color-primary500: #818cf8;
+  --color-primary600: #a5b4fc;
+  --color-primary700: #c7d2fe;
+  --color-primary800: #e0e7ff;
+  --color-primary900: #eef2ff;
+
+  /* Blues & Cyans Inverted */
+  --color-blue50: #1e3a8a;
+  --color-blue100: #1e40af;
+  --color-blue200: #1d4ed8;
+  --color-blue300: #2563eb;
+  --color-blue400: #3b82f6;
+  --color-blue500: #60a5fa;
+  --color-blue600: #93c5fd;
+  --color-blue700: #bfdbfe;
+  --color-blue800: #dbeafe;
+  --color-blue900: #eff6ff;
+
+  --color-cyan50: #164e63;
+  --color-cyan100: #155e75;
+  --color-cyan200: #0e7490;
+  --color-cyan300: #0891b2;
+  --color-cyan400: #06b6d4;
+  --color-cyan500: #22d3ee;
+  --color-cyan600: #67e8f9;
+  --color-cyan700: #a5f3fc;
+  --color-cyan800: #cffafe;
+  --color-cyan900: #ecfeff;
+
+  /* Greens & Teals Inverted */
+  --color-green50: #14532d;
+  --color-green100: #166534;
+  --color-green200: #15803d;
+  --color-green300: #16a34a;
+  --color-green400: #22c55e;
+  --color-green500: #4ade80;
+  --color-green600: #86efac;
+  --color-green700: #bbf7d0;
+  --color-green800: #dcfce3;
+  --color-green900: #f0fdf4;
+
+  --color-emerald50: #064e3b;
+  --color-emerald100: #065f46;
+  --color-emerald200: #047857;
+  --color-emerald300: #059669;
+  --color-emerald400: #10b981;
+  --color-emerald500: #34d399;
+  --color-emerald600: #6ee7b7;
+  --color-emerald700: #a7f3d0;
+  --color-emerald800: #d1fae5;
+  --color-emerald900: #ecfdf5;
+
+  --color-teal50: #134e4a;
+  --color-teal100: #115e59;
+  --color-teal200: #0f766e;
+  --color-teal300: #0d9488;
+  --color-teal400: #14b8a6;
+  --color-teal500: #2dd4bf;
+  --color-teal600: #5eead4;
+  --color-teal700: #99f6e4;
+  --color-teal800: #ccfbf1;
+  --color-teal900: #f0fdfa;
+
+  /* Yellows, Ambers & Oranges Inverted */
+  --color-yellow50: #713f12;
+  --color-yellow100: #854d0e;
+  --color-yellow200: #a16207;
+  --color-yellow300: #ca8a04;
+  --color-yellow400: #eab308;
+  --color-yellow500: #facc15;
+  --color-yellow600: #fde047;
+  --color-yellow700: #fef08a;
+  --color-yellow800: #fef9c3;
+  --color-yellow900: #fefce8;
+
+  --color-amber50: #78350f;
+  --color-amber100: #92400e;
+  --color-amber200: #b45309;
+  --color-amber300: #d97706;
+  --color-amber400: #f59e0b;
+  --color-amber500: #fbbf24;
+  --color-amber600: #fcd34d;
+  --color-amber700: #fde68a;
+  --color-amber800: #fef3c7;
+  --color-amber900: #fffbeb;
+
+  --color-orange50: #7c2d12;
+  --color-orange100: #9a3412;
+  --color-orange200: #c2410c;
+  --color-orange300: #ea580c;
+  --color-orange400: #f97316;
+  --color-orange500: #fb923c;
+  --color-orange600: #fdba74;
+  --color-orange700: #fed7aa;
+  --color-orange800: #ffedd5;
+  --color-orange900: #fff7ed;
+
+  /* Reds & Pinks Inverted */
+  --color-red50: #7f1d1d;
+  --color-red100: #991b1b;
+  --color-red200: #b91c1c;
+  --color-red300: #dc2626;
+  --color-red400: #ef4444;
+  --color-red500: #f87171;
+  --color-red600: #fca5a5;
+  --color-red700: #fecaca;
+  --color-red800: #fee2e2;
+  --color-red900: #fef2f2;
+
+  --color-pink50: #831843;
+  --color-pink100: #9d174d;
+  --color-pink200: #be185d;
+  --color-pink300: #db2777;
+  --color-pink400: #ec4899;
+  --color-pink500: #f472b6;
+  --color-pink600: #f9a8d4;
+  --color-pink700: #fbcfe8;
+  --color-pink800: #fce7f3;
+  --color-pink900: #fdf2f8;
+
+  /* Violets & Fuchsias Inverted */
+  --color-violet50: #4c1d95;
+  --color-violet100: #5b21b6;
+  --color-violet200: #6d28d9;
+  --color-violet300: #7c3aed;
+  --color-violet400: #8b5cf6;
+  --color-violet500: #a78bfa;
+  --color-violet600: #c4b5fd;
+  --color-violet700: #ddd6fe;
+  --color-violet800: #ede9fe;
+  --color-violet900: #f5f3ff;
+
+  --color-fuchsia50: #701a75;
+  --color-fuchsia100: #86198f;
+  --color-fuchsia200: #a21caf;
+  --color-fuchsia300: #c026d3;
+  --color-fuchsia400: #d946ef;
+  --color-fuchsia500: #e879f9;
+  --color-fuchsia600: #f0abfc;
+  --color-fuchsia700: #f5d0fe;
+  --color-fuchsia800: #fae8ff;
+  --color-fuchsia900: #fdf4ff;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--color-gray50);
+  color: var(--color-gray900);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+input, button, select, textarea {
+  font-family: inherit;
+}
