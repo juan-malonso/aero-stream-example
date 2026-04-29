@@ -2,9 +2,13 @@
 
 import { ConnectionStatus } from '@/constants';
 
-import { DoneComponent, KYCComponent, VideoComponent, WelcomeComponent } from '@/components/steps';
+import { DoneComponent, ErrorScreen, KYCComponent, VideoComponent, WelcomeComponent } from '@/components/steps';
 
-import { type AeroStreamComponentParams, type AeroStreamLibrary, AeroStreamPilot } from 'aero-stream-pilot';
+import {
+  type AeroStreamComponentParams,
+  type AeroStreamLibrary,
+  AeroStreamPilot,
+} from 'aero-stream-pilot';
 import { useEffect, useRef, useState } from 'react';
 import { Button, Row, Column } from '@/components/ui';
 import { colors, shadows, typography } from '@/styles/tokens';
@@ -102,11 +106,12 @@ export function PilotConnection({ workflowId, onSessionId, onStatusChange, onTim
         sessionId,
         videoStream: stream,
         library: stepLibrary,
+        errorScreen: ErrorScreen,
         renderer: setCurrentComponent,
         onMessage: () => { /* noop */ },
         onClose: () => {
           resetConnectionState({ clearScreen: false });
-        }
+        },
       });
       pilotRef.current = pilot;
 

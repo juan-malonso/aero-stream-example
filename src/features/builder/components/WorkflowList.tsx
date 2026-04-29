@@ -61,7 +61,7 @@ function WorkflowEditor({
 
         <Column gap="0.5rem" align="stretch">
           {origins.map((origin, index) => (
-            <Row key={`${index.toString()}-${origin}`} gap="0.5rem" align="center">
+            <Row key={index.toString()} gap="0.5rem" align="center">
               <Input
                 type="text"
                 value={origin}

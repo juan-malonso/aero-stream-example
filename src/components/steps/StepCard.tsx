@@ -28,11 +28,11 @@ export function StepCard({ children, title, subtitle, description, message, onRe
         )}
 
         {(title ?? subtitle ?? description ?? message) && (
-          <div style={{ padding: '1.5rem', borderBottom: `1px solid ${colors.gray100}`, textAlign: 'center' }}>
-            {title && <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: colors.gray800, margin: 0 }}>{title}</h2>}
-            {subtitle && <h3 style={{ fontSize: '1.125rem', fontWeight: 500, color: colors.gray600, marginTop: '0.5rem', marginBottom: 0 }}>{subtitle}</h3>}
-            {description && <p style={{ fontSize: '0.875rem', color: colors.gray500, marginTop: '0.5rem', marginBottom: 0 }}>{description}</p>}
-            {message && <p style={{ fontSize: '1rem', color: colors.gray600, marginTop: '0.5rem', marginBottom: 0 }}>{message}</p>}
+          <div style={{ padding: '0.75rem', borderBottom: `1px solid ${colors.gray100}`, textAlign: 'center' }}>
+            {title && <h2 style={{ fontSize: '1rem', fontWeight: 'bold', color: colors.gray800, margin: 0 }}>{title}</h2>}
+            {subtitle && <h3 style={{ fontSize: '0.85rem', fontWeight: 500, color: colors.gray600, marginTop: '0.375rem', marginBottom: 0 }}>{subtitle}</h3>}
+            {description && <p style={{ fontSize: '0.7rem', color: colors.gray500, marginTop: '0.375rem', marginBottom: 0 }}>{description}</p>}
+            {message && <p style={{ fontSize: '0.7rem', color: colors.gray600, marginTop: '0.375rem', marginBottom: 0 }}>{message}</p>}
           </div>
         )}
         
