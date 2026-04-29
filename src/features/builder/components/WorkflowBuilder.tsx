@@ -4,9 +4,8 @@ import { Sidebar } from './Sidebar';
 import { StartNode } from './StartNode';
 import { SelfConnectingEdge } from './SelfConnectingEdge';
 import { WelcomeNode, KYCNode, VideoNode, DoneNode } from '@/components/steps/nodes';
-import { Row, Button, Input } from '@/components/ui';
 
-import { useWorkflowMetadata, useWorkflowGraph } from '@/hooks/useWorkflow';
+import { useWorkflowGraph } from '@/hooks/useWorkflow';
 import { useImplicitEdges } from '@/hooks/useImplicitEdges';
 import { COMPONENT_REGISTRY, NODE_TYPE_TO_EXECUTION } from '@/lib/workflow/componentRegistry';
 import { generateId } from '@/lib/uuid';
@@ -26,7 +25,6 @@ import {
 } from '@xyflow/react';
 import React, { useCallback, useRef, useState } from 'react';
 import { type OutputConfig, type StepNodeData } from '@/components/steps/types';
-import { colors, typography } from '@/styles/tokens';
 
 const nodeTypes = {
   welcomeStep: WelcomeNode,
@@ -42,7 +40,6 @@ const edgeTypes = {
 
 function WorkflowCanvas() {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const { activeWorkflowId, saveWorkflow, activeWorkflowName, setActiveWorkflowName, isSaving } = useWorkflowMetadata();
   const { nodes, edges, onNodesChange, onEdgesChange, setNodes, setEdges } = useWorkflowGraph();
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
 
@@ -143,52 +140,6 @@ function WorkflowCanvas() {
 
   return (
     <div style={{ flexGrow: 1, height: '100%', position: 'relative' }} ref={reactFlowWrapper}>
-      <Row
-        justify="space-between"
-        align="center"
-        style={{
-          position: 'absolute',
-          top: '20px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 10,
-          backgroundColor: 'var(--color-bg-card)',
-          backdropFilter: 'blur(8px)',
-          padding: '0.5rem',
-          borderRadius: '10px',
-          boxShadow: `0 3px 10px -3px ${colors.gray200}`,
-          border: `1px solid ${colors.gray200}`,
-          gap: '1.5rem',
-          minWidth: '30rem'
-        }}
-      >
-        <Input
-          type="text"
-          value={activeWorkflowName}
-          onChange={(e) => setActiveWorkflowName(e.target.value)}
-          placeholder="Workflow Name"
-          style={{
-            border: 'none',
-            backgroundColor: 'transparent',
-            fontSize: typography.sizes.lg,
-            outline: 'none',
-          }}
-          disabled={!activeWorkflowId && !activeWorkflowName.includes("New")}
-        />
-        <Button
-          onClick={saveWorkflow}
-          disabled={isSaving || !activeWorkflowName}
-          variant="primary"
-          size="md"
-          style={{
-            borderRadius: '5px',
-            padding: '0.3rem 0.6rem',
-            fontSize: typography.sizes.lg,
-          }}
-        >
-          {isSaving ? 'Saving...' : 'Save'}
-        </Button>
-      </Row>
       <ReactFlow
         nodes={nodes}
         edges={edges}

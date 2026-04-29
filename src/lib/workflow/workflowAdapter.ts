@@ -1,4 +1,4 @@
-import { type TowerWorkflow, type WorkflowStep, type WorkflowTransition } from './workflow';
+import { type TowerWorkflow, type WorkflowConfig, type WorkflowStep, type WorkflowTransition } from './workflow';
 import { COMPONENT_REGISTRY, EXECUTION_TYPE_TO_NODE, NODE_TYPE_TO_EXECUTION } from './componentRegistry';
 import { type OutputConfig, type StepNodeData } from '@/components/steps/types';
 
@@ -140,7 +140,7 @@ export function parseTowerToReactFlow(towerWorkflow: TowerWorkflow): { nodes: No
   return { nodes, edges };
 }
 
-export function parseReactFlowToTower(nodes: Node[], edges: Edge[], name: string): TowerWorkflow {
+export function parseReactFlowToTower(nodes: Node[], edges: Edge[], name: string, config?: WorkflowConfig): TowerWorkflow {
   const steps: Record<string, WorkflowStep> = {};
 
   const startEdge = edges.find((e) => e.source === 'start_node');
@@ -198,5 +198,6 @@ export function parseReactFlowToTower(nodes: Node[], edges: Edge[], name: string
     start: startStepId,
     steps,
     globals: {},
+    config: config ?? { allowedOrigins: ['http://localhost:3000'], secret: 'my-super-secret-token' },
   };
 }

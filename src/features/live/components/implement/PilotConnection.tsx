@@ -11,6 +11,7 @@ import { colors, shadows, typography } from '@/styles/tokens';
 
 const token = 'my-super-secret-token';
 const socketUrl = 'ws://localhost:8787/app/sync';
+const apiUrl = 'http://localhost:8787';
 
 interface PilotConnectionProps {
   workflowId: string;
@@ -32,6 +33,7 @@ export function PilotConnection({ workflowId, onSessionId, onStatusChange, onTim
 
   const [status, setStatus] = useState(ConnectionStatus.closed);
   const [currentComponent, setCurrentComponent] = useState<React.ReactNode | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
 
   useEffect(() => {
     onStatusChange(status);
@@ -39,9 +41,50 @@ export function PilotConnection({ workflowId, onSessionId, onStatusChange, onTim
 
   const pilotRef = useRef<AeroStreamPilot | null>(null);
 
+  const resetConnectionState = ({ clearScreen = true }: { clearScreen?: boolean } = {}) => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+
+    pilotRef.current = null;
+    if (clearScreen) {
+      setCurrentComponent(null);
+    }
+    setStatus(ConnectionStatus.closed);
+    setSessionId(null);
+    onSessionId(null);
+  };
+
+  const handleCreateSession = async () => {
+    if (!workflowId || status === ConnectionStatus.active) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${apiUrl}/app/${workflowId}`, { method: 'POST' });
+      if (!response.ok) {
+        throw new Error(`Unable to create session: ${response.status}`);
+      }
+
+      const data = await response.json() as { sessionId?: string };
+      if (!data.sessionId) {
+        throw new Error('Session ID missing in create-session response');
+      }
+
+      setSessionId(data.sessionId);
+      onSessionId(data.sessionId);
+    } catch (error) {
+      setStatus(ConnectionStatus.error);
+      console.error('Session creation error:', error);
+    }
+  };
+
   const handleConnect = async () => {
     try {
-      onSessionId(null);
+      if (!sessionId) {
+        return;
+      }
 
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
@@ -53,27 +96,23 @@ export function PilotConnection({ workflowId, onSessionId, onStatusChange, onTim
       });
 
       pilotRef.current?.disconnect()
-      pilotRef.current = new AeroStreamPilot<React.ReactNode>({
+      const pilot = new AeroStreamPilot<React.ReactNode>({
         url: socketUrl,
         secret: token,
-        workflowId,
+        sessionId,
         videoStream: stream,
         library: stepLibrary,
         renderer: setCurrentComponent,
-        onMessage: (message: unknown) => {
-          const msgSessionId = (message as { sessionId?: string }).sessionId;
-          if (msgSessionId) {
-            onSessionId(msgSessionId);
-          }
-        },
+        onMessage: () => { /* noop */ },
         onClose: () => {
-          handleDisconnect();
+          resetConnectionState({ clearScreen: false });
         }
       });
+      pilotRef.current = pilot;
 
-      await pilotRef.current.connect();
+      await pilot.connect();
 
-      if (pilotRef.current.isConnected) {
+      if (pilotRef.current === pilot && pilot.isConnected) {
         setStatus(ConnectionStatus.active);
 
         onTimeReset();
@@ -86,18 +125,13 @@ export function PilotConnection({ workflowId, onSessionId, onStatusChange, onTim
   };
 
   const handleDisconnect = () => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-
     if (pilotRef.current) {
-      pilotRef.current.disconnect();
+      const pilot = pilotRef.current;
       pilotRef.current = null;
+      pilot.disconnect();
     }
 
-    setStatus(ConnectionStatus.closed);
-    onSessionId(null);
+    resetConnectionState({ clearScreen: true });
   };
 
   useEffect(() => {
@@ -142,13 +176,22 @@ export function PilotConnection({ workflowId, onSessionId, onStatusChange, onTim
       {/* Control Bar */}
       <Row gap="0.75rem" align="stretch">
         <Button
-          onClick={() => { void handleConnect(); }}
+          onClick={() => { void handleCreateSession(); }}
           disabled={status === ConnectionStatus.active || !workflowId}
+          variant="primary"
+          size="lg"
+          style={{ flex: 1, borderRadius: '10px', boxShadow: shadows.sm }}
+        >
+          {sessionId ? 'Session Ready' : 'Create Session'}
+        </Button>
+        <Button
+          onClick={() => { void handleConnect(); }}
+          disabled={status === ConnectionStatus.active || !sessionId}
           variant="primary"
           size="lg"
           style={{ flex: 2, borderRadius: '10px', boxShadow: shadows.sm }}
         >
-          {status === ConnectionStatus.active ? 'System Active' : 'Start Simulation'}
+          {status === ConnectionStatus.active ? 'System Active' : 'Connect to Session'}
         </Button>
         <Button
           onClick={() => { handleDisconnect(); }}

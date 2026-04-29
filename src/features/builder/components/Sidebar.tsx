@@ -5,7 +5,7 @@ import { sidebarContainerStyle } from '@/styles/theme';
 
 export const Sidebar = () => {
   return (
-    <aside style={sidebarContainerStyle}>
+    <aside style={{ ...sidebarContainerStyle, overflowY: 'auto' }}>
       <ComponentToolbox />
       <WorkflowList />
     </aside>

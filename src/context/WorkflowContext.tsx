@@ -1,6 +1,6 @@
 'use client';
 
-import { type WorkflowMetadata } from '@/lib/workflow/workflow';
+import { type WorkflowConfig, type WorkflowMetadata } from '@/lib/workflow/workflow';
 import { workflowService } from '@/lib/workflow/workflow.service';
 import { parseReactFlowToTower, parseTowerToReactFlow } from '@/lib/workflow/workflowAdapter';
 
@@ -11,6 +11,8 @@ interface WorkflowMetadataContextProps {
   workflows: WorkflowMetadata[];
   activeWorkflowId: string | null;
   activeWorkflowName: string;
+  security: WorkflowConfig;
+  setSecurity: React.Dispatch<React.SetStateAction<WorkflowConfig>>;
   isLoading: boolean;
   isSaving: boolean;
   setActiveWorkflowName: (name: string) => void;
@@ -39,6 +41,10 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
   const [activeWorkflowName, setActiveWorkflowName] = useState('New Workflow');
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
+  const [security, setSecurity] = useState<WorkflowConfig>({
+    allowedOrigins: ['http://localhost:3000'],
+    secret: 'my-super-secret-token',
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -73,6 +79,10 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
       setEdges(newEdges);
       setActiveWorkflowId(towerWorkflow.id || id);
       setActiveWorkflowName(towerWorkflow.name);
+      setSecurity({
+        allowedOrigins: towerWorkflow.config?.allowedOrigins ?? ['http://localhost:3000'],
+        secret: towerWorkflow.config?.secret ?? 'my-super-secret-token',
+      });
     } catch (error) {
       console.error('Error selecting workflow:', error);
     } finally {
@@ -83,7 +93,7 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
   const saveWorkflow = useCallback(async () => {
     try {
       setIsSaving(true);
-      const payload = parseReactFlowToTower(nodes, edges, activeWorkflowName);
+      const payload = parseReactFlowToTower(nodes, edges, activeWorkflowName, security);
       if (activeWorkflowId) payload.id = activeWorkflowId;
 
       const saved = await workflowService.upsertWorkflow(payload);
@@ -94,11 +104,12 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setIsSaving(false);
     }
-  }, [nodes, edges, activeWorkflowName, activeWorkflowId, loadWorkflows]);
+  }, [nodes, edges, activeWorkflowName, activeWorkflowId, security, loadWorkflows]);
 
   const createNewWorkflow = useCallback(() => {
     setActiveWorkflowId(null);
     setActiveWorkflowName('New Workflow');
+    setSecurity({ allowedOrigins: ['http://localhost:3000'], secret: 'my-super-secret-token' });
     setNodes([]);
     setEdges([]);
   }, []);
@@ -125,7 +136,7 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
       nodes, edges, onNodesChange, onEdgesChange, setNodes, setEdges
     }}>
       <WorkflowMetadataContext.Provider value={{
-        workflows, activeWorkflowId, activeWorkflowName, isLoading, isSaving,
+        workflows, activeWorkflowId, activeWorkflowName, security, setSecurity, isLoading, isSaving,
         setActiveWorkflowName, loadWorkflows, selectWorkflow, saveWorkflow, deleteWorkflow, createNewWorkflow
       }}>
         {children}

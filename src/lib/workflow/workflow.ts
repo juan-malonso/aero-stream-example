@@ -16,6 +16,11 @@ export interface WorkflowStep {
   transitions: WorkflowTransition[];
 }
 
+export interface WorkflowConfig {
+  allowedOrigins: string[];
+  secret: string;
+}
+
 export interface TowerWorkflow {
   id?: string;
   name: string;
@@ -23,6 +28,7 @@ export interface TowerWorkflow {
   start: string;
   steps: Record<string, WorkflowStep>;
   globals: Record<string, unknown>;
+  config: WorkflowConfig;
 }
 
 export interface WorkflowMetadata {

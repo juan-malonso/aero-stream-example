@@ -8,6 +8,7 @@ export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttribute
         ref={ref}
         style={{
           width: '100%',
+          boxSizing: 'border-box',
           padding: `${spacing.sm} ${spacing.lg}`,
           border: `1px solid ${colors.gray300}`,
           borderRadius: radii.md,

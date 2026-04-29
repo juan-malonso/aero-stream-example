@@ -13,7 +13,7 @@ export function ComponentToolbox() {
   };
 
   return (
-    <Column style={{ borderTop: `1px solid ${colors.gray200}`, flex: 1, overflowY: 'auto', background: colors.white }} gap="0" align="stretch">
+    <Column style={{ borderTop: `1px solid ${colors.gray200}`, flex: 1, background: colors.white }} gap="0" align="stretch">
       <Row justify="space-between" align="center" style={{ 
         padding: '1rem 1.25rem', 
         borderBottom: `1px solid ${colors.gray200}`, 
