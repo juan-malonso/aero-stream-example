@@ -15,8 +15,16 @@ export interface PlatformEventEnvelope {
   occurredAt: string;
   sessionId: string;
   workflowId: string;
+  connectionId?: string;
   source: string;
   payload: Record<string, unknown>;
+}
+
+export interface ConnectionGroup {
+  connectionId: string;
+  connectedAt: string;
+  device: Record<string, unknown> | null;
+  events: PlatformEventEnvelope[];
 }
 
 export interface PlatformSession {
@@ -26,6 +34,7 @@ export interface PlatformSession {
   lastActivityAt: string;
   eventCount: number;
   events: PlatformEventEnvelope[];
+  connections: ConnectionGroup[];
 }
 
 export interface PlatformSessionSummary {

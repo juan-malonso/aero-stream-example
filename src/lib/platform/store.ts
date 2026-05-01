@@ -1,4 +1,5 @@
-import type { PlatformEventEnvelope, PlatformSession, PlatformSessionSummary } from './types';
+import type { ConnectionGroup, PlatformEventEnvelope, PlatformSession, PlatformSessionSummary } from './types';
+import { PlatformEventType } from './types';
 
 /**
  * Process-level singleton for platform event storage.
@@ -8,16 +9,52 @@ import type { PlatformEventEnvelope, PlatformSession, PlatformSessionSummary } f
 
 const STORE_KEY = '__aerostream_platform_store__' as const;
 
-interface GlobalWithStore {
-  [STORE_KEY]?: Map<string, PlatformSession>;
+interface StoredSession {
+  sessionId: string;
+  workflowId: string;
+  createdAt: string;
+  lastActivityAt: string;
+  eventCount: number;
+  events: PlatformEventEnvelope[];
 }
 
-function getStore(): Map<string, PlatformSession> {
+interface GlobalWithStore {
+  [STORE_KEY]?: Map<string, StoredSession>;
+}
+
+function getStore(): Map<string, StoredSession> {
   const globalRef = globalThis as unknown as GlobalWithStore;
   if (!globalRef[STORE_KEY]) {
-    globalRef[STORE_KEY] = new Map<string, PlatformSession>();
+    globalRef[STORE_KEY] = new Map<string, StoredSession>();
   }
   return globalRef[STORE_KEY];
+}
+
+function deriveConnectionGroups(events: PlatformEventEnvelope[]): ConnectionGroup[] {
+  const groupMap = new Map<string, ConnectionGroup>();
+
+  for (const event of events) {
+    if (!event.connectionId) continue;
+
+    if (!groupMap.has(event.connectionId)) {
+      groupMap.set(event.connectionId, {
+        connectionId: event.connectionId,
+        connectedAt: event.occurredAt,
+        device: null,
+        events: [],
+      });
+    }
+
+    const group = groupMap.get(event.connectionId)!;
+    group.events.push(event);
+
+    if (event.type === PlatformEventType.SESSION_CONNECTED) {
+      group.connectedAt = event.occurredAt;
+      group.device = (event.payload.device as Record<string, unknown> | null) ?? null;
+    }
+  }
+
+  return Array.from(groupMap.values());
 }
 
 export function addEvent(event: PlatformEventEnvelope): void {
@@ -61,5 +98,11 @@ export function getSessionSummaries(): PlatformSessionSummary[] {
 
 export function getSessionDetail(sessionId: string): PlatformSession | null {
   const store = getStore();
-  return store.get(sessionId) ?? null;
+  const session = store.get(sessionId);
+  if (!session) return null;
+
+  return {
+    ...session,
+    connections: deriveConnectionGroups(session.events),
+  };
 }

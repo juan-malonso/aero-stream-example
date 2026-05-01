@@ -1,6 +1,6 @@
 'use client';
 
-import type { PlatformSession } from '@/lib/platform/types';
+import type { ConnectionGroup, PlatformSession } from '@/lib/platform/types';
 import { colors, radii, shadows, typography } from '@/styles/tokens';
 
 import { EventCard } from './EventCard';
@@ -9,6 +9,115 @@ import { SessionReplay } from './SessionReplay';
 interface SessionDetailProps {
   session: PlatformSession | null;
   isLoading: boolean;
+}
+
+function ConnectionSection({ group, index }: { group: ConnectionGroup; index: number }) {
+  const timeLabel = group.connectedAt
+    ? new Date(group.connectedAt).toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      })
+    : null;
+
+  const deviceParts = group.device
+    ? [
+        group.device.browserName
+          ? `${String(group.device.browserName)} ${String(group.device.browserVersion ?? '')}`.trim()
+          : null,
+        group.device.osName ? String(group.device.osName) : null,
+        group.device.deviceType ? String(group.device.deviceType) : null,
+      ].filter((x): x is string => x !== null)
+    : [];
+
+  return (
+    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'stretch' }}>
+      {/* Vertical connection card */}
+      <div style={{
+        position: 'relative',
+        padding: '0.25rem',
+        flexShrink: 0,
+        background: colors.primary50,
+        border: `1px solid ${colors.primary200}`,
+        borderRadius: radii.lg,
+        boxShadow: shadows.xs,
+        overflow: 'hidden',
+        display: 'flex',
+        justifyContent: 'center',
+      }}>
+        {/* Gradient fade at top — marks content cutoff */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          background: `linear-gradient(to bottom, ${colors.primary100}, transparent)`,
+          pointerEvents: 'none',
+          zIndex: 1,
+        }} />
+
+        {/* Rotated text — starts at bottom, overflow clips at top */}
+        <div style={{
+          writingMode: 'vertical-rl',
+          transform: 'rotate(180deg)',
+          overflow: 'hidden',
+          padding: '0.75rem 0',
+          userSelect: 'none',
+        }}>
+          {/* Connection label — highest priority */}
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{
+              fontSize: typography.sizes['2xs'],
+              fontWeight: typography.weights.bold,
+              color: colors.primary600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+            }}>
+              {`Connection #${index + 1}`}
+            </span>
+
+            <span style={{ color: colors.primary300, fontSize: typography.sizes['2xs'] }}>{'  ·  '}</span>
+
+            {/* UUID — monospace, medium emphasis */}
+            <span style={{
+              fontFamily: 'monospace',
+              fontSize: typography.sizes['2xs'],
+              color: colors.gray400,
+            }}>
+              {group.connectionId}
+            </span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            {/* Device parts — lower emphasis */}
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              {deviceParts.flatMap((part, i) => [
+                <span key={`val-d-${i}`} style={{ 
+                  fontSize: typography.sizes['2xs'], 
+                  color: colors.gray400 
+                }}>
+                  {part}
+                </span>,
+              ])}
+            </div>
+
+            {/* Time — lowest priority, first to be clipped */}
+            {timeLabel && [
+              <span key="sep-t" style={{ color: colors.primary200, fontSize: typography.sizes['2xs'] }}>{'  ·  '}</span>,
+              <span key="val-t" style={{ fontSize: typography.sizes['2xs'], color: colors.gray300 }}>{timeLabel}</span>,
+            ]}
+          </div>
+        </div>
+      </div>
+
+      {/* Events column */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        {group.events.map((event, i) => (
+          <EventCard key={event.eventId} event={event} index={i} />
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export function SessionDetail({ session, isLoading }: SessionDetailProps) {
@@ -100,7 +209,7 @@ export function SessionDetail({ session, isLoading }: SessionDetailProps) {
       <SessionReplay sessionId={session.sessionId} />
 
       {/* Event Timeline */}
-      <div style={{ display: 'flex', flexDirection: 'column',  gap: '0.75rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         <div style={{
           fontSize: typography.sizes.xs,
           fontWeight: typography.weights.bold,
@@ -111,8 +220,16 @@ export function SessionDetail({ session, isLoading }: SessionDetailProps) {
           Event Timeline ({session.events.length})
         </div>
 
-        {session.events.map((event, index) => (
-          <EventCard key={event.eventId} event={event} index={index} />
+        {/* Session-scoped events (before any connection) */}
+        {session.events
+          .filter((e) => !e.connectionId)
+          .map((event, index) => (
+            <EventCard key={event.eventId} event={event} index={index} />
+          ))}
+
+        {/* Connection sections */}
+        {session.connections.map((group, groupIndex) => (
+          <ConnectionSection key={group.connectionId} group={group} index={groupIndex} />
         ))}
       </div>
     </div>
