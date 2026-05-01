@@ -1,8 +1,17 @@
+export type PlatformSessionStatus = 'ACTIVE' | 'FINISHED';
+export type PlatformSessionResultType = 'COMPLETED' | 'TERMINATED' | 'ERROR';
+
+export interface PlatformSessionResult {
+  type: PlatformSessionResultType;
+  reason: string;
+}
+
 export enum PlatformEventType {
   SESSION_CREATED = 'SESSION_CREATED',
   SESSION_CONNECTED = 'SESSION_CONNECTED',
   STEP_RENDERED = 'STEP_RENDERED',
   STEP_SUBMITTED = 'STEP_SUBMITTED',
+  SESSION_RESULT = 'SESSION_RESULT',
 }
 
 export const SUPPORTED_EVENT_TYPES: ReadonlySet<string> = new Set<string>(
@@ -33,6 +42,8 @@ export interface PlatformSession {
   createdAt: string;
   lastActivityAt: string;
   eventCount: number;
+  status: PlatformSessionStatus;
+  result?: PlatformSessionResult;
   events: PlatformEventEnvelope[];
   connections: ConnectionGroup[];
 }
@@ -43,4 +54,6 @@ export interface PlatformSessionSummary {
   createdAt: string;
   lastActivityAt: string;
   eventCount: number;
+  status: PlatformSessionStatus;
+  result?: PlatformSessionResult;
 }

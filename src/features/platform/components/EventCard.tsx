@@ -43,6 +43,12 @@ const EVENT_THEMES: Record<PlatformEventType, EventTheme> = {
     label: 'Step Submitted',
     icon: '^',
   },
+  [PlatformEventType.SESSION_RESULT]: {
+    accent: colors.gray600,
+    background: colors.gray50,
+    label: 'Session Result',
+    icon: '=',
+  },
 };
 
 export function EventCard({ event, index }: EventCardProps) {
@@ -239,6 +245,21 @@ function EventPayloadSummary({ type, payload }: { type: PlatformEventType; paylo
           <div style={fieldStyle}>
             <span style={labelStyle}>Data</span>
             <span style={valueStyle}>{preview}{preview.length >= 120 ? '...' : ''}</span>
+          </div>
+        </div>
+      );
+    }
+
+    case PlatformEventType.SESSION_RESULT: {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div style={fieldStyle}>
+            <span style={labelStyle}>Result</span>
+            <span style={valueStyle}>{String(payload.type ?? '—')}</span>
+          </div>
+          <div style={fieldStyle}>
+            <span style={labelStyle}>Reason</span>
+            <span style={valueStyle}>{String(payload.reason ?? '—')}</span>
           </div>
         </div>
       );

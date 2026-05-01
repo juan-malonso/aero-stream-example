@@ -1,4 +1,11 @@
-import type { ConnectionGroup, PlatformEventEnvelope, PlatformSession, PlatformSessionSummary } from './types';
+import type {
+  ConnectionGroup,
+  PlatformEventEnvelope,
+  PlatformSession,
+  PlatformSessionResult,
+  PlatformSessionStatus,
+  PlatformSessionSummary,
+} from './types';
 import { PlatformEventType } from './types';
 
 /**
@@ -15,6 +22,8 @@ interface StoredSession {
   createdAt: string;
   lastActivityAt: string;
   eventCount: number;
+  status: PlatformSessionStatus;
+  result?: PlatformSessionResult;
   events: PlatformEventEnvelope[];
 }
 
@@ -65,6 +74,11 @@ export function addEvent(event: PlatformEventEnvelope): void {
     existing.events.push(event);
     existing.lastActivityAt = event.occurredAt;
     existing.eventCount = existing.events.length;
+
+    if (event.type === PlatformEventType.SESSION_RESULT) {
+      existing.status = 'FINISHED';
+      existing.result = event.payload as unknown as PlatformSessionResult;
+    }
   } else {
     store.set(event.sessionId, {
       sessionId: event.sessionId,
@@ -72,6 +86,7 @@ export function addEvent(event: PlatformEventEnvelope): void {
       createdAt: event.occurredAt,
       lastActivityAt: event.occurredAt,
       eventCount: 1,
+      status: 'ACTIVE',
       events: [event],
     });
   }
@@ -88,6 +103,8 @@ export function getSessionSummaries(): PlatformSessionSummary[] {
       createdAt: session.createdAt,
       lastActivityAt: session.lastActivityAt,
       eventCount: session.eventCount,
+      status: session.status ?? 'ACTIVE',
+      result: session.result,
     });
   });
 
@@ -103,6 +120,7 @@ export function getSessionDetail(sessionId: string): PlatformSession | null {
 
   return {
     ...session,
+    status: session.status ?? 'ACTIVE',
     connections: deriveConnectionGroups(session.events),
   };
 }
