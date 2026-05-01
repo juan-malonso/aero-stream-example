@@ -45,6 +45,7 @@ export function PerformanceStats({ status, connectionTime }: { status: Connectio
   const getStatusColor = () => {
     switch (status) {
       case ConnectionStatus.active: return colors.emerald500;
+      case ConnectionStatus.connecting: return colors.amber500;
       case ConnectionStatus.error: return colors.red500;
       default: return colors.gray500;
     }

@@ -131,6 +131,12 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
     loadWorkflows();
   }, [loadWorkflows]);
 
+  useEffect(() => {
+    if (!activeWorkflowId && workflows.length > 0) {
+      void selectWorkflow(workflows[0].id);
+    }
+  }, [activeWorkflowId, selectWorkflow, workflows]);
+
   return (
     <WorkflowGraphContext.Provider value={{
       nodes, edges, onNodesChange, onEdgesChange, setNodes, setEdges

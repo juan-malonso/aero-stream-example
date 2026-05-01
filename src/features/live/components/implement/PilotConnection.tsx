@@ -15,10 +15,10 @@ import { colors, typography } from '@/styles/tokens';
 
 const token = 'my-super-secret-token';
 const socketUrl = 'ws://localhost:8787/app/sync';
-const apiUrl = 'http://localhost:8787';
 
 interface PilotConnectionProps {
   workflowId: string;
+  sessionId: string;
   onSessionId: (id: string | null) => void;
   onStatusChange: (status: ConnectionStatus) => void;
   onTimeTick: () => void;
@@ -26,14 +26,12 @@ interface PilotConnectionProps {
 }
 
 export interface PilotConnectionHandle {
-  createSession: () => Promise<void>;
   connect: () => Promise<void>;
   disconnect: () => void;
-  sessionId: string | null;
 }
 
 export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnectionProps>(
-  function PilotConnection({ workflowId, onSessionId, onStatusChange, onTimeTick, onTimeReset }, ref) {
+  function PilotConnection({ workflowId, sessionId, onSessionId, onStatusChange, onTimeTick, onTimeReset }, ref) {
   const stepLibrary: AeroStreamLibrary<React.ReactNode> = {
     WelcomeComponent: (props: AeroStreamComponentParams) => <WelcomeComponent {...props} />,
     VideoComponent: (props: AeroStreamComponentParams) => <VideoComponent {...props} />,
@@ -42,10 +40,10 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
   };
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const connectionAttemptRef = useRef(0);
 
   const [status, setStatus] = useState(ConnectionStatus.closed);
   const [currentComponent, setCurrentComponent] = useState<React.ReactNode | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(null);
 
   useEffect(() => {
     onStatusChange(status);
@@ -64,39 +62,18 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
       setCurrentComponent(null);
     }
     setStatus(ConnectionStatus.closed);
-    setSessionId(null);
-    onSessionId(null);
   };
 
-  const handleCreateSession = async () => {
-    if (!workflowId || status === ConnectionStatus.active) {
+  const handleConnect = async () => {
+    if (!workflowId || !sessionId || status === ConnectionStatus.connecting || status === ConnectionStatus.active) {
       return;
     }
 
     try {
-      const response = await fetch(`${apiUrl}/app/${workflowId}`, { method: 'POST' });
-      if (!response.ok) {
-        throw new Error(`Unable to create session: ${response.status}`);
-      }
-
-      const data = await response.json() as { sessionId?: string };
-      if (!data.sessionId) {
-        throw new Error('Session ID missing in create-session response');
-      }
-
-      setSessionId(data.sessionId);
-      onSessionId(data.sessionId);
-    } catch (error) {
-      setStatus(ConnectionStatus.error);
-      console.error('Session creation error:', error);
-    }
-  };
-
-  const handleConnect = async () => {
-    try {
-      if (!sessionId) {
-        return;
-      }
+      const attemptId = connectionAttemptRef.current + 1;
+      connectionAttemptRef.current = attemptId;
+      setStatus(ConnectionStatus.connecting);
+      onSessionId(sessionId);
 
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
@@ -106,6 +83,11 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
         },
         audio: true,
       });
+
+      if (connectionAttemptRef.current !== attemptId) {
+        stream.getTracks().forEach((track) => { track.stop(); });
+        return;
+      }
 
       pilotRef.current?.disconnect()
       const pilot = new AeroStreamPilot<React.ReactNode>({
@@ -125,6 +107,11 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
 
       await pilot.connect();
 
+      if (connectionAttemptRef.current !== attemptId) {
+        pilot.disconnect();
+        return;
+      }
+
       if (pilotRef.current === pilot && pilot.isConnected) {
         setStatus(ConnectionStatus.active);
 
@@ -138,6 +125,8 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
   };
 
   const handleDisconnect = () => {
+    connectionAttemptRef.current += 1;
+
     if (pilotRef.current) {
       const pilot = pilotRef.current;
       pilotRef.current = null;
@@ -148,10 +137,8 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
   };
 
   useImperativeHandle(ref, () => ({
-    createSession: handleCreateSession,
     connect: handleConnect,
     disconnect: handleDisconnect,
-    sessionId,
   }), [workflowId, status, sessionId]);
 
   useEffect(() => {
