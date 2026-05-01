@@ -21,6 +21,7 @@ interface PilotConnectionProps {
   sessionId: string;
   onSessionId: (id: string | null) => void;
   onStatusChange: (status: ConnectionStatus) => void;
+  onConnectionOpenChange: (isOpen: boolean) => void;
   onTimeTick: () => void;
   onTimeReset: () => void;
 }
@@ -31,7 +32,7 @@ export interface PilotConnectionHandle {
 }
 
 export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnectionProps>(
-  function PilotConnection({ workflowId, sessionId, onSessionId, onStatusChange, onTimeTick, onTimeReset }, ref) {
+  function PilotConnection({ workflowId, sessionId, onSessionId, onStatusChange, onConnectionOpenChange, onTimeTick, onTimeReset }, ref) {
   const stepLibrary: AeroStreamLibrary<React.ReactNode> = {
     WelcomeComponent: (props: AeroStreamComponentParams) => <WelcomeComponent {...props} />,
     VideoComponent: (props: AeroStreamComponentParams) => <VideoComponent {...props} />,
@@ -40,6 +41,7 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
   };
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const connectionWatchRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const connectionAttemptRef = useRef(0);
 
   const [status, setStatus] = useState(ConnectionStatus.closed);
@@ -56,12 +58,29 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
+    if (connectionWatchRef.current) {
+      clearInterval(connectionWatchRef.current);
+      connectionWatchRef.current = null;
+    }
 
     pilotRef.current = null;
+    onConnectionOpenChange(false);
     if (clearScreen) {
       setCurrentComponent(null);
     }
     setStatus(ConnectionStatus.closed);
+  };
+
+  const watchConnection = (pilot: AeroStreamPilot<React.ReactNode>) => {
+    if (connectionWatchRef.current) {
+      clearInterval(connectionWatchRef.current);
+    }
+
+    connectionWatchRef.current = setInterval(() => {
+      if (!pilot.isConnected) {
+        resetConnectionState({ clearScreen: false });
+      }
+    }, 250);
   };
 
   const handleConnect = async () => {
@@ -114,6 +133,8 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
 
       if (pilotRef.current === pilot && pilot.isConnected) {
         setStatus(ConnectionStatus.active);
+        onConnectionOpenChange(true);
+        watchConnection(pilot);
 
         onTimeReset();
         timerRef.current = setInterval(() => { onTimeTick(); }, 1000);
@@ -145,6 +166,9 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
+      }
+      if (connectionWatchRef.current) {
+        clearInterval(connectionWatchRef.current);
       }
     };
   }, []);

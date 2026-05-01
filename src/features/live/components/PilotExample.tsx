@@ -18,10 +18,13 @@ export function PilotExample() {
   const [status, setStatus] = useState(ConnectionStatus.closed);
   const [sessionId, setSessionId] = useState('');
   const [isCreatingSession, setIsCreatingSession] = useState(false);
+  const [isConnectionOpen, setIsConnectionOpen] = useState(false);
   const [connectionTime, setConnectionTime] = useState(0);
 
   const pilotRef = useRef<PilotConnectionHandle>(null);
-  const isConnectionInProgress = status === ConnectionStatus.connecting || status === ConnectionStatus.active || isCreatingSession;
+  const isConnecting = status === ConnectionStatus.connecting;
+  const isSessionBusy = isConnecting || isConnectionOpen || isCreatingSession;
+  const canAbort = isConnecting || isConnectionOpen;
   const isSessionIdValid = uuidPattern.test(sessionId);
 
   const handleSessionId = useCallback((id: string | null) => {
@@ -38,7 +41,7 @@ export function PilotExample() {
   };
 
   const handleCreateSession = async () => {
-    if (!activeWorkflowId || isConnectionInProgress) {
+    if (!activeWorkflowId || isSessionBusy) {
       return;
     }
 
@@ -74,6 +77,7 @@ export function PilotExample() {
           sessionId={isSessionIdValid ? sessionId : ''}
           onSessionId={handleSessionId}
           onStatusChange={setStatus}
+          onConnectionOpenChange={setIsConnectionOpen}
           onTimeTick={() => { setConnectionTime((prev) => prev + 1); }}
           onTimeReset={() => { setConnectionTime(0); }}
         />
@@ -103,7 +107,7 @@ export function PilotExample() {
               <Select
                 value={activeWorkflowId || ''}
                 onChange={handleSelectChange}
-                disabled={isLoading || isConnectionInProgress}
+                disabled={isLoading || isSessionBusy}
                 style={{
                   width: '100%',
                   borderRadius: radii.md,
@@ -129,7 +133,7 @@ export function PilotExample() {
                     onChange={(event) => {
                       setSessionId(event.target.value.trim());
                     }}
-                    disabled={isConnectionInProgress}
+                    disabled={isSessionBusy}
                     aria-invalid={!isSessionIdValid}
                     aria-label="Session UUID"
                     style={{
@@ -159,7 +163,7 @@ export function PilotExample() {
                 </div>
                 <Button
                   onClick={() => { void handleCreateSession(); }}
-                  disabled={isConnectionInProgress || !activeWorkflowId}
+                  disabled={isSessionBusy || !activeWorkflowId}
                   variant="secondary"
                   size="lg"
                   aria-label="Create new session in Tower"
@@ -170,7 +174,7 @@ export function PilotExample() {
               </Row>
               <Button
                 onClick={() => { void pilotRef.current?.connect(); }}
-                disabled={isConnectionInProgress || !activeWorkflowId || !isSessionIdValid}
+                disabled={isSessionBusy || !activeWorkflowId || !isSessionIdValid}
                 variant="primary"
                 size="lg"
                 style={{
@@ -183,7 +187,7 @@ export function PilotExample() {
               </Button>
               <Button
                 onClick={() => { pilotRef.current?.disconnect(); }}
-                disabled={!isConnectionInProgress}
+                disabled={!canAbort}
                 variant="danger"
                 size="lg"
                 style={{ width: '100%', borderRadius: '8px' }}
