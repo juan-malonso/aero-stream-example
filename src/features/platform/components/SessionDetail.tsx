@@ -38,25 +38,15 @@ function ConnectionSection({ group, index }: { group: ConnectionGroup; index: nu
         position: 'relative',
         padding: '0.25rem',
         flexShrink: 0,
-        background: colors.primary50,
-        border: `1px solid ${colors.primary200}`,
+        background: colors.green50,
+        border: `1px solid ${colors.green200}`,
+        borderLeft: `3px solid ${colors.green700}`,
         borderRadius: radii.lg,
         boxShadow: shadows.xs,
         overflow: 'hidden',
         display: 'flex',
         justifyContent: 'center',
       }}>
-        {/* Gradient fade at top — marks content cutoff */}
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          background: `linear-gradient(to bottom, ${colors.primary100}, transparent)`,
-          pointerEvents: 'none',
-          zIndex: 1,
-        }} />
-
         {/* Rotated text — starts at bottom, overflow clips at top */}
         <div style={{
           writingMode: 'vertical-rl',
@@ -70,22 +60,20 @@ function ConnectionSection({ group, index }: { group: ConnectionGroup; index: nu
             <span style={{
               fontSize: typography.sizes['2xs'],
               fontWeight: typography.weights.bold,
-              color: colors.primary600,
+              color: colors.green700,
               textTransform: 'uppercase',
               letterSpacing: '0.08em',
             }}>
               {`Connection #${index + 1}`}
             </span>
-
-            <span style={{ color: colors.primary300, fontSize: typography.sizes['2xs'] }}>{'  ·  '}</span>
-
-            {/* UUID — monospace, medium emphasis */}
             <span style={{
-              fontFamily: 'monospace',
               fontSize: typography.sizes['2xs'],
-              color: colors.gray400,
+              fontWeight: typography.weights.bold,
+              color: colors.green700,
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
             }}>
-              {group.connectionId}
+              {`Connection #${index + 1}`}
             </span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -101,11 +89,14 @@ function ConnectionSection({ group, index }: { group: ConnectionGroup; index: nu
               ])}
             </div>
 
-            {/* Time — lowest priority, first to be clipped */}
-            {timeLabel && [
-              <span key="sep-t" style={{ color: colors.primary200, fontSize: typography.sizes['2xs'] }}>{'  ·  '}</span>,
-              <span key="val-t" style={{ fontSize: typography.sizes['2xs'], color: colors.gray300 }}>{timeLabel}</span>,
-            ]}
+            {/* UUID — monospace, medium emphasis */}
+            <span style={{
+              fontFamily: 'monospace',
+              fontSize: typography.sizes['2xs'],
+              color: colors.gray400,
+            }}>
+              {group.connectionId}
+            </span>
           </div>
         </div>
       </div>
