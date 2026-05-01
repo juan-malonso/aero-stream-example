@@ -9,18 +9,16 @@ interface VideoHistoryProps {
   history: { id: string; date: string }[];
   currentSessionId: string | null;
   status: ConnectionStatus;
-  onViewVideo: (id: string) => void;
   onDownloadVideo?: (id: string) => void;
 }
 
 interface VideoHistoryItemProps {
   session: { id: string; date: string };
   isActive: boolean;
-  onView: () => void;
   onDownload?: () => void;
 }
 
-export function VideoHistory({ history, currentSessionId, status, onViewVideo, onDownloadVideo }: VideoHistoryProps) {
+export function VideoHistory({ history, currentSessionId, status, onDownloadVideo }: VideoHistoryProps) {
   return (
     <Column gap="0.5rem" align="stretch" style={{ overflowY: 'auto', maxHeight: '350px', paddingRight: '0.25rem' }}>
       {history.length === 0 ? (
@@ -42,7 +40,6 @@ export function VideoHistory({ history, currentSessionId, status, onViewVideo, o
               key={session.id}
               session={session}
               isActive={isActive}
-              onView={() => { onViewVideo(session.id); }}
               onDownload={onDownloadVideo ? () => { onDownloadVideo(session.id); } : undefined}
             />
           );
@@ -52,7 +49,7 @@ export function VideoHistory({ history, currentSessionId, status, onViewVideo, o
   );
 }
 
-function VideoHistoryItem({ session, isActive, onView, onDownload }: VideoHistoryItemProps) {
+function VideoHistoryItem({ session, isActive, onDownload }: VideoHistoryItemProps) {
   const color = isActive ? colors.amber500 : colors.gray500;
 
   return (
@@ -66,15 +63,9 @@ function VideoHistoryItem({ session, isActive, onView, onDownload }: VideoHistor
         </Row>
 
         <Row gap="0.5rem" style={{ marginTop: '2px', width: '100%', color: colors.gray500 }}>
-          <Button
-            onClick={onView}
-            disabled={isActive}
-            variant={isActive ? 'ghost' : 'secondary'}
-            size="sm"
-            style={{ flex: 1, fontSize: '10px', height: '24px', borderRadius: '6px', width: '100%' }}
-          >
-            {isActive ? 'Syncing...' : 'View Replay'}
-          </Button>
+          <span style={{ flex: 1, fontSize: '10px', color: colors.gray400, display: 'flex', alignItems: 'center' }}>
+            {isActive ? 'Syncing...' : 'View in Platform tab'}
+          </span>
           {onDownload && (
             <Button
               onClick={onDownload}

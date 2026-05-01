@@ -1,13 +1,12 @@
 'use client';
 
 import { ConnectionStatus } from '@/constants';
-import { LiveViewer, PerformanceStats, VideoHistory } from './developer';
-import { PilotConnection } from './implement';
+import { PerformanceStats } from './developer';
+import { PilotConnection, type PilotConnectionHandle } from './implement';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useWorkflowMetadata } from '@/hooks/useWorkflow';
-import { downloadVideo } from '@/lib/video/downloadService';
-import { Row, Column, Select } from '@/components/ui';
+import { Row, Column, Select, Button } from '@/components/ui';
 import { colors, radii, shadows, typography } from '@/styles/tokens';
 import { sectionHeaderStyle } from '@/styles/theme';
 
@@ -15,23 +14,13 @@ export function PilotExample() {
   const { workflows, activeWorkflowId, selectWorkflow, isLoading } = useWorkflowMetadata();
   const [status, setStatus] = useState(ConnectionStatus.closed);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [videoHistory, setVideoHistory] = useState<{ id: string, date: string }[]>([]);
   const [connectionTime, setConnectionTime] = useState(0);
-  const [viewingId, setViewingId] = useState<string | null>(null);
+
+  const pilotRef = useRef<PilotConnectionHandle>(null);
 
   const handleSessionId = useCallback((id: string | null) => {
     setSessionId(id);
-    if (id) {
-      setVideoHistory((prev) => {
-        if (prev.some((v) => v.id === id)) return prev;
-        return [{ id, date: new Date().toLocaleString() }, ...prev];
-      });
-    }
   }, []);
-
-  const handleDownloadVideo = async (id: string) => {
-    await downloadVideo(id);
-  };
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const id = e.target.value;
@@ -45,6 +34,7 @@ export function PilotExample() {
       {/* Main Simulation Area */}
       <main style={{ flex: 1, padding: '1.5rem', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         <PilotConnection
+          ref={pilotRef}
           workflowId={activeWorkflowId || ''}
           onSessionId={handleSessionId}
           onStatusChange={setStatus}
@@ -53,7 +43,7 @@ export function PilotExample() {
         />
       </main>
 
-      {/* Unified Developer Sidebar - Aligned with Builder */}
+      {/* Developer Sidebar */}
       <aside style={{
         width: '350px',
         height: '100%',
@@ -88,11 +78,52 @@ export function PilotExample() {
           </Select>
         </Column>
 
+        {/* Session Controls */}
+        <Column gap="0" align="stretch" style={{ borderBottom: `1px solid ${colors.gray200}` }}>
+          <Row justify="space-between" align="center" style={{
+            padding: '1rem',
+            background: colors.gray50,
+            borderBottom: `1px solid ${colors.gray200}`,
+          }}>
+            <div style={sectionHeaderStyle}>Session Controls</div>
+          </Row>
+          <div style={{ padding: '0.75rem' }}>
+            <Column gap="0.5rem" align="stretch">
+              <Button
+                onClick={() => { void pilotRef.current?.createSession(); }}
+                disabled={status === ConnectionStatus.active || !activeWorkflowId}
+                variant="primary"
+                size="lg"
+                style={{ width: '100%', borderRadius: '8px', boxShadow: shadows.sm }}
+              >
+                {sessionId ? 'Session Ready' : 'Create Session'}
+              </Button>
+              <Button
+                onClick={() => { void pilotRef.current?.connect(); }}
+                disabled={status === ConnectionStatus.active || !sessionId}
+                variant="primary"
+                size="lg"
+                style={{ width: '100%', borderRadius: '8px', boxShadow: shadows.sm }}
+              >
+                {status === ConnectionStatus.active ? 'System Active' : 'Connect to Session'}
+              </Button>
+              <Button
+                onClick={() => { pilotRef.current?.disconnect(); }}
+                disabled={status === ConnectionStatus.closed}
+                variant="secondary"
+                size="lg"
+                style={{ width: '100%', borderRadius: '8px' }}
+              >
+                Abort
+              </Button>
+            </Column>
+          </div>
+        </Column>
+
         {/* Scrollable Content */}
         <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-
           {/* Performance Stats */}
-          <Column gap="0" align="stretch" style={{ borderBottom: `1px solid ${colors.gray200}` }}>
+          <Column gap="0" align="stretch">
             <Row justify="space-between" align="center" style={{
               padding: '1rem',
               background: colors.gray50,
@@ -102,43 +133,6 @@ export function PilotExample() {
             </Row>
             <div style={{ padding: '0.75rem' }}>
               <PerformanceStats status={status} connectionTime={connectionTime} />
-            </div>
-          </Column>
-
-          {/* Replay Viewer */}
-          <Column gap="0" align="stretch" style={{ borderBottom: `1px solid ${colors.gray200}` }}>
-            <Row justify="space-between" align="center" style={{
-              padding: '1rem',
-              background: colors.gray50,
-              borderBottom: `1px solid ${colors.gray200}`,
-            }}>
-              <div style={sectionHeaderStyle}>Live Replay</div>
-            </Row>
-            <div style={{ padding: '0.75rem' }}>
-              <LiveViewer
-                viewingId={viewingId}
-                onClose={() => setViewingId(null)}
-              />
-            </div>
-          </Column>
-
-          {/* Session History */}
-          <Column gap="0" align="stretch">
-            <Row justify="space-between" align="center" style={{
-              padding: '1rem',
-              background: colors.gray50,
-              borderBottom: `1px solid ${colors.gray200}`,
-            }}>
-              <div style={sectionHeaderStyle}>Session History</div>
-            </Row>
-            <div style={{ padding: '0.75rem' }}>
-              <VideoHistory
-                history={videoHistory}
-                currentSessionId={sessionId}
-                status={status}
-                onViewVideo={(id) => setViewingId(id)}
-                onDownloadVideo={(id) => void handleDownloadVideo(id)}
-              />
             </div>
           </Column>
         </div>

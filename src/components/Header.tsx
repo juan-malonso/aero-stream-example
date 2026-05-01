@@ -5,8 +5,8 @@ import { colors, typography } from '@/styles/tokens';
 import { Row } from '@/components/ui';
 
 interface HeaderProps {
-  activeTab: 'builder' | 'live';
-  setActiveTab: (tab: 'builder' | 'live') => void;
+  activeTab: 'builder' | 'live' | 'platform';
+  setActiveTab: (tab: 'builder' | 'live' | 'platform') => void;
 }
 
 interface NavItemProps {
@@ -102,9 +102,14 @@ export function Header({ activeTab, setActiveTab }: HeaderProps) {
             onClick={() => setActiveTab('builder')}
           />
           <NavItem
-            label="Live Environment"
+            label="Session Player"
             isActive={activeTab === 'live'}
             onClick={() => setActiveTab('live')}
+          />
+          <NavItem
+            label="Session Platform"
+            isActive={activeTab === 'platform'}
+            onClick={() => setActiveTab('platform')}
           />
         </nav>
       </div>
