@@ -20,8 +20,8 @@ interface EventTheme {
 
 const EVENT_THEMES: Record<PlatformEventType, EventTheme> = {
   [PlatformEventType.SESSION_CREATED]: {
-    accent: colors.blue500,
-    background: colors.blue50,
+    accent: colors.gray600,
+    background: colors.gray50,
     label: 'Session Created',
     icon: '+',
   },

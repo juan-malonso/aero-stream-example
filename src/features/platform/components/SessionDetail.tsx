@@ -1,6 +1,7 @@
 'use client';
 
 import type { ConnectionGroup, PlatformSession } from '@/lib/platform/types';
+import { PlatformEventType } from '@/lib/platform/types';
 import { colors, radii, shadows, typography } from '@/styles/tokens';
 
 import { EventCard } from './EventCard';
@@ -12,14 +13,6 @@ interface SessionDetailProps {
 }
 
 function ConnectionSection({ group, index }: { group: ConnectionGroup; index: number }) {
-  const timeLabel = group.connectedAt
-    ? new Date(group.connectedAt).toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false,
-      })
-    : null;
 
   const deviceParts = group.device
     ? [
@@ -32,15 +25,18 @@ function ConnectionSection({ group, index }: { group: ConnectionGroup; index: nu
     : [];
 
   return (
-    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'stretch' }}>
+    <div style={{
+      display: 'flex',
+      gap: '0.75rem',
+      alignItems: 'stretch'
+    }}>
       {/* Vertical connection card */}
       <div style={{
         position: 'relative',
-        padding: '0.25rem',
+        padding: '0.5rem',
         flexShrink: 0,
-        background: colors.green50,
-        border: `1px solid ${colors.green200}`,
-        borderLeft: `3px solid ${colors.green700}`,
+        background: colors.blue100,
+        borderLeft: `3px solid ${colors.blue700}`,
         borderRadius: radii.lg,
         boxShadow: shadows.xs,
         overflow: 'hidden',
@@ -52,7 +48,7 @@ function ConnectionSection({ group, index }: { group: ConnectionGroup; index: nu
           writingMode: 'vertical-rl',
           transform: 'rotate(180deg)',
           overflow: 'hidden',
-          padding: '0.75rem 0',
+          padding: '0.25rem',
           userSelect: 'none',
         }}>
           {/* Connection label — highest priority */}
@@ -60,20 +56,22 @@ function ConnectionSection({ group, index }: { group: ConnectionGroup; index: nu
             <span style={{
               fontSize: typography.sizes['2xs'],
               fontWeight: typography.weights.bold,
-              color: colors.green700,
+              color: colors.blue800,
               textTransform: 'uppercase',
               letterSpacing: '0.08em',
             }}>
-              {`Connection #${index + 1}`}
+              <span style={{ color: colors.blue600 }}>{`#${index + 1}   `}</span>
+              Connection
             </span>
             <span style={{
               fontSize: typography.sizes['2xs'],
               fontWeight: typography.weights.bold,
-              color: colors.green700,
+              color: colors.blue800,
               textTransform: 'uppercase',
               letterSpacing: '0.08em',
             }}>
-              {`Connection #${index + 1}`}
+              <span style={{ color: colors.blue600 }}>{`#${index + 1}   `}</span>
+              Connection
             </span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -102,7 +100,12 @@ function ConnectionSection({ group, index }: { group: ConnectionGroup; index: nu
       </div>
 
       {/* Events column */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+      <div style={{ 
+        flex: 1, 
+        display: 'flex',
+        flexDirection: 'column', 
+        gap: '0.75rem'
+      }}>
         {group.events.map((event, i) => (
           <EventCard key={event.eventId} event={event} index={i} />
         ))}
@@ -143,13 +146,18 @@ export function SessionDetail({ session, isLoading }: SessionDetailProps) {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', padding: '1.25rem' }}>
+    <div style={{ 
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '1.25rem',
+      padding: '1.25rem'
+    }}>
       {/* Session Header */}
       <div style={{
         background: colors.white,
         border: `1px solid ${colors.gray200}`,
         borderRadius: radii.lg,
-        padding: '0.5rem',
+        padding: '0.75rem',
         boxShadow: shadows.xs,
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -200,7 +208,11 @@ export function SessionDetail({ session, isLoading }: SessionDetailProps) {
       <SessionReplay sessionId={session.sessionId} />
 
       {/* Event Timeline */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+      <div style={{ 
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.75rem'
+      }}>
         <div style={{
           fontSize: typography.sizes.xs,
           fontWeight: typography.weights.bold,
@@ -211,9 +223,9 @@ export function SessionDetail({ session, isLoading }: SessionDetailProps) {
           Event Timeline ({session.events.length})
         </div>
 
-        {/* Session-scoped events (before any connection) */}
+        {/* Session-scoped events before connections (e.g. SESSION_CREATED) */}
         {session.events
-          .filter((e) => !e.connectionId)
+          .filter((e) => !e.connectionId && e.type !== PlatformEventType.SESSION_RESULT)
           .map((event, index) => (
             <EventCard key={event.eventId} event={event} index={index} />
           ))}
@@ -222,6 +234,13 @@ export function SessionDetail({ session, isLoading }: SessionDetailProps) {
         {session.connections.map((group, groupIndex) => (
           <ConnectionSection key={group.connectionId} group={group} index={groupIndex} />
         ))}
+
+        {/* Session result — rendered after all connections */}
+        {session.events
+          .filter((e) => e.type === PlatformEventType.SESSION_RESULT)
+          .map((event, index) => (
+            <EventCard key={event.eventId} event={event} index={index} />
+          ))}
       </div>
     </div>
   );
