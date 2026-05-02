@@ -2,7 +2,7 @@
 
 import { ConnectionStatus } from '@/constants';
 
-import { DoneComponent, ErrorScreen, KYCComponent, VideoComponent, WelcomeComponent } from '@/components/steps';
+import { AlertScreen, DoneComponent, ErrorScreen, InfoScreen, KYCComponent, VideoComponent, WelcomeComponent } from '@/components/steps';
 
 import {
   type AeroStreamComponentParams,
@@ -116,6 +116,8 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
         videoStream: stream,
         library: stepLibrary,
         errorScreen: ErrorScreen,
+        alertScreen: AlertScreen,
+        infoScreen: InfoScreen,
         renderer: setCurrentComponent,
         onMessage: () => { /* noop */ },
         onClose: () => {

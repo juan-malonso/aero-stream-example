@@ -1,6 +1,10 @@
-export async function downloadVideo(id: string): Promise<void> {
+const TOWER_URL = 'http://localhost:8787';
+
+export async function downloadVideo(sessionId: string, connectionId?: string): Promise<void> {
+  if (!connectionId) return;
+  const basePath = `${sessionId}/${connectionId}`;
   try {
-    const playlistRes = await fetch(`http://localhost:8787/resources/${id}/video/playlist.json`);
+    const playlistRes = await fetch(`${TOWER_URL}/resources/${basePath}/playlist.json`);
     if (!playlistRes.ok) throw new Error('Failed to fetch video playlist');
     const { url: playlistUrl } = await playlistRes.json() as { url: string };
 
@@ -10,7 +14,7 @@ export async function downloadVideo(id: string): Promise<void> {
 
     const buffers: ArrayBuffer[] = [];
     for (const segment of playlist.segments) {
-      const segRes = await fetch(`http://localhost:8787/resources/${id}/video/${segment}`);
+      const segRes = await fetch(`${TOWER_URL}/resources/${basePath}/${segment}`);
       if (!segRes.ok) continue;
       const { url: segUrl } = await segRes.json() as { url: string };
       const segDataRes = await fetch(segUrl);
@@ -26,7 +30,7 @@ export async function downloadVideo(id: string): Promise<void> {
     const a = document.createElement('a');
     a.style.display = 'none';
     a.href = url;
-    a.download = `video-${id}.webm`;
+    a.download = `video-${sessionId}-${connectionId.slice(0, 8)}.webm`;
     document.body.appendChild(a);
     a.click();
     URL.revokeObjectURL(url);

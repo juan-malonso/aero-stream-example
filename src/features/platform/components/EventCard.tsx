@@ -5,6 +5,7 @@ import { type CSSProperties, useState } from 'react';
 import type { PlatformEventEnvelope } from '@/lib/platform/types';
 import { PlatformEventType } from '@/lib/platform/types';
 import { colors, radii, shadows, typography } from '@/styles/tokens';
+import { downloadVideo } from '@/lib/video/downloadService';
 
 interface EventCardProps {
   event: PlatformEventEnvelope;
@@ -106,7 +107,7 @@ export function EventCard({ event, index }: EventCardProps) {
 
       {/* Card Body — Event-specific rendering */}
       <div style={{ padding: '0.75rem 1rem' }}>
-        <EventPayloadSummary type={event.type} payload={event.payload} />
+        <EventPayloadSummary event={event} />
       </div>
 
       {/* Expandable Raw Payload */}
@@ -153,7 +154,8 @@ export function EventCard({ event, index }: EventCardProps) {
   );
 }
 
-function EventPayloadSummary({ type, payload }: { type: PlatformEventType; payload: Record<string, unknown> }) {
+function EventPayloadSummary({ event }: { event: PlatformEventEnvelope }) {
+  const { type, payload } = event;
   const fieldStyle: CSSProperties = {
     display: 'flex',
     gap: '0.5rem',
@@ -189,23 +191,55 @@ function EventPayloadSummary({ type, payload }: { type: PlatformEventType; paylo
 
     case PlatformEventType.SESSION_CONNECTED: {
       const device = payload.device as Record<string, unknown> | null;
-      if (!device) {
-        return <span style={{ ...valueStyle, color: colors.gray400 }}>No device info</span>;
-      }
+      const { sessionId, connectionId } = event;
       return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          <div style={fieldStyle}>
-            <span style={labelStyle}>Browser</span>
-            <span style={valueStyle}>{String(device.browserName ?? '—')} {String(device.browserVersion ?? '')}</span>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
+          {/* Device fields */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            {device ? (
+              <>
+                <div style={fieldStyle}>
+                  <span style={labelStyle}>Browser</span>
+                  <span style={valueStyle}>{String(device.browserName ?? '—')} {String(device.browserVersion ?? '')}</span>
+                </div>
+                <div style={fieldStyle}>
+                  <span style={labelStyle}>OS</span>
+                  <span style={valueStyle}>{String(device.osName ?? '—')} {String(device.osVersion ?? '')}</span>
+                </div>
+                <div style={fieldStyle}>
+                  <span style={labelStyle}>Device</span>
+                  <span style={valueStyle}>{String(device.deviceType ?? '—')}{device.model ? ` (${String(device.model)})` : ''}</span>
+                </div>
+              </>
+            ) : (
+              <span style={{ ...valueStyle, color: colors.gray400 }}>No device info</span>
+            )}
           </div>
-          <div style={fieldStyle}>
-            <span style={labelStyle}>OS</span>
-            <span style={valueStyle}>{String(device.osName ?? '—')} {String(device.osVersion ?? '')}</span>
-          </div>
-          <div style={fieldStyle}>
-            <span style={labelStyle}>Device</span>
-            <span style={valueStyle}>{String(device.deviceType ?? '—')}{device.model ? ` (${String(device.model)})` : ''}</span>
-          </div>
+          {/* Download button — top-right, green header tone */}
+          <button
+            onClick={() => void downloadVideo(sessionId, connectionId)}
+            style={{
+              flexShrink: 0,
+              padding: '0.25rem 0.625rem',
+              border: `1px solid ${colors.green700}`,
+              borderRadius: radii.md,
+              background: colors.green100,
+              color: colors.green700,
+              fontSize: typography.sizes.xs,
+              fontWeight: typography.weights.semibold,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.3rem',
+            }}
+          >
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Download video
+          </button>
         </div>
       );
     }
