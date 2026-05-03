@@ -2,7 +2,7 @@
 
 import { ConnectionStatus } from '@/constants';
 
-import { AlertScreen, DoneComponent, ErrorScreen, InfoScreen, KYCComponent, VideoComponent, WelcomeComponent } from '@/components/steps';
+import { AlertScreen, CompletionScreen, DoneComponent, ErrorScreen, InfoScreen, KYCComponent, VideoComponent, WelcomeComponent } from '@/components/steps';
 
 import {
   type AeroStreamComponentParams,
@@ -46,6 +46,7 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
 
   const [status, setStatus] = useState(ConnectionStatus.closed);
   const [currentComponent, setCurrentComponent] = useState<React.ReactNode | null>(null);
+  const [completionState, setCompletionState] = useState<'none' | 'success' | 'error'>('none');
 
   useEffect(() => {
     onStatusChange(status);
@@ -92,6 +93,7 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
       const attemptId = connectionAttemptRef.current + 1;
       connectionAttemptRef.current = attemptId;
       setStatus(ConnectionStatus.connecting);
+      setCompletionState('none');
       onSessionId(sessionId);
 
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -119,6 +121,11 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
         alertScreen: AlertScreen,
         infoScreen: InfoScreen,
         renderer: setCurrentComponent,
+        onComplete: ({ ok }) => {
+          setCompletionState(ok ? 'success' : 'error');
+          setStatus(ConnectionStatus.closed);
+          onConnectionOpenChange(false);
+        },
         onMessage: () => { /* noop */ },
         onClose: () => {
           resetConnectionState({ clearScreen: false });
@@ -149,6 +156,7 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
 
   const handleDisconnect = () => {
     connectionAttemptRef.current += 1;
+    setCompletionState('none');
 
     if (pilotRef.current) {
       const pilot = pilotRef.current;
@@ -189,7 +197,9 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
       boxShadow: '0 10px 30px rgba(0,0,0,0.04)',
     }}>
       <div style={{ flex: 1, position: 'relative', overflow: 'hidden', color: colors.gray600 }}>
-        {currentComponent ?? (
+        {completionState !== 'none' ? (
+          <CompletionScreen ok={completionState === 'success'} />
+        ) : (currentComponent ?? (
           <Column align="center" justify="center" style={{ height: '100%' }} gap="1rem">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}>
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
@@ -200,7 +210,7 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
               <div style={{ fontSize: typography.sizes.sm, color: colors.gray500 }}>Select a workflow and click connect</div>
             </div>
           </Column>
-        )}
+        ))}
       </div>
     </div>
   );
