@@ -11,7 +11,7 @@ import { colors } from '@/styles/tokens';
 import React, { type CSSProperties,useState } from 'react';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'builder' | 'live' | 'platform'>('builder');
+  const [activeTab, setActiveTab] = useState<'builder' | 'live' | 'platform'>('live');
 
   const pageStyle: CSSProperties = {
     display: 'flex',

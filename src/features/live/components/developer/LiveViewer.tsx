@@ -1,26 +1,46 @@
 import { useEffect, useRef, useState } from 'react';
 import { radii } from '@/styles/tokens';
 
+const TOWER_URL = 'http://localhost:8787';
+
+interface RecordingMetadata {
+  status: 'recording' | 'finalized' | 'finalized_with_gaps' | 'failed' | 'failed_with_partial';
+  objectKey: string;
+  signatureTrackKey?: string;
+  gapsTrackKey?: string;
+  missingRanges?: unknown[];
+}
+
+async function fetchPresignedUrl(resourcePath: string): Promise<string | null> {
+  const res = await fetch(`${TOWER_URL}/resources/${resourcePath}`);
+  if (!res.ok) return null;
+  const data = await res.json() as { url?: string };
+  return typeof data.url === 'string' ? data.url : null;
+}
+
+async function fetchPresignedJson<T>(resourcePath: string): Promise<T | null> {
+  const url = await fetchPresignedUrl(resourcePath);
+  if (!url) return null;
+  const res = await fetch(url);
+  if (!res.ok) return null;
+  return await res.json() as T;
+}
+
 export function LiveViewer({ viewingId, onClose }: { viewingId: string | null; onClose: () => void }) {
   const viewerVideoRef = useRef<HTMLVideoElement>(null);
   const [vttUrl, setVttUrl] = useState('');
+  const [gapWarning, setGapWarning] = useState('');
 
   useEffect(() => {
     if (!viewingId || !viewerVideoRef.current) return;
 
     setVttUrl('');
-    fetch(`http://localhost:8787/resources/${viewingId}/video/signature.vtt`)
-      .then(res => res.ok ? res.json() : null)
-      .then((data: unknown) => {
-        if (typeof data === 'object' && data !== null && 'url' in data && typeof (data as { url: unknown }).url === 'string') {
-          setVttUrl((data as { url: string }).url);
-        }
-      })
-      .catch((e: unknown) => { console.error('Error fetching VTT:', e); });
+    setGapWarning('');
 
     const video = viewerVideoRef.current;
     const mediaSource = new MediaSource();
-    video.src = URL.createObjectURL(mediaSource);
+    let mediaSourceUrl = URL.createObjectURL(mediaSource);
+    video.src = mediaSourceUrl;
 
     let sourceBuffer: SourceBuffer | undefined;
     let isDestroyed = false;
@@ -36,6 +56,27 @@ export function LiveViewer({ viewingId, onClose }: { viewingId: string | null; o
       const segmentRes = await fetch(json.url);
       if (!segmentRes.ok) return null;
       return segmentRes.arrayBuffer();
+    };
+
+    const tryLoadSingleRecording = async (): Promise<boolean> => {
+      const metadata = await fetchPresignedJson<RecordingMetadata>(`${viewingId}/recording.json`);
+      if (!metadata || (metadata.status !== 'finalized' && metadata.status !== 'finalized_with_gaps')) return false;
+
+      const recordingUrl = await fetchPresignedUrl(metadata.objectKey);
+      if (!recordingUrl || isDestroyed) return false;
+
+      video.src = recordingUrl;
+      URL.revokeObjectURL(mediaSourceUrl);
+      mediaSourceUrl = '';
+
+      if (metadata.signatureTrackKey) {
+        const signatureUrl = await fetchPresignedUrl(metadata.signatureTrackKey);
+        if (signatureUrl && !isDestroyed) setVttUrl(signatureUrl);
+      }
+      if (metadata.status === 'finalized_with_gaps') {
+        setGapWarning(`Recording finalized with ${String(metadata.missingRanges?.length ?? 0)} missing range(s).`);
+      }
+      return true;
     };
 
     const processQueue = async () => {
@@ -73,12 +114,7 @@ export function LiveViewer({ viewingId, onClose }: { viewingId: string | null; o
       }
 
       const fetchPlaylist = async () => {
-        const presignedRes = await fetch(`http://localhost:8787/resources/${viewingId}/video/playlist.json`);
-        if (!presignedRes.ok) return null;
-        const json = await presignedRes.json() as { url: string };
-        const playlistRes = await fetch(json.url);
-        if (!playlistRes.ok) return null;
-        return await playlistRes.json() as { segments: string[], isUploading: boolean };
+        return await fetchPresignedJson<{ segments: string[], isUploading: boolean }>(`${viewingId}/video/playlist.json`);
       };
 
       const pollPlaylist = async () => {
@@ -110,13 +146,24 @@ export function LiveViewer({ viewingId, onClose }: { viewingId: string | null; o
         }
       };
 
-      void pollPlaylist();
-      fetchInterval = setInterval(() => { void pollPlaylist(); }, 3000);
+      void tryLoadSingleRecording().then((loaded) => {
+        if (loaded || isDestroyed) return;
+
+        void fetchPresignedUrl(`${viewingId}/video/signature.vtt`)
+          .then((url) => {
+            if (url && !isDestroyed) setVttUrl(url);
+          })
+          .catch((e: unknown) => { console.error('Error fetching VTT:', e); });
+
+        void pollPlaylist();
+        fetchInterval = setInterval(() => { void pollPlaylist(); }, 3000);
+      });
     });
 
     return () => {
       isDestroyed = true;
       clearInterval(fetchInterval);
+      if (mediaSourceUrl) URL.revokeObjectURL(mediaSourceUrl);
       if (mediaSource.readyState === 'open') {
         try { mediaSource.endOfStream(); } catch (e: unknown) { console.error('Error ending stream:', e); }
       }
@@ -126,6 +173,7 @@ export function LiveViewer({ viewingId, onClose }: { viewingId: string | null; o
   return (
     <div style={{
       width: '100%',
+      position: 'relative',
       overflow: 'hidden',
       borderRadius: radii.lg,
       aspectRatio: '16/9',
@@ -133,6 +181,24 @@ export function LiveViewer({ viewingId, onClose }: { viewingId: string | null; o
       alignItems: 'center',
       justifyContent: 'center'
     }}>
+      {gapWarning && (
+        <div style={{
+          position: 'absolute',
+          zIndex: 1,
+          top: '0.5rem',
+          left: '0.5rem',
+          right: '0.5rem',
+          padding: '0.35rem 0.5rem',
+          background: 'rgba(0,0,0,0.72)',
+          color: 'white',
+          fontSize: '0.75rem',
+          borderRadius: '6px',
+          pointerEvents: 'none',
+          textAlign: 'center',
+        }}>
+          {gapWarning}
+        </div>
+      )}
       <video
         ref={viewerVideoRef}
         autoPlay

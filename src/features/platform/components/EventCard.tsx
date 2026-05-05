@@ -5,7 +5,7 @@ import { type CSSProperties, useState } from 'react';
 import type { PlatformEventEnvelope } from '@/lib/platform/types';
 import { PlatformEventType } from '@/lib/platform/types';
 import { colors, radii, shadows, typography } from '@/styles/tokens';
-import { downloadVideo } from '@/lib/video/downloadService';
+import { downloadVideo, openVideo } from '@/lib/video/downloadService';
 
 interface EventCardProps {
   event: PlatformEventEnvelope;
@@ -192,6 +192,22 @@ function EventPayloadSummary({ event }: { event: PlatformEventEnvelope }) {
     case PlatformEventType.SESSION_CONNECTED: {
       const device = payload.device as Record<string, unknown> | null;
       const { sessionId, connectionId } = event;
+      const videoButtonStyle: CSSProperties = {
+        flexShrink: 0,
+        padding: '0.25rem 0.625rem',
+        border: `1px solid ${colors.green700}`,
+        borderRadius: radii.md,
+        background: colors.green100,
+        color: colors.green700,
+        fontSize: typography.sizes.xs,
+        fontWeight: typography.weights.semibold,
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.3rem',
+        whiteSpace: 'nowrap',
+      };
+
       return (
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
           {/* Device fields */}
@@ -215,31 +231,30 @@ function EventPayloadSummary({ event }: { event: PlatformEventEnvelope }) {
               <span style={{ ...valueStyle, color: colors.gray400 }}>No device info</span>
             )}
           </div>
-          {/* Download button — top-right, green header tone */}
-          <button
-            onClick={() => void downloadVideo(sessionId, connectionId)}
-            style={{
-              flexShrink: 0,
-              padding: '0.25rem 0.625rem',
-              border: `1px solid ${colors.green700}`,
-              borderRadius: radii.md,
-              background: colors.green100,
-              color: colors.green700,
-              fontSize: typography.sizes.xs,
-              fontWeight: typography.weights.semibold,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.3rem',
-            }}
-          >
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            Download video
-          </button>
+          <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            <button
+              onClick={() => openVideo(sessionId, connectionId)}
+              style={videoButtonStyle}
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                <polyline points="15 3 21 3 21 9" />
+                <line x1="10" y1="14" x2="21" y2="3" />
+              </svg>
+              Open video
+            </button>
+            <button
+              onClick={() => downloadVideo(sessionId, connectionId)}
+              style={videoButtonStyle}
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              Download video
+            </button>
+          </div>
         </div>
       );
     }

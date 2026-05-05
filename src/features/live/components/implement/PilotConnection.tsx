@@ -115,7 +115,15 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
         url: socketUrl,
         secret: token,
         sessionId,
-        videoStream: stream,
+        video: {
+          stream,
+          mimeType: 'video/mp4',
+          timesliceMs: 500,
+          targetFps: 12,
+          maxWidth: 1280,
+          maxHeight: 720,
+          socketChunkBytes: 64 * 1024,
+        },
         library: stepLibrary,
         errorScreen: ErrorScreen,
         alertScreen: AlertScreen,
@@ -125,6 +133,7 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
           setCompletionState(ok ? 'success' : 'error');
           setStatus(ConnectionStatus.closed);
           onConnectionOpenChange(false);
+          void pilot.disconnect();
         },
         onMessage: () => { /* noop */ },
         onClose: () => {
