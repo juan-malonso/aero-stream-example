@@ -48,6 +48,7 @@ function SessionSwitchAlert({ data, submit, reject }: AlertProps) {
       <div
         style={{
           background: colors.white,
+          border: `1px solid ${colors.gray200}`,
           borderRadius: radii.xl,
           padding: "2rem",
           width: "100%",
@@ -116,17 +117,15 @@ function GenericAlert({ alertType, data, submit, reject }: AlertProps) {
     <Overlay>
       <div
         style={{
-          background: "rgba(255, 255, 255, 0.18)",
-          backdropFilter: "blur(16px)",
-          WebkitBackdropFilter: "blur(16px)",
-          border: "1px solid rgba(255, 255, 255, 0.3)",
+          background: colors.white,
+          border: `1px solid ${colors.gray200}`,
           borderRadius: radii.xl,
-          padding: "1.5rem",
+          padding: "2rem",
           width: "100%",
           maxWidth: "22rem",
           display: "flex",
           flexDirection: "column",
-          gap: "1.25rem",
+          gap: "1.5rem",
         }}
       >
         <h2
@@ -220,7 +219,7 @@ function Overlay({ children }: { children: React.ReactNode }) {
       style={{
         position: "absolute",
         inset: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.35)",
+        backgroundColor: "rgba(0, 0, 0, 0.9)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
