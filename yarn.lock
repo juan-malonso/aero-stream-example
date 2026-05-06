@@ -2,7 +2,7 @@
 # Manual changes might be lost - proceed with caution!
 
 __metadata:
-  version: 9
+  version: 8
   cacheKey: 10c0
 
 "@eslint-community/eslint-utils@npm:^4.8.0, @eslint-community/eslint-utils@npm:^4.9.1":
@@ -577,23 +577,23 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"aero-stream-pilot-core@file:lib/aero-stream-pilot-core/pkg::locator=aero-stream-pilot%40file%3A..%2Faero-stream%2Fapps%2Faero-stream-pilot%23..%2Faero-stream%2Fapps%2Faero-stream-pilot%3A%3Ahash%3D6d06ee%26locator%3Daero-stream-example%2540workspace%253A.":
+"aero-stream-pilot-core@file:lib/aero-stream-pilot-core/pkg::locator=aero-stream-pilot%40file%3A..%2Faero-stream%2Fapps%2Faero-stream-pilot%23..%2Faero-stream%2Fapps%2Faero-stream-pilot%3A%3Ahash%3D1e23dd%26locator%3Daero-stream-example%2540workspace%253A.":
   version: 0.1.0
-  resolution: "aero-stream-pilot-core@file:lib/aero-stream-pilot-core/pkg#lib/aero-stream-pilot-core/pkg::hash=20368d&locator=aero-stream-pilot%40file%3A..%2Faero-stream%2Fapps%2Faero-stream-pilot%23..%2Faero-stream%2Fapps%2Faero-stream-pilot%3A%3Ahash%3D6d06ee%26locator%3Daero-stream-example%2540workspace%253A."
-  checksum: 10c0/c582a4823ef7f14bd88db0a0bd6e6ddd6e232678e9d7a2f84b6eff69e244eda02ce8e389b73619a7616435a844eb2e1df915a2bdf59479b1fd3d4a221daf02ce
+  resolution: "aero-stream-pilot-core@file:lib/aero-stream-pilot-core/pkg#lib/aero-stream-pilot-core/pkg::hash=0a90b9&locator=aero-stream-pilot%40file%3A..%2Faero-stream%2Fapps%2Faero-stream-pilot%23..%2Faero-stream%2Fapps%2Faero-stream-pilot%3A%3Ahash%3D1e23dd%26locator%3Daero-stream-example%2540workspace%253A."
+  checksum: 10c0/49b85e4c92ee5f69f72820f9d00a9a0ed4b27f161d58ac6d616e03125c83edd00239893476ab5ea612eae55e402b0d13ff2a405887c64a5619abc71929dac4d6
   languageName: node
   linkType: hard
 
 "aero-stream-pilot@file:../aero-stream/apps/aero-stream-pilot::locator=aero-stream-example%40workspace%3A.":
   version: 1.0.0
-  resolution: "aero-stream-pilot@file:../aero-stream/apps/aero-stream-pilot#../aero-stream/apps/aero-stream-pilot::hash=6d06ee&locator=aero-stream-example%40workspace%3A."
+  resolution: "aero-stream-pilot@file:../aero-stream/apps/aero-stream-pilot#../aero-stream/apps/aero-stream-pilot::hash=1e23dd&locator=aero-stream-example%40workspace%3A."
   dependencies:
     "@mediapipe/tasks-vision": "npm:^0.10.34"
     aero-stream-pilot-core: "file:lib/aero-stream-pilot-core/pkg"
   peerDependencies:
     react: "*"
     react-dom: "*"
-  checksum: 10c0/1d551d442b963e957a398739b7e7c4675895f8c14bc32d87e7ae7a0adc0c1154f235c15f4ccbe29bc7892d0aec2bbf32818eb775a3c9b711f6e0bbb9be460e6e
+  checksum: 10c0/2772b5330ea3575a4ad0719de9c4e64fe180474ff75790e4ee741594ff98a7cabb00ea298afc15b3c114cf658caf8fa456e6ae335d2eb22a1768c2ba45e5e566
   languageName: node
   linkType: hard
 

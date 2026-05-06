@@ -2,14 +2,16 @@
 
 import { ConnectionStatus } from '@/constants';
 
-import { AlertScreen, CompletionScreen, DoneComponent, ErrorScreen, InfoScreen, KYCComponent, VideoComponent, WelcomeComponent } from '@/components/steps';
+import { AlertScreen, CompletionScreen, ErrorScreen, InfoScreen, KYCComponent, VideoComponent, WelcomeComponent, DoneComponent } from '@/components/steps';
 
 import {
   type AeroStreamComponentParams,
   type AeroStreamLibrary,
+  type AeroStreamAlertScreenParams,
   AeroStreamPilot,
+  PilotLogMode,
 } from 'aero-stream-pilot';
-import { useEffect, useImperativeHandle, useRef, useState, forwardRef } from 'react';
+import { useCallback, useEffect, useImperativeHandle, useRef, useState, forwardRef } from 'react';
 import { Column } from '@/components/ui';
 import { colors, typography } from '@/styles/tokens';
 
@@ -45,7 +47,8 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
   const connectionAttemptRef = useRef(0);
 
   const [status, setStatus] = useState(ConnectionStatus.closed);
-  const [currentComponent, setCurrentComponent] = useState<React.ReactNode | null>(null);
+  const [currentStep, setCurrentStep] = useState<React.ReactNode | null>(null);
+  const [currentAlert, setCurrentAlert] = useState<React.ReactNode | null>(null);
   const [completionState, setCompletionState] = useState<'none' | 'success' | 'error'>('none');
 
   useEffect(() => {
@@ -67,7 +70,8 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
     pilotRef.current = null;
     onConnectionOpenChange(false);
     if (clearScreen) {
-      setCurrentComponent(null);
+      setCurrentStep(null);
+      setCurrentAlert(null);
     }
     setStatus(ConnectionStatus.closed);
   };
@@ -83,6 +87,16 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
       }
     }, 250);
   };
+
+  const alertScreen = useCallback((params: AeroStreamAlertScreenParams | null): React.ReactNode => {
+    if (!params) {
+      setCurrentAlert(null);
+      return null;
+    }
+    const node = AlertScreen(params);
+    setCurrentAlert(node);
+    return node;
+  }, []);
 
   const handleConnect = async () => {
     if (!workflowId || !sessionId || status === ConnectionStatus.connecting || status === ConnectionStatus.active) {
@@ -110,15 +124,15 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
         return;
       }
 
-      pilotRef.current?.disconnect()
+      pilotRef.current?.disconnect();
       const pilot = new AeroStreamPilot<React.ReactNode>({
         url: socketUrl,
         secret: token,
         sessionId,
+        logMode: PilotLogMode.developer,
         video: {
           stream,
-          mimeType: 'video/mp4',
-          timesliceMs: 500,
+          chunkIntervalMs: 500,
           targetFps: 12,
           maxWidth: 1280,
           maxHeight: 720,
@@ -126,9 +140,9 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
         },
         library: stepLibrary,
         errorScreen: ErrorScreen,
-        alertScreen: AlertScreen,
+        alertScreen,
         infoScreen: InfoScreen,
-        renderer: setCurrentComponent,
+        renderer: setCurrentStep,
         onComplete: ({ ok }) => {
           setCompletionState(ok ? 'success' : 'error');
           setStatus(ConnectionStatus.closed);
@@ -208,7 +222,7 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
       <div style={{ flex: 1, position: 'relative', overflow: 'hidden', color: colors.gray600 }}>
         {completionState !== 'none' ? (
           <CompletionScreen ok={completionState === 'success'} />
-        ) : (currentComponent ?? (
+        ) : (currentStep ?? (
           <Column align="center" justify="center" style={{ height: '100%' }} gap="1rem">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}>
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
@@ -220,6 +234,8 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
             </div>
           </Column>
         ))}
+
+        {currentAlert}
       </div>
     </div>
   );

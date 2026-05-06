@@ -61,6 +61,10 @@ function deriveConnectionGroups(events: PlatformEventEnvelope[]): ConnectionGrou
       group.connectedAt = event.occurredAt;
       group.device = (event.payload.device as Record<string, unknown> | null) ?? null;
     }
+
+    if (event.type === PlatformEventType.SESSION_REQUESTED && !group.device) {
+      group.device = (event.payload.device as Record<string, unknown> | null) ?? null;
+    }
   }
 
   return Array.from(groupMap.values());

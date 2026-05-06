@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { type CSSProperties, useState } from 'react';
+import { type CSSProperties, useState } from "react";
 
-import type { PlatformEventEnvelope } from '@/lib/platform/types';
-import { PlatformEventType } from '@/lib/platform/types';
-import { colors, radii, shadows, typography } from '@/styles/tokens';
-import { downloadVideo, openVideo } from '@/lib/video/downloadService';
+import type { PlatformEventEnvelope } from "@/lib/platform/types";
+import { PlatformEventType } from "@/lib/platform/types";
+import { colors, radii, shadows, typography } from "@/styles/tokens";
+import { downloadVideo, openVideo } from "@/lib/video/downloadService";
 
 interface EventCardProps {
   event: PlatformEventEnvelope;
@@ -21,131 +21,164 @@ interface EventTheme {
 
 const EVENT_THEMES: Record<PlatformEventType, EventTheme> = {
   [PlatformEventType.SESSION_CREATED]: {
-    accent: colors.gray600,
-    background: colors.gray50,
-    label: 'Session Created',
-    icon: '+',
+    accent: colors.gray800,
+    background: colors.gray100,
+    label: "Session Created",
+    icon: "+",
   },
   [PlatformEventType.SESSION_CONNECTED]: {
-    accent: colors.green700,
+    accent: colors.green800,
     background: colors.green100,
-    label: 'Session Connected',
-    icon: '~',
+    label: "Session Connected",
+    icon: "~",
+  },
+  [PlatformEventType.SESSION_REQUESTED]: {
+    accent: colors.teal800,
+    background: colors.teal100,
+    label: "Session Requested",
+    icon: "?",
   },
   [PlatformEventType.STEP_RENDERED]: {
-    accent: colors.violet500,
-    background: colors.violet50,
-    label: 'Step Rendered',
-    icon: '>',
+    accent: colors.violet800,
+    background: colors.violet100,
+    label: "Step Rendered",
+    icon: ">",
   },
   [PlatformEventType.STEP_SUBMITTED]: {
-    accent: colors.amber500,
-    background: colors.amber50,
-    label: 'Step Submitted',
-    icon: '^',
+    accent: colors.red800,
+    background: colors.red100,
+    label: "Step Submitted",
+    icon: "^",
+  },
+  [PlatformEventType.ALERT_RENDERED]: {
+    accent: colors.yellow800,
+    background: colors.yellow100,
+    label: "Alert Rendered",
+    icon: "!",
+  },
+  [PlatformEventType.ALERT_RESPONDED]: {
+    accent: colors.yellow800,
+    background: colors.yellow100,
+    label: "Alert Responded",
+    icon: "*",
   },
   [PlatformEventType.SESSION_RESULT]: {
-    accent: colors.gray600,
-    background: colors.gray50,
-    label: 'Session Result',
-    icon: '=',
+    accent: colors.gray800,
+    background: colors.gray100,
+    label: "Session Result",
+    icon: "=",
   },
 };
 
 export function EventCard({ event, index }: EventCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const theme = EVENT_THEMES[event.type] ?? EVENT_THEMES[PlatformEventType.SESSION_CREATED];
+  const theme =
+    EVENT_THEMES[event.type] ?? EVENT_THEMES[PlatformEventType.SESSION_CREATED];
 
-  const timeLabel = new Date(event.occurredAt).toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
+  const timeLabel = new Date(event.occurredAt).toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
     hour12: false,
   });
 
   return (
-    <div style={{
-      background: colors.white,
-      border: `1px solid ${colors.gray200}`,
-      borderLeft: `3px solid ${theme.accent}`,
-      borderRadius: radii.lg,
-      boxShadow: shadows.xs,
-      overflow: 'hidden',
-    }}>
+    <div
+      style={{
+        background: colors.white,
+        border: `1px solid ${colors.gray200}`,
+        borderLeft: `3px solid ${theme.accent}`,
+        borderRadius: radii.lg,
+        boxShadow: shadows.xs,
+        overflow: "hidden",
+      }}
+    >
       {/* Card Header */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '0.75rem 1rem',
-        background: theme.background,
-        borderBottom: `1px solid ${colors.gray100}`,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{
-            fontSize: typography.sizes['2xs'],
-            fontWeight: typography.weights.bold,
-            color: colors.gray400,
-            width: '18px',
-          }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "0.75rem 1rem",
+          background: theme.background,
+          borderBottom: `1px solid ${colors.gray100}`,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <span
+            style={{
+              fontSize: typography.sizes["2xs"],
+              fontWeight: typography.weights.bold,
+              color: colors.gray400,
+              width: "18px",
+            }}
+          >
             #{index + 1}
           </span>
-          <span style={{
-            fontSize: typography.sizes.sm,
-            fontWeight: typography.weights.bold,
-            color: theme.accent,
-            textTransform: 'uppercase',
-            letterSpacing: '0.03em',
-          }}>
+          <span
+            style={{
+              fontSize: typography.sizes.sm,
+              fontWeight: typography.weights.bold,
+              color: theme.accent,
+              textTransform: "uppercase",
+              letterSpacing: "0.03em",
+            }}
+          >
             {theme.label}
           </span>
         </div>
-        <span style={{ fontSize: typography.sizes['2xs'], color: colors.gray400 }}>
+        <span
+          style={{ fontSize: typography.sizes["2xs"], color: colors.gray400 }}
+        >
           {timeLabel}
         </span>
       </div>
 
       {/* Card Body — Event-specific rendering */}
-      <div style={{ padding: '0.75rem 1rem' }}>
+      <div style={{ padding: "0.75rem 1rem" }}>
         <EventPayloadSummary event={event} />
       </div>
 
       {/* Expandable Raw Payload */}
-      <div style={{
-        display: "flex",
-        flexDirection: "column",
-        borderTop: `1px solid ${colors.gray100}`,
-        padding: '0.5rem',
-        gap: '0.5rem'
-      }}>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          borderTop: `1px solid ${colors.gray100}`,
+          padding: "0.5rem",
+          gap: "0.5rem",
+        }}
+      >
         <button
           onClick={() => setIsExpanded(!isExpanded)}
           style={{
-            border: 'none',
-            background: 'none',
-            cursor: 'pointer',
-            fontSize: typography.sizes['xs'],
+            border: "none",
+            background: "none",
+            cursor: "pointer",
+            fontSize: typography.sizes["xs"],
             color: colors.gray400,
             fontWeight: typography.weights.medium,
-            width: '100%',
-            textAlign: 'left',
+            width: "100%",
+            textAlign: "left",
           }}
         >
-          {isExpanded ? 'Hide raw payload' : 'Show raw payload'}
+          {isExpanded ? "Hide raw payload" : "Show raw payload"}
         </button>
         {isExpanded && (
-          <pre style={{
-            fontSize: typography.sizes['xs'],
-            color: colors.gray600,
-            background: colors.gray50,
-            padding: '0.5rem',
-            margin: 0,
-            borderRadius: radii.md,
-            overflow: 'auto',
-            maxHeight: '200px',
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-all',
-          }}>
+          <pre
+            style={{
+              fontSize: typography.sizes["xs"],
+              color: colors.gray600,
+              background: colors.gray50,
+              padding: "0.5rem",
+              margin: 0,
+              borderRadius: radii.md,
+              overflow: "auto",
+              maxHeight: "200px",
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-all",
+            }}
+          >
             {JSON.stringify(event.payload, null, 2)}
           </pre>
         )}
@@ -157,26 +190,26 @@ export function EventCard({ event, index }: EventCardProps) {
 function EventPayloadSummary({ event }: { event: PlatformEventEnvelope }) {
   const { type, payload } = event;
   const fieldStyle: CSSProperties = {
-    display: 'flex',
-    gap: '0.5rem',
-    alignItems: 'baseline',
+    display: "flex",
+    gap: "0.5rem",
+    alignItems: "baseline",
     fontSize: typography.sizes.sm,
   };
 
   const labelStyle: CSSProperties = {
     color: colors.gray400,
     fontWeight: typography.weights.semibold,
-    fontSize: typography.sizes['2xs'],
-    textTransform: 'uppercase',
-    letterSpacing: '0.03em',
-    minWidth: '60px',
+    fontSize: typography.sizes["2xs"],
+    textTransform: "uppercase",
+    letterSpacing: "0.03em",
+    minWidth: "60px",
   };
 
   const valueStyle: CSSProperties = {
     color: colors.gray700,
-    fontFamily: 'monospace',
+    fontFamily: "monospace",
     fontSize: typography.sizes.xs,
-    wordBreak: 'break-all',
+    wordBreak: "break-all",
   };
 
   switch (type) {
@@ -184,7 +217,7 @@ function EventPayloadSummary({ event }: { event: PlatformEventEnvelope }) {
       return (
         <div style={fieldStyle}>
           <span style={labelStyle}>Workflow</span>
-          <span style={valueStyle}>{String(payload.workflowId ?? '—')}</span>
+          <span style={valueStyle}>{String(payload.workflowId ?? "—")}</span>
         </div>
       );
     }
@@ -194,49 +227,86 @@ function EventPayloadSummary({ event }: { event: PlatformEventEnvelope }) {
       const { sessionId, connectionId } = event;
       const videoButtonStyle: CSSProperties = {
         flexShrink: 0,
-        padding: '0.25rem 0.625rem',
+        padding: "0.25rem 0.625rem",
         border: `1px solid ${colors.green700}`,
         borderRadius: radii.md,
         background: colors.green100,
         color: colors.green700,
         fontSize: typography.sizes.xs,
         fontWeight: typography.weights.semibold,
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.3rem',
-        whiteSpace: 'nowrap',
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        gap: "0.3rem",
+        whiteSpace: "nowrap",
       };
 
       return (
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
+        <div
+          style={{ display: "flex", gap: "0.75rem", alignItems: "flex-start" }}
+        >
           {/* Device fields */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              gap: "4px",
+            }}
+          >
             {device ? (
               <>
                 <div style={fieldStyle}>
                   <span style={labelStyle}>Browser</span>
-                  <span style={valueStyle}>{String(device.browserName ?? '—')} {String(device.browserVersion ?? '')}</span>
+                  <span style={valueStyle}>
+                    {String(device.browserName ?? "—")}{" "}
+                    {String(device.browserVersion ?? "")}
+                  </span>
                 </div>
                 <div style={fieldStyle}>
                   <span style={labelStyle}>OS</span>
-                  <span style={valueStyle}>{String(device.osName ?? '—')} {String(device.osVersion ?? '')}</span>
+                  <span style={valueStyle}>
+                    {String(device.osName ?? "—")}{" "}
+                    {String(device.osVersion ?? "")}
+                  </span>
                 </div>
                 <div style={fieldStyle}>
                   <span style={labelStyle}>Device</span>
-                  <span style={valueStyle}>{String(device.deviceType ?? '—')}{device.model ? ` (${String(device.model)})` : ''}</span>
+                  <span style={valueStyle}>
+                    {String(device.deviceType ?? "—")}
+                    {device.model ? ` (${String(device.model)})` : ""}
+                  </span>
                 </div>
               </>
             ) : (
-              <span style={{ ...valueStyle, color: colors.gray400 }}>No device info</span>
+              <span style={{ ...valueStyle, color: colors.gray400 }}>
+                No device info
+              </span>
             )}
           </div>
-          <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          <div
+            style={{
+              display: "flex",
+              gap: "0.5rem",
+              flexShrink: 0,
+              flexWrap: "wrap",
+              justifyContent: "flex-end",
+            }}
+          >
             <button
               onClick={() => openVideo(sessionId, connectionId)}
               style={videoButtonStyle}
             >
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="11"
+                height="11"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
                 <polyline points="15 3 21 3 21 9" />
                 <line x1="10" y1="14" x2="21" y2="3" />
@@ -247,7 +317,16 @@ function EventPayloadSummary({ event }: { event: PlatformEventEnvelope }) {
               onClick={() => downloadVideo(sessionId, connectionId)}
               style={videoButtonStyle}
             >
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="11"
+                height="11"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                 <polyline points="7 10 12 15 17 10" />
                 <line x1="12" y1="15" x2="12" y2="3" />
@@ -261,19 +340,21 @@ function EventPayloadSummary({ event }: { event: PlatformEventEnvelope }) {
 
     case PlatformEventType.STEP_RENDERED: {
       return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           <div style={fieldStyle}>
             <span style={labelStyle}>Step</span>
-            <span style={valueStyle}>{String(payload.stepId ?? '—')}</span>
+            <span style={valueStyle}>{String(payload.stepId ?? "—")}</span>
           </div>
           <div style={fieldStyle}>
             <span style={labelStyle}>Type</span>
-            <span style={valueStyle}>{String(payload.stepType ?? '—')}</span>
+            <span style={valueStyle}>{String(payload.stepType ?? "—")}</span>
           </div>
           {payload.end === true && (
             <div style={fieldStyle}>
               <span style={labelStyle}>Final</span>
-              <span style={{ ...valueStyle, color: colors.amber600 }}>Last step</span>
+              <span style={{ ...valueStyle, color: colors.amber600 }}>
+                Last step
+              </span>
             </div>
           )}
         </div>
@@ -282,9 +363,11 @@ function EventPayloadSummary({ event }: { event: PlatformEventEnvelope }) {
 
     case PlatformEventType.STEP_SUBMITTED: {
       const submittedData = payload.data;
-      const preview = submittedData ? JSON.stringify(submittedData).slice(0, 120) : '—';
+      const preview = submittedData
+        ? JSON.stringify(submittedData).slice(0, 120)
+        : "—";
       return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           {payload.stepId != null && (
             <div style={fieldStyle}>
               <span style={labelStyle}>Step</span>
@@ -293,28 +376,120 @@ function EventPayloadSummary({ event }: { event: PlatformEventEnvelope }) {
           )}
           <div style={fieldStyle}>
             <span style={labelStyle}>Data</span>
-            <span style={valueStyle}>{preview}{preview.length >= 120 ? '...' : ''}</span>
+            <span style={valueStyle}>
+              {preview}
+              {preview.length >= 120 ? "..." : ""}
+            </span>
           </div>
+        </div>
+      );
+    }
+
+    case PlatformEventType.SESSION_REQUESTED: {
+      const device = payload.device as Record<string, unknown> | null;
+      return (
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+          {device ? (
+            <>
+              <div style={fieldStyle}>
+                <span style={labelStyle}>Browser</span>
+                <span style={valueStyle}>
+                  {String(device.browserName ?? "—")}{" "}
+                  {String(device.browserVersion ?? "")}
+                </span>
+              </div>
+              <div style={fieldStyle}>
+                <span style={labelStyle}>OS</span>
+                <span style={valueStyle}>
+                  {String(device.osName ?? "—")}{" "}
+                  {String(device.osVersion ?? "")}
+                </span>
+              </div>
+              <div style={fieldStyle}>
+                <span style={labelStyle}>Device</span>
+                <span style={valueStyle}>
+                  {String(device.deviceType ?? "—")}
+                  {device.model ? ` (${String(device.model)})` : ""}
+                </span>
+              </div>
+            </>
+          ) : (
+            <span style={{ ...valueStyle, color: colors.gray400 }}>
+              No device info
+            </span>
+          )}
+        </div>
+      );
+    }
+
+    case PlatformEventType.ALERT_RENDERED: {
+      return (
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+          <div style={fieldStyle}>
+            <span style={labelStyle}>Alert</span>
+            <span style={valueStyle}>{String(payload.alertType ?? "—")}</span>
+          </div>
+        </div>
+      );
+    }
+
+    case PlatformEventType.ALERT_RESPONDED: {
+      const result = String(payload.result ?? "—");
+      const responded = payload.data as Record<string, unknown> | undefined;
+      const preview = responded
+        ? JSON.stringify(responded).slice(0, 120)
+        : undefined;
+      return (
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+          <div style={fieldStyle}>
+            <span style={labelStyle}>Alert</span>
+            <span style={valueStyle}>{String(payload.alertType ?? "—")}</span>
+          </div>
+          <div style={fieldStyle}>
+            <span style={labelStyle}>Result</span>
+            <span
+              style={{
+                ...valueStyle,
+                color: result === "submitted" ? colors.green700 : colors.red700,
+                fontWeight: typography.weights.semibold,
+              }}
+            >
+              {result}
+            </span>
+          </div>
+          {preview && (
+            <div style={fieldStyle}>
+              <span style={labelStyle}>Data</span>
+              <span style={valueStyle}>
+                {preview}
+                {preview.length >= 120 ? "..." : ""}
+              </span>
+            </div>
+          )}
         </div>
       );
     }
 
     case PlatformEventType.SESSION_RESULT: {
       return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           <div style={fieldStyle}>
             <span style={labelStyle}>Result</span>
-            <span style={valueStyle}>{String(payload.type ?? '—')}</span>
+            <span style={valueStyle}>{String(payload.type ?? "—")}</span>
           </div>
           <div style={fieldStyle}>
             <span style={labelStyle}>Reason</span>
-            <span style={valueStyle}>{String(payload.reason ?? '—')}</span>
+            <span style={valueStyle}>{String(payload.reason ?? "—")}</span>
           </div>
         </div>
       );
     }
 
     default:
-      return <span style={{ ...valueStyle, color: colors.gray400 }}>Unknown event</span>;
+      return (
+        <span style={{ ...valueStyle, color: colors.gray400 }}>
+          Unknown event
+        </span>
+      );
   }
 }
