@@ -17,6 +17,7 @@ interface EventTheme {
   background: string;
   label: string;
   icon: string;
+  messageType: "in" | "out" | null;
 }
 
 const EVENT_THEMES: Record<PlatformEventType, EventTheme> = {
@@ -25,62 +26,111 @@ const EVENT_THEMES: Record<PlatformEventType, EventTheme> = {
     background: colors.gray100,
     label: "Session Created",
     icon: "+",
+    messageType: null,
   },
   [PlatformEventType.SESSION_CONNECTED]: {
     accent: colors.green800,
     background: colors.green100,
     label: "Session Connected",
     icon: "~",
+    messageType: "in",
   },
   [PlatformEventType.SESSION_REQUESTED]: {
     accent: colors.teal800,
     background: colors.teal100,
     label: "Session Requested",
     icon: "?",
+    messageType: "in",
   },
   [PlatformEventType.STEP_RENDERED]: {
     accent: colors.violet800,
     background: colors.violet100,
     label: "Step Rendered",
     icon: ">",
+    messageType: "out",
   },
   [PlatformEventType.STEP_SUBMITTED]: {
     accent: colors.red800,
     background: colors.red100,
     label: "Step Submitted",
     icon: "^",
+    messageType: "in",
   },
   [PlatformEventType.ALERT_RENDERED]: {
     accent: colors.yellow800,
     background: colors.yellow100,
     label: "Alert Rendered",
     icon: "!",
+    messageType: "out",
   },
   [PlatformEventType.ALERT_RESPONDED]: {
     accent: colors.yellow800,
     background: colors.yellow100,
     label: "Alert Responded",
     icon: "*",
+    messageType: "in",
   },
   [PlatformEventType.SESSION_RESULT]: {
     accent: colors.gray800,
     background: colors.gray100,
     label: "Session Result",
     icon: "=",
+    messageType: "out",
   },
 };
+
+function DirectionIcon({ type, color }: { type: "in" | "out"; color: string }) {
+  if (type === "out") {
+    // Arrow exiting the server box leftward (tower → pilot)
+    return (
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke={color}
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <rect x="15" y="2" width="7" height="20" rx="2" strokeWidth="2" />
+        <line x1="15" y1="12" x2="4" y2="12" />
+        <polyline points="9 7 4 12 9 17" />
+      </svg>
+    );
+  }
+  // Arrow entering the server box rightward (pilot → tower)
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="15" y="2" width="7" height="20" rx="2" strokeWidth="2" />
+      <line x1="2" y1="12" x2="15" y2="12" />
+      <polyline points="10 7 15 12 10 17" />
+    </svg>
+  );
+}
 
 export function EventCard({ event, index }: EventCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const theme =
     EVENT_THEMES[event.type] ?? EVENT_THEMES[PlatformEventType.SESSION_CREATED];
 
-  const timeLabel = new Date(event.occurredAt).toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  });
+  const dateLabel = new Date(event.occurredAt);
+  const timeLabel =
+    dateLabel.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    }) + `.${dateLabel.getMilliseconds()}`;
 
   return (
     <div
@@ -107,7 +157,7 @@ export function EventCard({ event, index }: EventCardProps) {
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
           <span
             style={{
-              fontSize: typography.sizes["2xs"],
+              fontSize: typography.sizes.xs,
               fontWeight: typography.weights.bold,
               color: colors.gray400,
               width: "18px",
@@ -115,6 +165,9 @@ export function EventCard({ event, index }: EventCardProps) {
           >
             #{index + 1}
           </span>
+          {theme.messageType && (
+            <DirectionIcon type={theme.messageType} color={theme.accent} />
+          )}
           <span
             style={{
               fontSize: typography.sizes.sm,
@@ -128,7 +181,10 @@ export function EventCard({ event, index }: EventCardProps) {
           </span>
         </div>
         <span
-          style={{ fontSize: typography.sizes["2xs"], color: colors.gray400 }}
+          style={{
+            fontSize: typography.sizes.xs,
+            fontWeight: typography.weights.bold,
+          }}
         >
           {timeLabel}
         </span>
@@ -287,6 +343,7 @@ function EventPayloadSummary({ event }: { event: PlatformEventEnvelope }) {
           <div
             style={{
               display: "flex",
+
               gap: "0.5rem",
               flexShrink: 0,
               flexWrap: "wrap",
@@ -311,7 +368,7 @@ function EventPayloadSummary({ event }: { event: PlatformEventEnvelope }) {
                 <polyline points="15 3 21 3 21 9" />
                 <line x1="10" y1="14" x2="21" y2="3" />
               </svg>
-              Open video
+              Preview
             </button>
             <button
               onClick={() => downloadVideo(sessionId, connectionId)}
@@ -331,7 +388,7 @@ function EventPayloadSummary({ event }: { event: PlatformEventEnvelope }) {
                 <polyline points="7 10 12 15 17 10" />
                 <line x1="12" y1="15" x2="12" y2="3" />
               </svg>
-              Download video
+              Download
             </button>
           </div>
         </div>

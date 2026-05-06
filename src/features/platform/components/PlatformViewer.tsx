@@ -93,7 +93,7 @@ export function PlatformViewer() {
       {/* Session Detail — Right Pane */}
       <main style={{
         flex: 1,
-        height: '100%',
+        minHeight: 0,
         overflowY: 'auto',
       }}>
         <SessionDetail
