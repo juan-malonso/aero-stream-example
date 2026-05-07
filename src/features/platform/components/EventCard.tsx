@@ -35,6 +35,13 @@ const EVENT_THEMES: Record<PlatformEventType, EventTheme> = {
     icon: "~",
     messageType: "in",
   },
+  [PlatformEventType.SESSION_CLOSED]: {
+    accent: colors.green800,
+    background: colors.green100,
+    label: "Session Closed",
+    icon: "×",
+    messageType: "in",
+  },
   [PlatformEventType.SESSION_REQUESTED]: {
     accent: colors.teal800,
     background: colors.teal100,
@@ -75,6 +82,20 @@ const EVENT_THEMES: Record<PlatformEventType, EventTheme> = {
     background: colors.gray100,
     label: "Session Result",
     icon: "=",
+    messageType: "out",
+  },
+  [PlatformEventType.TAILING_STEP]: {
+    accent: colors.gray500,
+    background: colors.gray50,
+    label: "Tailing Step",
+    icon: "~",
+    messageType: "out",
+  },
+  [PlatformEventType.TAILING_END]: {
+    accent: colors.gray500,
+    background: colors.gray50,
+    label: "Tailing End",
+    icon: "x",
     messageType: "out",
   },
 };
@@ -537,6 +558,53 @@ function EventPayloadSummary({ event }: { event: PlatformEventEnvelope }) {
           <div style={fieldStyle}>
             <span style={labelStyle}>Reason</span>
             <span style={valueStyle}>{String(payload.reason ?? "—")}</span>
+          </div>
+        </div>
+      );
+    }
+
+    case PlatformEventType.TAILING_STEP: {
+      return (
+        <div style={fieldStyle}>
+          <span style={labelStyle}>Step</span>
+          <span style={valueStyle}>{String(payload.stepType ?? "—")}</span>
+        </div>
+      );
+    }
+
+    case PlatformEventType.TAILING_END: {
+      return (
+        <span style={{ ...valueStyle, color: colors.gray400 }}>
+          Session ended for tailing connection
+        </span>
+      );
+    }
+
+    case PlatformEventType.SESSION_CLOSED: {
+      const wasClean = payload.wasClean === true;
+      return (
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+          <div style={fieldStyle}>
+            <span style={labelStyle}>Code</span>
+            <span style={valueStyle}>{String(payload.code ?? "—")}</span>
+          </div>
+          {payload.reason && (
+            <div style={fieldStyle}>
+              <span style={labelStyle}>Reason</span>
+              <span style={valueStyle}>{String(payload.reason)}</span>
+            </div>
+          )}
+          <div style={fieldStyle}>
+            <span style={labelStyle}>Clean</span>
+            <span
+              style={{
+                ...valueStyle,
+                color: wasClean ? colors.green700 : colors.red700,
+                fontWeight: typography.weights.semibold,
+              }}
+            >
+              {wasClean ? "yes" : "no"}
+            </span>
           </div>
         </div>
       );
