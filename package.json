@@ -6,7 +6,8 @@
     "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "node --experimental-strip-types --test src/lib/config/workerEndpoints.test.ts src/lib/tower/towerRuntime.service.test.ts src/lib/video/downloadService.test.ts src/lib/workflow/workflow.service.test.ts"
   },
   "dependencies": {
     "@xyflow/react": "^12.10.2",

@@ -13,14 +13,13 @@ import {
 } from 'aero-stream-pilot';
 import { useCallback, useEffect, useImperativeHandle, useRef, useState, forwardRef } from 'react';
 import { Column } from '@/components/ui';
+import { getPilotSyncUrl } from '@/lib/tower/towerRuntime.service.ts';
 import { colors, typography } from '@/styles/tokens';
-
-const token = 'my-super-secret-token';
-const socketUrl = 'ws://localhost:8787/app/sync';
 
 interface PilotConnectionProps {
   workflowId: string;
   sessionId: string;
+  secret: string;
   onSessionId: (id: string | null) => void;
   onStatusChange: (status: ConnectionStatus) => void;
   onConnectionOpenChange: (isOpen: boolean) => void;
@@ -34,7 +33,7 @@ export interface PilotConnectionHandle {
 }
 
 export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnectionProps>(
-  function PilotConnection({ workflowId, sessionId, onSessionId, onStatusChange, onConnectionOpenChange, onTimeTick, onTimeReset }, ref) {
+  function PilotConnection({ workflowId, sessionId, secret, onSessionId, onStatusChange, onConnectionOpenChange, onTimeTick, onTimeReset }, ref) {
   const stepLibrary: AeroStreamLibrary<React.ReactNode> = {
     WelcomeComponent: (props: AeroStreamComponentParams) => <WelcomeComponent {...props} />,
     VideoComponent: (props: AeroStreamComponentParams) => <VideoComponent {...props} />,
@@ -104,6 +103,10 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
     }
 
     try {
+      if (!secret.trim()) {
+        throw new Error('Workflow secret is required before connecting Pilot to Tower');
+      }
+
       const attemptId = connectionAttemptRef.current + 1;
       connectionAttemptRef.current = attemptId;
       setStatus(ConnectionStatus.connecting);
@@ -126,8 +129,8 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
 
       pilotRef.current?.disconnect();
       const pilot = new AeroStreamPilot<React.ReactNode>({
-        url: socketUrl,
-        secret: token,
+        url: getPilotSyncUrl(),
+        secret,
         sessionId,
         logMode: PilotLogMode.developer,
         video: {
@@ -193,7 +196,7 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
   useImperativeHandle(ref, () => ({
     connect: handleConnect,
     disconnect: handleDisconnect,
-  }), [workflowId, status, sessionId]);
+  }), [workflowId, status, sessionId, secret]);
 
   useEffect(() => {
     return () => {
