@@ -414,8 +414,8 @@ function ConnectionGrid({
           {/* Horizontal separators between each row — span all columns, sit at odd gridRow slots */}
           {(() => {
             const usedRows = new Set<number>([1]);
-            for (const row of eventRowMap.values()) usedRows.add(row);
-            const sorted = [...usedRows].sort((a, b) => a - b);
+            Array.from(eventRowMap.values()).forEach((row) => usedRows.add(row));
+            const sorted = Array.from(usedRows).sort((a, b) => a - b);
             return sorted.slice(0, -1).map((r) => (
               <div
                 key={`sep-${r}`}
@@ -515,11 +515,11 @@ export function SessionDetail({ session, isLoading }: SessionDetailProps) {
       }
       // All events in the same bucket share the same grid row,
       // regardless of connection — same-connection events stack inside the cell.
-      for (const connEvents of byConn.values()) {
+      Array.from(byConn.values()).forEach((connEvents) => {
         connEvents.forEach((event) => {
           eventRowMap.set(event.eventId, currentRow);
         });
-      }
+      });
       currentRow += 1;
     }
   }

@@ -8,23 +8,27 @@ Demonstrates end-to-end encrypted WebSocket workflow orchestration with video st
 
 - Node.js 20+
 - Yarn 4.x (`corepack enable`)
-- A running [aero-stream-tower](https://github.com/aero-stream/aero-stream) instance (local or remote)
+- A running Controller worker for workflow and video management
+- A running [aero-stream-tower](https://github.com/aero-stream/aero-stream) instance for live runtime and Pilot sync
 
 ## Environment Setup
 
 Create a `.env.local` file at the repo root:
 
 ```env
-NEXT_PUBLIC_TOWER_URL=wss://<your-tower-host>/sync
-NEXT_PUBLIC_SECRET=<your-pre-shared-secret>
-NEXT_PUBLIC_WORKFLOW_ID=<workflow-id-from-tower>
+NEXT_PUBLIC_CONTROLLER_API_URL=http://localhost:8788/api
+NEXT_PUBLIC_TOWER_API_URL=http://localhost:8787
+# Optional. When omitted, the example derives ws:// or wss://<tower>/app/sync from NEXT_PUBLIC_TOWER_API_URL.
+NEXT_PUBLIC_TOWER_SYNC_URL=ws://localhost:8787/app/sync
 ```
 
 | Variable | Description |
 |----------|-------------|
-| `NEXT_PUBLIC_TOWER_URL` | WebSocket URL of the Tower instance (`wss://` for production, `ws://` for local) |
-| `NEXT_PUBLIC_SECRET` | Pre-shared symmetric key configured on the Tower |
-| `NEXT_PUBLIC_WORKFLOW_ID` | ID of the workflow to execute (must exist in Tower's D1 database) |
+| `NEXT_PUBLIC_CONTROLLER_API_URL` | HTTP API base URL for Controller-owned workflow builder and video management operations. Include the API prefix when Controller serves management routes below `/api`. |
+| `NEXT_PUBLIC_TOWER_API_URL` | HTTP origin/base URL for Tower-owned runtime operations such as session creation. Do not include the Controller API prefix. |
+| `NEXT_PUBLIC_TOWER_SYNC_URL` | Optional Tower WebSocket URL for Pilot sync. If omitted, the app derives `/app/sync` from `NEXT_PUBLIC_TOWER_API_URL`. |
+
+The selected workflow's secret token is read from the workflow configuration saved by the Builder. The example no longer hard-codes a Pilot secret.
 
 ## Running the Demo
 
@@ -63,12 +67,14 @@ src/
 └── hooks/                   # useWorkflow
 ```
 
-## Connecting to Tower
+## Connecting to Controller and Tower
 
-1. Start your Tower instance and note the WebSocket URL.
-2. Set `NEXT_PUBLIC_TOWER_URL` in `.env.local`.
-3. Use the **Builder** tab to create or select a workflow.
-4. Switch to the **Live** tab to connect and execute the workflow.
+1. Start Controller and Tower against their shared local development state.
+2. Set `NEXT_PUBLIC_CONTROLLER_API_URL` and `NEXT_PUBLIC_TOWER_API_URL` in `.env.local`.
+3. Use the **Builder** tab to create or select a workflow through Controller.
+4. Switch to the **Live** tab to create a session and execute the workflow through Tower/Pilot.
+
+Controller workflow/video route details are still owned by the upstream Controller task. This example keeps those calls isolated in `src/lib/workflow/workflow.service.ts` and `src/lib/video/downloadService.ts` so final path changes stay local to the client boundary.
 
 ## Adding Custom Steps
 

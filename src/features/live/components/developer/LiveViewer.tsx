@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
+import {
+  fetchControllerResourceJson,
+  fetchControllerResourceUrl,
+  fetchControllerVideoSegmentBuffer,
+} from '@/lib/video/downloadService';
 import { radii } from '@/styles/tokens';
-
-const TOWER_URL = 'http://localhost:8787';
 
 interface RecordingMetadata {
   status: 'recording' | 'finalized' | 'finalized_with_gaps' | 'failed' | 'failed_with_partial';
@@ -9,21 +12,6 @@ interface RecordingMetadata {
   signatureTrackKey?: string;
   gapsTrackKey?: string;
   missingRanges?: unknown[];
-}
-
-async function fetchPresignedUrl(resourcePath: string): Promise<string | null> {
-  const res = await fetch(`${TOWER_URL}/resources/${resourcePath}`);
-  if (!res.ok) return null;
-  const data = await res.json() as { url?: string };
-  return typeof data.url === 'string' ? data.url : null;
-}
-
-async function fetchPresignedJson<T>(resourcePath: string): Promise<T | null> {
-  const url = await fetchPresignedUrl(resourcePath);
-  if (!url) return null;
-  const res = await fetch(url);
-  if (!res.ok) return null;
-  return await res.json() as T;
 }
 
 export function LiveViewer({ viewingId, onClose }: { viewingId: string | null; onClose: () => void }) {
@@ -50,19 +38,14 @@ export function LiveViewer({ viewingId, onClose }: { viewingId: string | null; o
     let isAppending = false;
 
     const fetchSegmentBuffer = async (segment: string): Promise<ArrayBuffer | null> => {
-      const presignedRes = await fetch(`http://localhost:8787/resources/${viewingId}/video/${segment}`);
-      if (!presignedRes.ok) return null;
-      const json = await presignedRes.json() as { url: string };
-      const segmentRes = await fetch(json.url);
-      if (!segmentRes.ok) return null;
-      return segmentRes.arrayBuffer();
+      return await fetchControllerVideoSegmentBuffer(viewingId, segment);
     };
 
     const tryLoadSingleRecording = async (): Promise<boolean> => {
-      const metadata = await fetchPresignedJson<RecordingMetadata>(`${viewingId}/recording.json`);
+      const metadata = await fetchControllerResourceJson<RecordingMetadata>(`${viewingId}/recording.json`);
       if (!metadata || (metadata.status !== 'finalized' && metadata.status !== 'finalized_with_gaps')) return false;
 
-      const recordingUrl = await fetchPresignedUrl(metadata.objectKey);
+      const recordingUrl = await fetchControllerResourceUrl(metadata.objectKey);
       if (!recordingUrl || isDestroyed) return false;
 
       video.src = recordingUrl;
@@ -70,7 +53,7 @@ export function LiveViewer({ viewingId, onClose }: { viewingId: string | null; o
       mediaSourceUrl = '';
 
       if (metadata.signatureTrackKey) {
-        const signatureUrl = await fetchPresignedUrl(metadata.signatureTrackKey);
+        const signatureUrl = await fetchControllerResourceUrl(metadata.signatureTrackKey);
         if (signatureUrl && !isDestroyed) setVttUrl(signatureUrl);
       }
       if (metadata.status === 'finalized_with_gaps') {
@@ -114,7 +97,7 @@ export function LiveViewer({ viewingId, onClose }: { viewingId: string | null; o
       }
 
       const fetchPlaylist = async () => {
-        return await fetchPresignedJson<{ segments: string[], isUploading: boolean }>(`${viewingId}/video/playlist.json`);
+        return await fetchControllerResourceJson<{ segments: string[], isUploading: boolean }>(`${viewingId}/video/playlist.json`);
       };
 
       const pollPlaylist = async () => {
@@ -149,7 +132,7 @@ export function LiveViewer({ viewingId, onClose }: { viewingId: string | null; o
       void tryLoadSingleRecording().then((loaded) => {
         if (loaded || isDestroyed) return;
 
-        void fetchPresignedUrl(`${viewingId}/video/signature.vtt`)
+        void fetchControllerResourceUrl(`${viewingId}/video/signature.vtt`)
           .then((url) => {
             if (url && !isDestroyed) setVttUrl(url);
           })

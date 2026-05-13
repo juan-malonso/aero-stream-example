@@ -1,38 +1,53 @@
-import { type TowerWorkflow, type WorkflowMetadata } from './workflow';
+import { type TowerWorkflow, type WorkflowMetadata } from './workflow.ts';
+import { getControllerApiUrl } from '../config/workerEndpoints.ts';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_TOWER_API_URL || 'http://localhost:8787/api';
+interface WorkflowServiceOptions {
+  controllerApiUrl?: string;
+  fetcher?: typeof fetch;
+  idFactory?: () => string;
+}
 
-export const workflowService = {
-  async getWorkflows(): Promise<WorkflowMetadata[]> {
-    const res = await fetch(`${API_BASE_URL}/workflows`);
-    if (!res.ok) throw new Error('Failed to fetch workflows');
-    const { data } = await res.json();
-    return data;
-  },
+export function createWorkflowService({
+  controllerApiUrl,
+  fetcher = fetch,
+  idFactory = () => crypto.randomUUID(),
+}: WorkflowServiceOptions = {}) {
+  const getBaseUrl = () => controllerApiUrl ?? getControllerApiUrl();
 
-  async getWorkflowById(id: string): Promise<TowerWorkflow> {
-    const res = await fetch(`${API_BASE_URL}/workflows/${id}`);
-    if (!res.ok) throw new Error(`Failed to fetch workflow ${id}`);
-    const { data } = await res.json();
-    return data;
-  },
+  return {
+    async getWorkflows(): Promise<WorkflowMetadata[]> {
+      const res = await fetcher(`${getBaseUrl()}/workflows`);
+      if (!res.ok) throw new Error('Failed to fetch workflows from Controller');
+      const { data } = await res.json();
+      return data;
+    },
 
-  async upsertWorkflow(workflow: TowerWorkflow): Promise<TowerWorkflow> {
-    const id = workflow.id || crypto.randomUUID();
-    const res = await fetch(`${API_BASE_URL}/workflows/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(workflow),
-    });
-    if (!res.ok) throw new Error('Failed to save workflow');
-    const { data } = await res.json();
-    return data;
-  },
+    async getWorkflowById(id: string): Promise<TowerWorkflow> {
+      const res = await fetcher(`${getBaseUrl()}/workflows/${encodeURIComponent(id)}`);
+      if (!res.ok) throw new Error(`Failed to fetch workflow ${id} from Controller`);
+      const { data } = await res.json();
+      return data;
+    },
 
-  async deleteWorkflow(id: string): Promise<void> {
-    const res = await fetch(`${API_BASE_URL}/workflows/${id}`, {
-      method: 'DELETE',
-    });
-    if (!res.ok) throw new Error(`Failed to delete workflow ${id}`);
-  }
-};
+    async upsertWorkflow(workflow: TowerWorkflow): Promise<TowerWorkflow> {
+      const id = workflow.id || idFactory();
+      const res = await fetcher(`${getBaseUrl()}/workflows/${encodeURIComponent(id)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...workflow, id }),
+      });
+      if (!res.ok) throw new Error('Failed to save workflow through Controller');
+      const { data } = await res.json();
+      return data;
+    },
+
+    async deleteWorkflow(id: string): Promise<void> {
+      const res = await fetcher(`${getBaseUrl()}/workflows/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error(`Failed to delete workflow ${id} through Controller`);
+    },
+  };
+}
+
+export const workflowService = createWorkflowService();
