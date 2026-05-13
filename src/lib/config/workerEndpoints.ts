@@ -1,10 +1,12 @@
 export interface WorkerEndpointEnv {
+  NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN?: string;
   NEXT_PUBLIC_CONTROLLER_API_URL?: string;
   NEXT_PUBLIC_TOWER_API_URL?: string;
   NEXT_PUBLIC_TOWER_SYNC_URL?: string;
 }
 
 export interface WorkerEndpoints {
+  controllerAdminToken: string;
   controllerApiUrl: string;
   towerApiUrl: string;
   towerSyncUrl: string;
@@ -18,6 +20,7 @@ export class WorkerEndpointConfigError extends Error {
 }
 
 const publicWorkerEnv: WorkerEndpointEnv = {
+  NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN: process.env.NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN,
   NEXT_PUBLIC_CONTROLLER_API_URL: process.env.NEXT_PUBLIC_CONTROLLER_API_URL,
   NEXT_PUBLIC_TOWER_API_URL: process.env.NEXT_PUBLIC_TOWER_API_URL,
   NEXT_PUBLIC_TOWER_SYNC_URL: process.env.NEXT_PUBLIC_TOWER_SYNC_URL,
@@ -57,7 +60,16 @@ function deriveTowerSyncUrl(towerApiUrl: string): string {
   return url.toString().replace(/\/$/, '');
 }
 
+function requireValue(name: keyof WorkerEndpointEnv, value: string | undefined): string {
+  const raw = value?.trim();
+  if (!raw) {
+    throw new WorkerEndpointConfigError(`Missing ${name}. Configure ${name} for the example dual-worker integration.`);
+  }
+  return raw;
+}
+
 export function resolveWorkerEndpoints(env: WorkerEndpointEnv = publicWorkerEnv): WorkerEndpoints {
+  const controllerAdminToken = requireValue('NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN', env.NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN);
   const controllerApiUrl = normalizeUrl('NEXT_PUBLIC_CONTROLLER_API_URL', env.NEXT_PUBLIC_CONTROLLER_API_URL, ['http:', 'https:']);
   const towerApiUrl = normalizeUrl('NEXT_PUBLIC_TOWER_API_URL', env.NEXT_PUBLIC_TOWER_API_URL, ['http:', 'https:']);
   const towerSyncUrl = env.NEXT_PUBLIC_TOWER_SYNC_URL
@@ -65,6 +77,7 @@ export function resolveWorkerEndpoints(env: WorkerEndpointEnv = publicWorkerEnv)
     : deriveTowerSyncUrl(towerApiUrl);
 
   return {
+    controllerAdminToken,
     controllerApiUrl,
     towerApiUrl,
     towerSyncUrl,
@@ -75,11 +88,20 @@ export function getControllerApiUrl(env?: WorkerEndpointEnv): string {
   return resolveWorkerEndpoints(env).controllerApiUrl;
 }
 
+export function getControllerAdminHeaders(env?: WorkerEndpointEnv): Record<string, string> {
+  return {
+    'x-aero-admin-token': resolveWorkerEndpoints(env).controllerAdminToken,
+  };
+}
+
 export function getTowerApiUrl(env?: WorkerEndpointEnv): string {
-  return resolveWorkerEndpoints(env).towerApiUrl;
+  return normalizeUrl('NEXT_PUBLIC_TOWER_API_URL', (env ?? publicWorkerEnv).NEXT_PUBLIC_TOWER_API_URL, ['http:', 'https:']);
 }
 
 export function getTowerSyncUrl(env?: WorkerEndpointEnv): string {
-  return resolveWorkerEndpoints(env).towerSyncUrl;
+  const targetEnv = env ?? publicWorkerEnv;
+  const towerApiUrl = getTowerApiUrl(targetEnv);
+  return targetEnv.NEXT_PUBLIC_TOWER_SYNC_URL
+    ? normalizeUrl('NEXT_PUBLIC_TOWER_SYNC_URL', targetEnv.NEXT_PUBLIC_TOWER_SYNC_URL, ['ws:', 'wss:'])
+    : deriveTowerSyncUrl(towerApiUrl);
 }
-

@@ -1,29 +1,34 @@
 import { type TowerWorkflow, type WorkflowMetadata } from './workflow.ts';
-import { getControllerApiUrl } from '../config/workerEndpoints.ts';
+import { getControllerAdminHeaders, getControllerApiUrl } from '../config/workerEndpoints.ts';
 
 interface WorkflowServiceOptions {
+  controllerAdminToken?: string;
   controllerApiUrl?: string;
   fetcher?: typeof fetch;
   idFactory?: () => string;
 }
 
 export function createWorkflowService({
+  controllerAdminToken,
   controllerApiUrl,
   fetcher = fetch,
   idFactory = () => crypto.randomUUID(),
 }: WorkflowServiceOptions = {}) {
   const getBaseUrl = () => controllerApiUrl ?? getControllerApiUrl();
+  const headers = () => controllerAdminToken
+    ? { 'x-aero-admin-token': controllerAdminToken }
+    : getControllerAdminHeaders();
 
   return {
     async getWorkflows(): Promise<WorkflowMetadata[]> {
-      const res = await fetcher(`${getBaseUrl()}/workflows`);
+      const res = await fetcher(`${getBaseUrl()}/workflows`, { headers: headers() });
       if (!res.ok) throw new Error('Failed to fetch workflows from Controller');
       const { data } = await res.json();
       return data;
     },
 
     async getWorkflowById(id: string): Promise<TowerWorkflow> {
-      const res = await fetcher(`${getBaseUrl()}/workflows/${encodeURIComponent(id)}`);
+      const res = await fetcher(`${getBaseUrl()}/workflows/${encodeURIComponent(id)}`, { headers: headers() });
       if (!res.ok) throw new Error(`Failed to fetch workflow ${id} from Controller`);
       const { data } = await res.json();
       return data;
@@ -33,7 +38,7 @@ export function createWorkflowService({
       const id = workflow.id || idFactory();
       const res = await fetcher(`${getBaseUrl()}/workflows/${encodeURIComponent(id)}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...headers(), 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...workflow, id }),
       });
       if (!res.ok) throw new Error('Failed to save workflow through Controller');
@@ -44,6 +49,7 @@ export function createWorkflowService({
     async deleteWorkflow(id: string): Promise<void> {
       const res = await fetcher(`${getBaseUrl()}/workflows/${encodeURIComponent(id)}`, {
         method: 'DELETE',
+        headers: headers(),
       });
       if (!res.ok) throw new Error(`Failed to delete workflow ${id} through Controller`);
     },

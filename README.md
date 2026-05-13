@@ -16,6 +16,7 @@ Demonstrates end-to-end encrypted WebSocket workflow orchestration with video st
 Create a `.env.local` file at the repo root:
 
 ```env
+NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN=local-test-admin-token
 NEXT_PUBLIC_CONTROLLER_API_URL=http://localhost:8788/api
 NEXT_PUBLIC_TOWER_API_URL=http://localhost:8787
 # Optional. When omitted, the example derives ws:// or wss://<tower>/app/sync from NEXT_PUBLIC_TOWER_API_URL.
@@ -24,6 +25,7 @@ NEXT_PUBLIC_TOWER_SYNC_URL=ws://localhost:8787/app/sync
 
 | Variable | Description |
 |----------|-------------|
+| `NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN` | Local/test Controller token sent as `x-aero-admin-token`. Do not use this public variable for production administrator secrets; production deployments should use a server-side proxy or approved auth integration. |
 | `NEXT_PUBLIC_CONTROLLER_API_URL` | HTTP API base URL for Controller-owned workflow builder and video management operations. Include the API prefix when Controller serves management routes below `/api`. |
 | `NEXT_PUBLIC_TOWER_API_URL` | HTTP origin/base URL for Tower-owned runtime operations such as session creation. Do not include the Controller API prefix. |
 | `NEXT_PUBLIC_TOWER_SYNC_URL` | Optional Tower WebSocket URL for Pilot sync. If omitted, the app derives `/app/sync` from `NEXT_PUBLIC_TOWER_API_URL`. |
