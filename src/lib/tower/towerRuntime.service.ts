@@ -1,7 +1,7 @@
-import { getTowerApiUrl, getTowerSyncUrl, type WorkerEndpointEnv } from '../config/workerEndpoints.ts';
+import { getTowerInitUrl, getTowerLiveUrl, type WorkerEndpointEnv } from '../config/workerEndpoints.ts';
 
 interface TowerRuntimeServiceOptions {
-  towerApiUrl?: string;
+  towerInitUrl?: string;
   fetcher?: typeof fetch;
 }
 
@@ -9,12 +9,16 @@ export interface CreateSessionResponse {
   sessionId?: string;
 }
 
-export function createTowerRuntimeService({ towerApiUrl, fetcher = fetch }: TowerRuntimeServiceOptions = {}) {
-  const getBaseUrl = () => towerApiUrl ?? getTowerApiUrl();
+export function createTowerRuntimeService({ towerInitUrl, fetcher = fetch }: TowerRuntimeServiceOptions = {}) {
+  const getInitUrl = () => towerInitUrl ?? getTowerInitUrl();
 
   return {
     async createSession(workflowId: string): Promise<CreateSessionResponse> {
-      const response = await fetcher(`${getBaseUrl()}/app/${encodeURIComponent(workflowId)}`, { method: 'POST' });
+      const response = await fetcher(getInitUrl(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workflowId }),
+      });
       if (!response.ok) {
         throw new Error(`Unable to create Tower runtime session: ${response.status}`);
       }
@@ -24,8 +28,8 @@ export function createTowerRuntimeService({ towerApiUrl, fetcher = fetch }: Towe
   };
 }
 
-export function getPilotSyncUrl(env?: WorkerEndpointEnv): string {
-  return getTowerSyncUrl(env);
+export function getPilotLiveUrl(env?: WorkerEndpointEnv): string {
+  return getTowerLiveUrl(env);
 }
 
 export const towerRuntimeService = createTowerRuntimeService();

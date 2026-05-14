@@ -2,15 +2,15 @@ export interface WorkerEndpointEnv {
   NODE_ENV?: string;
   NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN?: string;
   NEXT_PUBLIC_CONTROLLER_API_URL?: string;
-  NEXT_PUBLIC_TOWER_API_URL?: string;
-  NEXT_PUBLIC_TOWER_SYNC_URL?: string;
+  NEXT_PUBLIC_TOWER_INIT_URL?: string;
+  NEXT_PUBLIC_TOWER_LIVE_URL?: string;
 }
 
 export interface WorkerEndpoints {
   controllerAdminToken: string;
   controllerApiUrl: string;
-  towerApiUrl: string;
-  towerSyncUrl: string;
+  towerInitUrl: string;
+  towerLiveUrl: string;
 }
 
 export class WorkerEndpointConfigError extends Error {
@@ -25,13 +25,14 @@ const publicWorkerEnv: WorkerEndpointEnv = {
   NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN:
     process.env.NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN,
   NEXT_PUBLIC_CONTROLLER_API_URL: process.env.NEXT_PUBLIC_CONTROLLER_API_URL,
-  NEXT_PUBLIC_TOWER_API_URL: process.env.NEXT_PUBLIC_TOWER_API_URL,
-  NEXT_PUBLIC_TOWER_SYNC_URL: process.env.NEXT_PUBLIC_TOWER_SYNC_URL,
+  NEXT_PUBLIC_TOWER_INIT_URL: process.env.NEXT_PUBLIC_TOWER_INIT_URL,
+  NEXT_PUBLIC_TOWER_LIVE_URL: process.env.NEXT_PUBLIC_TOWER_LIVE_URL,
 };
 
 const LOCAL_TEST_CONTROLLER_ADMIN_TOKEN = "local-test-admin-token";
 const LOCAL_CONTROLLER_API_URL = "http://localhost:8788/api";
-const LOCAL_TOWER_API_URL = "http://localhost:8787";
+const LOCAL_TOWER_INIT_URL = "http://localhost:8787/squawk/init";
+const LOCAL_TOWER_LIVE_URL = "ws://localhost:8787/squawk/live";
 const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1", "::1"]);
 
 function normalizeUrl(
@@ -42,7 +43,7 @@ function normalizeUrl(
   const raw = value?.trim();
   if (!raw) {
     throw new WorkerEndpointConfigError(
-      `Missing ${name}. Configure ${name} for the example dual-worker integration.`,
+      `Missing ${name}. Configure ${name} for the example worker integration.`,
     );
   }
 
@@ -64,20 +65,6 @@ function normalizeUrl(
   return url.toString().replace(/\/$/, "");
 }
 
-function appendPath(baseUrl: string, path: string): string {
-  const base = new URL(baseUrl);
-  const basePath = base.pathname.replace(/\/$/, "");
-  const nextPath = path.startsWith("/") ? path : `/${path}`;
-  base.pathname = `${basePath}${nextPath}`;
-  return base.toString().replace(/\/$/, "");
-}
-
-function deriveTowerSyncUrl(towerApiUrl: string): string {
-  const url = new URL(appendPath(towerApiUrl, "/app/sync"));
-  url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
-  return url.toString().replace(/\/$/, "");
-}
-
 function requireValue(
   name: keyof WorkerEndpointEnv,
   value: string | undefined,
@@ -85,7 +72,7 @@ function requireValue(
   const raw = value?.trim();
   if (!raw) {
     throw new WorkerEndpointConfigError(
-      `Missing ${name}. Configure ${name} for the example dual-worker integration.`,
+      `Missing ${name}. Configure ${name} for the example worker integration.`,
     );
   }
   return raw;
@@ -130,32 +117,34 @@ export function resolveWorkerEndpoints(
     ),
     ["http:", "https:"],
   );
-  const towerApiUrl = normalizeUrl(
-    "NEXT_PUBLIC_TOWER_API_URL",
-    valueOrLocalDefault(
-      env,
-      env.NEXT_PUBLIC_TOWER_API_URL,
-      LOCAL_TOWER_API_URL,
-    ),
-    ["http:", "https:"],
-  );
   const controllerAdminToken = resolveControllerAdminToken(
     env,
     controllerApiUrl,
   );
-  const towerSyncUrl = env.NEXT_PUBLIC_TOWER_SYNC_URL
-    ? normalizeUrl(
-        "NEXT_PUBLIC_TOWER_SYNC_URL",
-        env.NEXT_PUBLIC_TOWER_SYNC_URL,
-        ["ws:", "wss:"],
-      )
-    : deriveTowerSyncUrl(towerApiUrl);
+  const towerInitUrl = normalizeUrl(
+    "NEXT_PUBLIC_TOWER_INIT_URL",
+    valueOrLocalDefault(
+      env,
+      env.NEXT_PUBLIC_TOWER_INIT_URL,
+      LOCAL_TOWER_INIT_URL,
+    ),
+    ["http:", "https:"],
+  );
+  const towerLiveUrl = normalizeUrl(
+    "NEXT_PUBLIC_TOWER_LIVE_URL",
+    valueOrLocalDefault(
+      env,
+      env.NEXT_PUBLIC_TOWER_LIVE_URL,
+      LOCAL_TOWER_LIVE_URL,
+    ),
+    ["ws:", "wss:"],
+  );
 
   return {
     controllerAdminToken,
     controllerApiUrl,
-    towerApiUrl,
-    towerSyncUrl,
+    towerInitUrl,
+    towerLiveUrl,
   };
 }
 
@@ -171,27 +160,28 @@ export function getControllerAdminHeaders(
   };
 }
 
-export function getTowerApiUrl(env?: WorkerEndpointEnv): string {
+export function getTowerInitUrl(env?: WorkerEndpointEnv): string {
   const targetEnv = env ?? publicWorkerEnv;
   return normalizeUrl(
-    "NEXT_PUBLIC_TOWER_API_URL",
+    "NEXT_PUBLIC_TOWER_INIT_URL",
     valueOrLocalDefault(
       targetEnv,
-      targetEnv.NEXT_PUBLIC_TOWER_API_URL,
-      LOCAL_TOWER_API_URL,
+      targetEnv.NEXT_PUBLIC_TOWER_INIT_URL,
+      LOCAL_TOWER_INIT_URL,
     ),
     ["http:", "https:"],
   );
 }
 
-export function getTowerSyncUrl(env?: WorkerEndpointEnv): string {
+export function getTowerLiveUrl(env?: WorkerEndpointEnv): string {
   const targetEnv = env ?? publicWorkerEnv;
-  const towerApiUrl = getTowerApiUrl(targetEnv);
-  return targetEnv.NEXT_PUBLIC_TOWER_SYNC_URL
-    ? normalizeUrl(
-        "NEXT_PUBLIC_TOWER_SYNC_URL",
-        targetEnv.NEXT_PUBLIC_TOWER_SYNC_URL,
-        ["ws:", "wss:"],
-      )
-    : deriveTowerSyncUrl(towerApiUrl);
+  return normalizeUrl(
+    "NEXT_PUBLIC_TOWER_LIVE_URL",
+    valueOrLocalDefault(
+      targetEnv,
+      targetEnv.NEXT_PUBLIC_TOWER_LIVE_URL,
+      LOCAL_TOWER_LIVE_URL,
+    ),
+    ["ws:", "wss:"],
+  );
 }

@@ -13,7 +13,7 @@ import {
 } from 'aero-stream-pilot';
 import { useCallback, useEffect, useImperativeHandle, useRef, useState, forwardRef } from 'react';
 import { Column } from '@/components/ui';
-import { getPilotSyncUrl } from '@/lib/tower/towerRuntime.service.ts';
+import { getPilotLiveUrl } from '@/lib/tower/towerRuntime.service.ts';
 import { colors, typography } from '@/styles/tokens';
 
 interface PilotConnectionProps {
@@ -129,7 +129,7 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
 
       pilotRef.current?.disconnect();
       const pilot = new AeroStreamPilot<React.ReactNode>({
-        url: getPilotSyncUrl(),
+        url: getPilotLiveUrl(),
         secret,
         sessionId,
         logMode: PilotLogMode.developer,

@@ -16,7 +16,8 @@ Demonstrates end-to-end encrypted WebSocket workflow orchestration with video st
 The local defaults are enough for the standard Controller/Tower dev ports:
 
 - Controller API: `http://localhost:8788/api`
-- Tower API: `http://localhost:8787`
+- Tower init: `http://localhost:8787/squawk/init`
+- Tower live: `ws://localhost:8787/squawk/live`
 - Controller admin token: `local-test-admin-token`
 
 Create a `.env.local` file at the repo root only when you need to override those values:
@@ -24,17 +25,16 @@ Create a `.env.local` file at the repo root only when you need to override those
 ```env
 NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN=local-test-admin-token
 NEXT_PUBLIC_CONTROLLER_API_URL=http://localhost:8788/api
-NEXT_PUBLIC_TOWER_API_URL=http://localhost:8787
-# Optional. When omitted, the example derives ws:// or wss://<tower>/app/sync from NEXT_PUBLIC_TOWER_API_URL.
-NEXT_PUBLIC_TOWER_SYNC_URL=ws://localhost:8787/app/sync
+NEXT_PUBLIC_TOWER_INIT_URL=http://localhost:8787/squawk/init
+NEXT_PUBLIC_TOWER_LIVE_URL=ws://localhost:8787/squawk/live
 ```
 
 | Variable                             | Description                                                                                                                                                                                                         |
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN` | Local/test Controller token sent as `x-aero-admin-token`. Do not use this public variable for production administrator secrets; production deployments should use a server-side proxy or approved auth integration. |
 | `NEXT_PUBLIC_CONTROLLER_API_URL`     | HTTP API base URL for Controller-owned workflow builder and video management operations. Include the API prefix when Controller serves management routes below `/api`.                                              |
-| `NEXT_PUBLIC_TOWER_API_URL`          | HTTP origin/base URL for Tower-owned runtime operations such as session creation. Do not include the Controller API prefix.                                                                                         |
-| `NEXT_PUBLIC_TOWER_SYNC_URL`         | Optional Tower WebSocket URL for Pilot sync. If omitted, the app derives `/app/sync` from `NEXT_PUBLIC_TOWER_API_URL`.                                                                                              |
+| `NEXT_PUBLIC_TOWER_INIT_URL`         | Full Tower HTTP URL for runtime session creation. Local default is `http://localhost:8787/squawk/init`.                                                                                                             |
+| `NEXT_PUBLIC_TOWER_LIVE_URL`         | Full Tower WebSocket URL for Pilot live sync. Local default is `ws://localhost:8787/squawk/live`.                                                                                                                   |
 
 The selected workflow's secret token is read from the workflow configuration saved by the Builder. The example no longer hard-codes a Pilot secret.
 
@@ -78,7 +78,7 @@ src/
 ## Connecting to Controller and Tower
 
 1. Start Controller and Tower against their shared local development state.
-2. Optionally set `NEXT_PUBLIC_CONTROLLER_API_URL` and `NEXT_PUBLIC_TOWER_API_URL` in `.env.local` when not using the default local ports.
+2. Optionally set `NEXT_PUBLIC_CONTROLLER_API_URL`, `NEXT_PUBLIC_TOWER_INIT_URL`, and `NEXT_PUBLIC_TOWER_LIVE_URL` in `.env.local` when not using the default local ports.
 3. Use the **Builder** tab to create or select a workflow through Controller.
 4. Switch to the **Live** tab to create a session and execute the workflow through Tower/Pilot.
 
