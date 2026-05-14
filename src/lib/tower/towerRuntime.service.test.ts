@@ -29,4 +29,3 @@ test('derives the Pilot sync URL from Tower config', () => {
     'wss://tower.local/app/sync',
   );
 });
-
