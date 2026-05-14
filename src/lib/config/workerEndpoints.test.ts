@@ -6,12 +6,24 @@ import { resolveWorkerEndpoints, WorkerEndpointConfigError } from './workerEndpo
 test('requires the Controller API URL for management boundaries', () => {
   assert.throws(
     () => resolveWorkerEndpoints({
+      NODE_ENV: 'production',
       NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN: 'local-test-admin-token',
       NEXT_PUBLIC_TOWER_API_URL: 'http://localhost:8787',
     }),
     (error) => error instanceof WorkerEndpointConfigError
       && error.message.includes('Missing NEXT_PUBLIC_CONTROLLER_API_URL'),
   );
+});
+
+test('defaults local worker endpoints for development', () => {
+  const endpoints = resolveWorkerEndpoints({
+    NODE_ENV: 'development',
+  });
+
+  assert.equal(endpoints.controllerAdminToken, 'local-test-admin-token');
+  assert.equal(endpoints.controllerApiUrl, 'http://localhost:8788/api');
+  assert.equal(endpoints.towerApiUrl, 'http://localhost:8787');
+  assert.equal(endpoints.towerSyncUrl, 'ws://localhost:8787/app/sync');
 });
 
 test('normalizes Controller and Tower URLs and derives Tower sync URL', () => {

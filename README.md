@@ -13,7 +13,13 @@ Demonstrates end-to-end encrypted WebSocket workflow orchestration with video st
 
 ## Environment Setup
 
-Create a `.env.local` file at the repo root:
+The local defaults are enough for the standard Controller/Tower dev ports:
+
+- Controller API: `http://localhost:8788/api`
+- Tower API: `http://localhost:8787`
+- Controller admin token: `local-test-admin-token`
+
+Create a `.env.local` file at the repo root only when you need to override those values:
 
 ```env
 NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN=local-test-admin-token
@@ -72,7 +78,7 @@ src/
 ## Connecting to Controller and Tower
 
 1. Start Controller and Tower against their shared local development state.
-2. Set `NEXT_PUBLIC_CONTROLLER_API_URL` and `NEXT_PUBLIC_TOWER_API_URL` in `.env.local`.
+2. Optionally set `NEXT_PUBLIC_CONTROLLER_API_URL` and `NEXT_PUBLIC_TOWER_API_URL` in `.env.local` when not using the default local ports.
 3. Use the **Builder** tab to create or select a workflow through Controller.
 4. Switch to the **Live** tab to create a session and execute the workflow through Tower/Pilot.
 

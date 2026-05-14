@@ -29,6 +29,8 @@ const publicWorkerEnv: WorkerEndpointEnv = {
 };
 
 const LOCAL_TEST_CONTROLLER_ADMIN_TOKEN = 'local-test-admin-token';
+const LOCAL_CONTROLLER_API_URL = 'http://localhost:8788/api';
+const LOCAL_TOWER_API_URL = 'http://localhost:8787';
 const LOCAL_HOSTNAMES = new Set(['localhost', '127.0.0.1', '::1']);
 
 function normalizeUrl(name: keyof WorkerEndpointEnv, value: string | undefined, protocols: string[]): string {
@@ -73,6 +75,11 @@ function requireValue(name: keyof WorkerEndpointEnv, value: string | undefined):
   return raw;
 }
 
+function valueOrLocalDefault(env: WorkerEndpointEnv, value: string | undefined, localDefault: string): string | undefined {
+  if (value?.trim()) return value;
+  return env.NODE_ENV !== 'production' ? localDefault : undefined;
+}
+
 function resolveControllerAdminToken(env: WorkerEndpointEnv, controllerApiUrl: string): string {
   const raw = env.NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN?.trim();
   if (raw) return raw;
@@ -86,8 +93,16 @@ function resolveControllerAdminToken(env: WorkerEndpointEnv, controllerApiUrl: s
 }
 
 export function resolveWorkerEndpoints(env: WorkerEndpointEnv = publicWorkerEnv): WorkerEndpoints {
-  const controllerApiUrl = normalizeUrl('NEXT_PUBLIC_CONTROLLER_API_URL', env.NEXT_PUBLIC_CONTROLLER_API_URL, ['http:', 'https:']);
-  const towerApiUrl = normalizeUrl('NEXT_PUBLIC_TOWER_API_URL', env.NEXT_PUBLIC_TOWER_API_URL, ['http:', 'https:']);
+  const controllerApiUrl = normalizeUrl(
+    'NEXT_PUBLIC_CONTROLLER_API_URL',
+    valueOrLocalDefault(env, env.NEXT_PUBLIC_CONTROLLER_API_URL, LOCAL_CONTROLLER_API_URL),
+    ['http:', 'https:'],
+  );
+  const towerApiUrl = normalizeUrl(
+    'NEXT_PUBLIC_TOWER_API_URL',
+    valueOrLocalDefault(env, env.NEXT_PUBLIC_TOWER_API_URL, LOCAL_TOWER_API_URL),
+    ['http:', 'https:'],
+  );
   const controllerAdminToken = resolveControllerAdminToken(env, controllerApiUrl);
   const towerSyncUrl = env.NEXT_PUBLIC_TOWER_SYNC_URL
     ? normalizeUrl('NEXT_PUBLIC_TOWER_SYNC_URL', env.NEXT_PUBLIC_TOWER_SYNC_URL, ['ws:', 'wss:'])
@@ -112,7 +127,12 @@ export function getControllerAdminHeaders(env?: WorkerEndpointEnv): Record<strin
 }
 
 export function getTowerApiUrl(env?: WorkerEndpointEnv): string {
-  return normalizeUrl('NEXT_PUBLIC_TOWER_API_URL', (env ?? publicWorkerEnv).NEXT_PUBLIC_TOWER_API_URL, ['http:', 'https:']);
+  const targetEnv = env ?? publicWorkerEnv;
+  return normalizeUrl(
+    'NEXT_PUBLIC_TOWER_API_URL',
+    valueOrLocalDefault(targetEnv, targetEnv.NEXT_PUBLIC_TOWER_API_URL, LOCAL_TOWER_API_URL),
+    ['http:', 'https:'],
+  );
 }
 
 export function getTowerSyncUrl(env?: WorkerEndpointEnv): string {
