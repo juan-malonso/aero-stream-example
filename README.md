@@ -15,7 +15,7 @@ Demonstrates end-to-end encrypted WebSocket workflow orchestration with video st
 
 The local defaults are enough for the standard Controller/Tower dev ports:
 
-- Controller API: `http://localhost:8788/api`
+- Controller API: `http://localhost:8787/api`
 - Tower API: `http://localhost:8787`
 - Controller admin token: `local-test-admin-token`
 
@@ -23,18 +23,18 @@ Create a `.env.local` file at the repo root only when you need to override those
 
 ```env
 NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN=local-test-admin-token
-NEXT_PUBLIC_CONTROLLER_API_URL=http://localhost:8788/api
+NEXT_PUBLIC_CONTROLLER_API_URL=http://localhost:8787/api
 NEXT_PUBLIC_TOWER_API_URL=http://localhost:8787
 # Optional. When omitted, the example derives ws:// or wss://<tower>/app/sync from NEXT_PUBLIC_TOWER_API_URL.
 NEXT_PUBLIC_TOWER_SYNC_URL=ws://localhost:8787/app/sync
 ```
 
-| Variable | Description |
-|----------|-------------|
+| Variable                             | Description                                                                                                                                                                                                         |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN` | Local/test Controller token sent as `x-aero-admin-token`. Do not use this public variable for production administrator secrets; production deployments should use a server-side proxy or approved auth integration. |
-| `NEXT_PUBLIC_CONTROLLER_API_URL` | HTTP API base URL for Controller-owned workflow builder and video management operations. Include the API prefix when Controller serves management routes below `/api`. |
-| `NEXT_PUBLIC_TOWER_API_URL` | HTTP origin/base URL for Tower-owned runtime operations such as session creation. Do not include the Controller API prefix. |
-| `NEXT_PUBLIC_TOWER_SYNC_URL` | Optional Tower WebSocket URL for Pilot sync. If omitted, the app derives `/app/sync` from `NEXT_PUBLIC_TOWER_API_URL`. |
+| `NEXT_PUBLIC_CONTROLLER_API_URL`     | HTTP API base URL for Controller-owned workflow builder and video management operations. Include the API prefix when Controller serves management routes below `/api`.                                              |
+| `NEXT_PUBLIC_TOWER_API_URL`          | HTTP origin/base URL for Tower-owned runtime operations such as session creation. Do not include the Controller API prefix.                                                                                         |
+| `NEXT_PUBLIC_TOWER_SYNC_URL`         | Optional Tower WebSocket URL for Pilot sync. If omitted, the app derives `/app/sync` from `NEXT_PUBLIC_TOWER_API_URL`.                                                                                              |
 
 The selected workflow's secret token is read from the workflow configuration saved by the Builder. The example no longer hard-codes a Pilot secret.
 
@@ -89,7 +89,7 @@ Controller workflow/video route details are still owned by the upstream Controll
 Implement a step component and register it in the step library in `src/features/live/components/implement/PilotConnection.tsx`:
 
 ```typescript
-import { MyCustomStep } from '@/components/steps/MyCustomStep';
+import { MyCustomStep } from "@/components/steps/MyCustomStep";
 
 const stepLibrary = {
   MyCustomStep,
