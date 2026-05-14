@@ -8,23 +8,35 @@ Demonstrates end-to-end encrypted WebSocket workflow orchestration with video st
 
 - Node.js 20+
 - Yarn 4.x (`corepack enable`)
-- A running [aero-stream-tower](https://github.com/aero-stream/aero-stream) instance (local or remote)
+- A running Controller worker for workflow and video management
+- A running [aero-stream-tower](https://github.com/aero-stream/aero-stream) instance for live runtime and Pilot sync
 
 ## Environment Setup
 
-Create a `.env.local` file at the repo root:
+The local defaults are enough for the standard Controller/Tower dev ports:
+
+- Controller API: `http://localhost:8788/api`
+- Tower init: `http://localhost:8787/squawk/init`
+- Tower live: `ws://localhost:8787/squawk/live`
+- Controller admin token: `local-test-admin-token`
+
+Create a `.env.local` file at the repo root only when you need to override those values:
 
 ```env
-NEXT_PUBLIC_TOWER_URL=wss://<your-tower-host>/sync
-NEXT_PUBLIC_SECRET=<your-pre-shared-secret>
-NEXT_PUBLIC_WORKFLOW_ID=<workflow-id-from-tower>
+NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN=local-test-admin-token
+NEXT_PUBLIC_CONTROLLER_API_URL=http://localhost:8788/api
+NEXT_PUBLIC_TOWER_INIT_URL=http://localhost:8787/squawk/init
+NEXT_PUBLIC_TOWER_LIVE_URL=ws://localhost:8787/squawk/live
 ```
 
-| Variable | Description |
-|----------|-------------|
-| `NEXT_PUBLIC_TOWER_URL` | WebSocket URL of the Tower instance (`wss://` for production, `ws://` for local) |
-| `NEXT_PUBLIC_SECRET` | Pre-shared symmetric key configured on the Tower |
-| `NEXT_PUBLIC_WORKFLOW_ID` | ID of the workflow to execute (must exist in Tower's D1 database) |
+| Variable                             | Description                                                                                                                                                                                                         |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN` | Local/test Controller token sent as `x-aero-admin-token`. Do not use this public variable for production administrator secrets; production deployments should use a server-side proxy or approved auth integration. |
+| `NEXT_PUBLIC_CONTROLLER_API_URL`     | HTTP API base URL for Controller-owned workflow builder and video management operations. Include the API prefix when Controller serves management routes below `/api`.                                              |
+| `NEXT_PUBLIC_TOWER_INIT_URL`         | Full Tower HTTP URL for runtime session creation. Local default is `http://localhost:8787/squawk/init`.                                                                                                             |
+| `NEXT_PUBLIC_TOWER_LIVE_URL`         | Full Tower WebSocket URL for Pilot live sync. Local default is `ws://localhost:8787/squawk/live`.                                                                                                                   |
+
+The selected workflow's secret token is read from the workflow configuration saved by the Builder. The example no longer hard-codes a Pilot secret.
 
 ## Running the Demo
 
@@ -63,19 +75,21 @@ src/
 └── hooks/                   # useWorkflow
 ```
 
-## Connecting to Tower
+## Connecting to Controller and Tower
 
-1. Start your Tower instance and note the WebSocket URL.
-2. Set `NEXT_PUBLIC_TOWER_URL` in `.env.local`.
-3. Use the **Builder** tab to create or select a workflow.
-4. Switch to the **Live** tab to connect and execute the workflow.
+1. Start Controller and Tower against their shared local development state.
+2. Optionally set `NEXT_PUBLIC_CONTROLLER_API_URL`, `NEXT_PUBLIC_TOWER_INIT_URL`, and `NEXT_PUBLIC_TOWER_LIVE_URL` in `.env.local` when not using the default local ports.
+3. Use the **Builder** tab to create or select a workflow through Controller.
+4. Switch to the **Live** tab to create a session and execute the workflow through Tower/Pilot.
+
+Controller workflow/video route details are still owned by the upstream Controller task. This example keeps those calls isolated in `src/lib/workflow/workflow.service.ts` and `src/lib/video/downloadService.ts` so final path changes stay local to the client boundary.
 
 ## Adding Custom Steps
 
 Implement a step component and register it in the step library in `src/features/live/components/implement/PilotConnection.tsx`:
 
 ```typescript
-import { MyCustomStep } from '@/components/steps/MyCustomStep';
+import { MyCustomStep } from "@/components/steps/MyCustomStep";
 
 const stepLibrary = {
   MyCustomStep,

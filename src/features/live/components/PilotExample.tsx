@@ -7,14 +7,14 @@ import { PilotConnection, type PilotConnectionHandle } from './implement';
 import { useCallback, useRef, useState } from 'react';
 import { useWorkflowMetadata } from '@/hooks/useWorkflow';
 import { Row, Column, Select, Button, Input } from '@/components/ui';
+import { towerRuntimeService } from '@/lib/tower/towerRuntime.service.ts';
 import { colors, radii, shadows, typography } from '@/styles/tokens';
 import { sectionHeaderStyle } from '@/styles/theme';
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const apiUrl = 'http://localhost:8787';
 
 export function PilotExample() {
-  const { workflows, activeWorkflowId, selectWorkflow, isLoading } = useWorkflowMetadata();
+  const { workflows, activeWorkflowId, security, selectWorkflow, isLoading } = useWorkflowMetadata();
   const [status, setStatus] = useState(ConnectionStatus.closed);
   const [sessionId, setSessionId] = useState('');
   const [isCreatingSession, setIsCreatingSession] = useState(false);
@@ -47,12 +47,7 @@ export function PilotExample() {
 
     try {
       setIsCreatingSession(true);
-      const response = await fetch(`${apiUrl}/app/${activeWorkflowId}`, { method: 'POST' });
-      if (!response.ok) {
-        throw new Error(`Unable to create session: ${response.status}`);
-      }
-
-      const data = await response.json() as { sessionId?: string };
+      const data = await towerRuntimeService.createSession(activeWorkflowId);
       if (!data.sessionId || !uuidPattern.test(data.sessionId)) {
         throw new Error('Session ID missing or invalid in create-session response');
       }
@@ -75,6 +70,7 @@ export function PilotExample() {
           ref={pilotRef}
           workflowId={activeWorkflowId || ''}
           sessionId={isSessionIdValid ? sessionId : ''}
+          secret={security.secret}
           onSessionId={handleSessionId}
           onStatusChange={setStatus}
           onConnectionOpenChange={setIsConnectionOpen}

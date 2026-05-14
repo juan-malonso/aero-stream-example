@@ -5,12 +5,16 @@ import { type AeroStreamAlertScreen } from "aero-stream-pilot";
 import { Button } from "@/components/ui";
 import { colors, radii, typography } from "@/styles/tokens";
 
-export const AlertScreen: AeroStreamAlertScreen<React.ReactNode> = ({
-  alertType,
-  data,
-  submit,
-  reject,
-}) => {
+export const AlertScreen: AeroStreamAlertScreen<React.ReactNode> = (params) => {
+  if (!params) return null;
+
+  const {
+    alertType,
+    data,
+    submit,
+    reject,
+  } = params;
+
   if (alertType === "SESSION_SWITCH") {
     return <SessionSwitchAlert data={data} submit={submit} reject={reject} />;
   }

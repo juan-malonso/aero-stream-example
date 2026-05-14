@@ -582,16 +582,17 @@ function EventPayloadSummary({ event }: { event: PlatformEventEnvelope }) {
 
     case PlatformEventType.SESSION_CLOSED: {
       const wasClean = payload.wasClean === true;
+      const reason = payload.reason == null ? "" : String(payload.reason);
       return (
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           <div style={fieldStyle}>
             <span style={labelStyle}>Code</span>
             <span style={valueStyle}>{String(payload.code ?? "—")}</span>
           </div>
-          {payload.reason && (
+          {reason && (
             <div style={fieldStyle}>
               <span style={labelStyle}>Reason</span>
-              <span style={valueStyle}>{String(payload.reason)}</span>
+              <span style={valueStyle}>{reason}</span>
             </div>
           )}
           <div style={fieldStyle}>
