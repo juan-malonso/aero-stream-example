@@ -29,4 +29,3 @@ export function getPilotSyncUrl(env?: WorkerEndpointEnv): string {
 }
 
 export const towerRuntimeService = createTowerRuntimeService();
-
