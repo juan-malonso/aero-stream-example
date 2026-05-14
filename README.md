@@ -15,7 +15,7 @@ Demonstrates end-to-end encrypted WebSocket workflow orchestration with video st
 
 The local defaults are enough for the standard Controller/Tower dev ports:
 
-- Controller API: `http://localhost:8787/api`
+- Controller API: `http://localhost:8788/api`
 - Tower API: `http://localhost:8787`
 - Controller admin token: `local-test-admin-token`
 
@@ -23,7 +23,7 @@ Create a `.env.local` file at the repo root only when you need to override those
 
 ```env
 NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN=local-test-admin-token
-NEXT_PUBLIC_CONTROLLER_API_URL=http://localhost:8787/api
+NEXT_PUBLIC_CONTROLLER_API_URL=http://localhost:8788/api
 NEXT_PUBLIC_TOWER_API_URL=http://localhost:8787
 # Optional. When omitted, the example derives ws:// or wss://<tower>/app/sync from NEXT_PUBLIC_TOWER_API_URL.
 NEXT_PUBLIC_TOWER_SYNC_URL=ws://localhost:8787/app/sync

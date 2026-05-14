@@ -30,7 +30,7 @@ const publicWorkerEnv: WorkerEndpointEnv = {
 };
 
 const LOCAL_TEST_CONTROLLER_ADMIN_TOKEN = "local-test-admin-token";
-const LOCAL_CONTROLLER_API_URL = "http://localhost:8787/api";
+const LOCAL_CONTROLLER_API_URL = "http://localhost:8788/api";
 const LOCAL_TOWER_API_URL = "http://localhost:8787";
 const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1", "::1"]);
 

@@ -26,7 +26,7 @@ test("defaults local worker endpoints for development", () => {
   });
 
   assert.equal(endpoints.controllerAdminToken, "local-test-admin-token");
-  assert.equal(endpoints.controllerApiUrl, "http://localhost:8787/api");
+  assert.equal(endpoints.controllerApiUrl, "http://localhost:8788/api");
   assert.equal(endpoints.towerApiUrl, "http://localhost:8787");
   assert.equal(endpoints.towerSyncUrl, "ws://localhost:8787/app/sync");
 });
@@ -34,12 +34,12 @@ test("defaults local worker endpoints for development", () => {
 test("normalizes Controller and Tower URLs and derives Tower sync URL", () => {
   const endpoints = resolveWorkerEndpoints({
     NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN: "local-test-admin-token",
-    NEXT_PUBLIC_CONTROLLER_API_URL: "http://localhost:8787/api/",
+    NEXT_PUBLIC_CONTROLLER_API_URL: "http://localhost:8788/api/",
     NEXT_PUBLIC_TOWER_API_URL: "http://localhost:8787/",
   });
 
   assert.equal(endpoints.controllerAdminToken, "local-test-admin-token");
-  assert.equal(endpoints.controllerApiUrl, "http://localhost:8787/api");
+  assert.equal(endpoints.controllerApiUrl, "http://localhost:8788/api");
   assert.equal(endpoints.towerApiUrl, "http://localhost:8787");
   assert.equal(endpoints.towerSyncUrl, "ws://localhost:8787/app/sync");
 });
@@ -47,7 +47,7 @@ test("normalizes Controller and Tower URLs and derives Tower sync URL", () => {
 test("defaults the Controller admin token for local development URLs", () => {
   const endpoints = resolveWorkerEndpoints({
     NODE_ENV: "development",
-    NEXT_PUBLIC_CONTROLLER_API_URL: "http://localhost:8787/api",
+    NEXT_PUBLIC_CONTROLLER_API_URL: "http://localhost:8788/api",
     NEXT_PUBLIC_TOWER_API_URL: "http://localhost:8787",
   });
 
@@ -84,7 +84,7 @@ test("rejects runtime HTTP URLs in the Tower WebSocket override", () => {
     () =>
       resolveWorkerEndpoints({
         NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN: "local-test-admin-token",
-        NEXT_PUBLIC_CONTROLLER_API_URL: "http://localhost:8787/api",
+        NEXT_PUBLIC_CONTROLLER_API_URL: "http://localhost:8788/api",
         NEXT_PUBLIC_TOWER_API_URL: "http://localhost:8787",
         NEXT_PUBLIC_TOWER_SYNC_URL: "http://localhost:8787/app/sync",
       }),
