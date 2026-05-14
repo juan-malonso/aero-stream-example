@@ -27,6 +27,28 @@ test('normalizes Controller and Tower URLs and derives Tower sync URL', () => {
   assert.equal(endpoints.towerSyncUrl, 'ws://localhost:8787/app/sync');
 });
 
+test('defaults the Controller admin token for local development URLs', () => {
+  const endpoints = resolveWorkerEndpoints({
+    NODE_ENV: 'development',
+    NEXT_PUBLIC_CONTROLLER_API_URL: 'http://localhost:8788/api',
+    NEXT_PUBLIC_TOWER_API_URL: 'http://localhost:8787',
+  });
+
+  assert.equal(endpoints.controllerAdminToken, 'local-test-admin-token');
+});
+
+test('requires an explicit Controller admin token for non-local URLs', () => {
+  assert.throws(
+    () => resolveWorkerEndpoints({
+      NODE_ENV: 'production',
+      NEXT_PUBLIC_CONTROLLER_API_URL: 'https://controller.example.com/api',
+      NEXT_PUBLIC_TOWER_API_URL: 'https://tower.example.com',
+    }),
+    (error) => error instanceof WorkerEndpointConfigError
+      && error.message.includes('Missing NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN'),
+  );
+});
+
 test('allows an explicit Tower WebSocket URL for Pilot runtime paths', () => {
   const endpoints = resolveWorkerEndpoints({
     NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN: 'local-test-admin-token',

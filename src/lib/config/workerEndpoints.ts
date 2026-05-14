@@ -1,4 +1,5 @@
 export interface WorkerEndpointEnv {
+  NODE_ENV?: string;
   NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN?: string;
   NEXT_PUBLIC_CONTROLLER_API_URL?: string;
   NEXT_PUBLIC_TOWER_API_URL?: string;
@@ -20,11 +21,15 @@ export class WorkerEndpointConfigError extends Error {
 }
 
 const publicWorkerEnv: WorkerEndpointEnv = {
+  NODE_ENV: process.env.NODE_ENV,
   NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN: process.env.NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN,
   NEXT_PUBLIC_CONTROLLER_API_URL: process.env.NEXT_PUBLIC_CONTROLLER_API_URL,
   NEXT_PUBLIC_TOWER_API_URL: process.env.NEXT_PUBLIC_TOWER_API_URL,
   NEXT_PUBLIC_TOWER_SYNC_URL: process.env.NEXT_PUBLIC_TOWER_SYNC_URL,
 };
+
+const LOCAL_TEST_CONTROLLER_ADMIN_TOKEN = 'local-test-admin-token';
+const LOCAL_HOSTNAMES = new Set(['localhost', '127.0.0.1', '::1']);
 
 function normalizeUrl(name: keyof WorkerEndpointEnv, value: string | undefined, protocols: string[]): string {
   const raw = value?.trim();
@@ -68,10 +73,22 @@ function requireValue(name: keyof WorkerEndpointEnv, value: string | undefined):
   return raw;
 }
 
+function resolveControllerAdminToken(env: WorkerEndpointEnv, controllerApiUrl: string): string {
+  const raw = env.NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN?.trim();
+  if (raw) return raw;
+
+  const { hostname } = new URL(controllerApiUrl);
+  if (env.NODE_ENV !== 'production' && LOCAL_HOSTNAMES.has(hostname)) {
+    return LOCAL_TEST_CONTROLLER_ADMIN_TOKEN;
+  }
+
+  return requireValue('NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN', env.NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN);
+}
+
 export function resolveWorkerEndpoints(env: WorkerEndpointEnv = publicWorkerEnv): WorkerEndpoints {
-  const controllerAdminToken = requireValue('NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN', env.NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN);
   const controllerApiUrl = normalizeUrl('NEXT_PUBLIC_CONTROLLER_API_URL', env.NEXT_PUBLIC_CONTROLLER_API_URL, ['http:', 'https:']);
   const towerApiUrl = normalizeUrl('NEXT_PUBLIC_TOWER_API_URL', env.NEXT_PUBLIC_TOWER_API_URL, ['http:', 'https:']);
+  const controllerAdminToken = resolveControllerAdminToken(env, controllerApiUrl);
   const towerSyncUrl = env.NEXT_PUBLIC_TOWER_SYNC_URL
     ? normalizeUrl('NEXT_PUBLIC_TOWER_SYNC_URL', env.NEXT_PUBLIC_TOWER_SYNC_URL, ['ws:', 'wss:'])
     : deriveTowerSyncUrl(towerApiUrl);
