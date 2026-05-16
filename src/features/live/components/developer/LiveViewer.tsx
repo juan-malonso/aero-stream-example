@@ -3,7 +3,7 @@ import {
   fetchControllerResourceJson,
   fetchControllerResourceUrl,
   fetchControllerVideoSegmentBuffer,
-} from '@/lib/video/downloadService';
+} from '@/lib/shared/video/downloadService';
 import { radii } from '@/styles/tokens';
 
 interface RecordingMetadata {

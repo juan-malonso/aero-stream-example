@@ -1,8 +1,8 @@
-import { addEvent } from '@/lib/platform/store';
-import { type PlatformEventEnvelope, SUPPORTED_EVENT_TYPES } from '@/lib/platform/types';
+import { addEvent } from '@/lib/sessions/store';
+import { type SessionEventEnvelope, SUPPORTED_EVENT_TYPES } from '@/lib/sessions/types';
 import { NextResponse } from 'next/server';
 
-function isValidEnvelope(body: unknown): body is PlatformEventEnvelope {
+function isValidEnvelope(body: unknown): body is SessionEventEnvelope {
   if (typeof body !== 'object' || body === null) return false;
 
   const candidate = body as Record<string, unknown>;

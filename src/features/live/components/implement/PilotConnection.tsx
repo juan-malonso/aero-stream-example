@@ -12,7 +12,7 @@ import {
 } from 'aero-stream-pilot';
 import { useCallback, useEffect, useImperativeHandle, useRef, useState, forwardRef } from 'react';
 import { Column } from '@/components/ui';
-import { getPilotLiveUrl } from '@/lib/tower/towerRuntime.service.ts';
+import { getPilotLiveUrl } from '@/lib/live/tower/towerRuntime.service.ts';
 import { colors, typography } from '@/styles/tokens';
 
 interface PilotConnectionProps {

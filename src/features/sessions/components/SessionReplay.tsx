@@ -3,7 +3,7 @@
 import { useState } from 'react';
 
 import { LiveViewer } from '@/features/live/components/developer/LiveViewer';
-import { downloadVideo } from '@/lib/video/downloadService';
+import { downloadVideo } from '@/lib/shared/video/downloadService';
 import { Button } from '@/components/ui';
 import { colors, radii, shadows, typography } from '@/styles/tokens';
 

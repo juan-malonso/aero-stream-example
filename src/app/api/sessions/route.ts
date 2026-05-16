@@ -1,4 +1,4 @@
-import { getSessionSummaries } from '@/lib/platform/store';
+import { getSessionSummaries } from '@/lib/sessions/store';
 import { NextResponse } from 'next/server';
 
 export async function GET(): Promise<NextResponse> {

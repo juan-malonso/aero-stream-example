@@ -1,20 +1,20 @@
 import type {
   ConnectionGroup,
-  PlatformEventEnvelope,
-  PlatformSession,
-  PlatformSessionResult,
-  PlatformSessionStatus,
-  PlatformSessionSummary,
+  SessionEventEnvelope,
+  Session,
+  SessionResult,
+  SessionStatus,
+  SessionSummary,
 } from './types.ts';
-import { PlatformEventType } from './types.ts';
+import { SessionEventType } from './types.ts';
 
 /**
- * Process-level singleton for platform event storage.
+ * Process-level singleton for session event storage.
  * Uses the globalThis pattern to survive Next.js hot-reload in development.
  * Data is intentionally volatile — lost on process restart.
  */
 
-const STORE_KEY = '__aerostream_platform_store__' as const;
+const STORE_KEY = '__aerostream_sessions_store__' as const;
 
 interface StoredSession {
   sessionId: string;
@@ -22,9 +22,9 @@ interface StoredSession {
   createdAt: string;
   lastActivityAt: string;
   eventCount: number;
-  status: PlatformSessionStatus;
-  result?: PlatformSessionResult;
-  events: PlatformEventEnvelope[];
+  status: SessionStatus;
+  result?: SessionResult;
+  events: SessionEventEnvelope[];
 }
 
 interface GlobalWithStore {
@@ -39,7 +39,7 @@ function getStore(): Map<string, StoredSession> {
   return globalRef[STORE_KEY];
 }
 
-function deriveConnectionGroups(events: PlatformEventEnvelope[]): ConnectionGroup[] {
+function deriveConnectionGroups(events: SessionEventEnvelope[]): ConnectionGroup[] {
   const groupMap = new Map<string, ConnectionGroup>();
 
   for (const event of events) {
@@ -57,12 +57,12 @@ function deriveConnectionGroups(events: PlatformEventEnvelope[]): ConnectionGrou
     const group = groupMap.get(event.connectionId)!;
     group.events.push(event);
 
-    if (event.type === PlatformEventType.SESSION_CONNECTED) {
+    if (event.type === SessionEventType.SESSION_CONNECTED) {
       group.connectedAt = event.occurredAt;
       group.device = (event.payload.device as Record<string, unknown> | null) ?? null;
     }
 
-    if (event.type === PlatformEventType.SESSION_REQUESTED && !group.device) {
+    if (event.type === SessionEventType.SESSION_REQUESTED && !group.device) {
       group.device = (event.payload.device as Record<string, unknown> | null) ?? null;
     }
   }
@@ -70,7 +70,7 @@ function deriveConnectionGroups(events: PlatformEventEnvelope[]): ConnectionGrou
   return Array.from(groupMap.values());
 }
 
-export function addEvent(event: PlatformEventEnvelope): void {
+export function addEvent(event: SessionEventEnvelope): void {
   const store = getStore();
   const existing = store.get(event.sessionId);
 
@@ -79,9 +79,9 @@ export function addEvent(event: PlatformEventEnvelope): void {
     existing.lastActivityAt = event.occurredAt;
     existing.eventCount = existing.events.length;
 
-    if (event.type === PlatformEventType.SESSION_RESULT) {
+    if (event.type === SessionEventType.SESSION_RESULT) {
       existing.status = 'FINISHED';
-      existing.result = event.payload as unknown as PlatformSessionResult;
+      existing.result = event.payload as unknown as SessionResult;
     }
   } else {
     store.set(event.sessionId, {
@@ -96,9 +96,9 @@ export function addEvent(event: PlatformEventEnvelope): void {
   }
 }
 
-export function getSessionSummaries(): PlatformSessionSummary[] {
+export function getSessionSummaries(): SessionSummary[] {
   const store = getStore();
-  const summaries: PlatformSessionSummary[] = [];
+  const summaries: SessionSummary[] = [];
 
   store.forEach((session) => {
     summaries.push({
@@ -117,7 +117,7 @@ export function getSessionSummaries(): PlatformSessionSummary[] {
   );
 }
 
-export function getSessionDetail(sessionId: string): PlatformSession | null {
+export function getSessionDetail(sessionId: string): Session | null {
   const store = getStore();
   const session = store.get(sessionId);
   if (!session) return null;
@@ -129,6 +129,6 @@ export function getSessionDetail(sessionId: string): PlatformSession | null {
   };
 }
 
-export function clearPlatformSessionsForTest(): void {
+export function clearSessionsForTest(): void {
   getStore().clear();
 }

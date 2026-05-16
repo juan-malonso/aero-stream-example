@@ -1,4 +1,4 @@
-import { getTowerInitUrl, getTowerLiveUrl, type WorkerEndpointEnv } from '../config/workerEndpoints.ts';
+import { getTowerInitUrl, getTowerLiveUrl, type WorkerEndpointEnv } from '../../shared/config/workerEndpoints.ts';
 
 interface TowerRuntimeServiceOptions {
   towerInitUrl?: string;

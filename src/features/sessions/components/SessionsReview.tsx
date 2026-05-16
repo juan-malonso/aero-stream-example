@@ -1,5 +1,5 @@
-import { PlatformViewer } from '@/features/platform/components/PlatformViewer';
+import { SessionsViewer } from '@/features/sessions/components/SessionsViewer';
 
 export function SessionsReview() {
-  return <PlatformViewer />;
+  return <SessionsViewer />;
 }

@@ -10,7 +10,7 @@
     "deploy": "opennextjs-cloudflare deploy",
     "start": "next start",
     "lint": "eslint .",
-    "test": "node --experimental-strip-types --test src/aero-stream-example-library/builder.test.ts src/lib/config/workerEndpoints.test.ts src/lib/platform/store.test.ts src/lib/tower/towerRuntime.service.test.ts src/lib/video/downloadService.test.ts src/lib/workflow/workflow.service.test.ts"
+    "test": "node --experimental-strip-types --test src/aero-stream-example-library/builder.test.ts src/lib/shared/config/workerEndpoints.test.ts src/lib/sessions/store.test.ts src/lib/live/tower/towerRuntime.service.test.ts src/lib/shared/video/downloadService.test.ts src/lib/builder/workflow/workflow.service.test.ts"
   },
   "dependencies": {
     "@xyflow/react": "^12.10.2",

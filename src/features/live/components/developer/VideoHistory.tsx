@@ -64,7 +64,7 @@ function VideoHistoryItem({ session, isActive, onDownload }: VideoHistoryItemPro
 
         <Row gap="0.5rem" style={{ marginTop: '2px', width: '100%', color: colors.gray500 }}>
           <span style={{ flex: 1, fontSize: '10px', color: colors.gray400, display: 'flex', alignItems: 'center' }}>
-            {isActive ? 'Syncing...' : 'View in Platform tab'}
+            {isActive ? 'Syncing...' : 'View in Sessions tab'}
           </span>
           {onDownload && (
             <Button

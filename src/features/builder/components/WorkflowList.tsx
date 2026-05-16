@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useWorkflowMetadata } from '@/hooks/useWorkflow';
+import { useWorkflowMetadata } from '@/contexts/shared/workflow/useWorkflow';
 import { colors, radii, shadows, typography } from '@/styles/tokens';
 import { sectionHeaderStyle } from '@/styles/theme';
 import { Button, Input, Row, Column } from '@/components/ui';

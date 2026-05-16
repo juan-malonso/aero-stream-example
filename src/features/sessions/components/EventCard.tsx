@@ -2,13 +2,13 @@
 
 import { type CSSProperties, useState } from "react";
 
-import type { PlatformEventEnvelope } from "@/lib/platform/types";
-import { PlatformEventType } from "@/lib/platform/types";
+import type { SessionEventEnvelope } from "@/lib/sessions/types";
+import { SessionEventType } from "@/lib/sessions/types";
 import { colors, radii, shadows, typography } from "@/styles/tokens";
-import { downloadVideo, openVideo } from "@/lib/video/downloadService";
+import { downloadVideo, openVideo } from "@/lib/shared/video/downloadService";
 
 interface EventCardProps {
-  event: PlatformEventEnvelope;
+  event: SessionEventEnvelope;
   index: number;
 }
 
@@ -20,78 +20,78 @@ interface EventTheme {
   messageType: "in" | "out" | null;
 }
 
-const EVENT_THEMES: Record<PlatformEventType, EventTheme> = {
-  [PlatformEventType.SESSION_CREATED]: {
+const EVENT_THEMES: Record<SessionEventType, EventTheme> = {
+  [SessionEventType.SESSION_CREATED]: {
     accent: colors.gray800,
     background: colors.gray100,
     label: "Session Created",
     icon: "+",
     messageType: null,
   },
-  [PlatformEventType.SESSION_CONNECTED]: {
+  [SessionEventType.SESSION_CONNECTED]: {
     accent: colors.green800,
     background: colors.green100,
     label: "Session Connected",
     icon: "~",
     messageType: "in",
   },
-  [PlatformEventType.SESSION_CLOSED]: {
+  [SessionEventType.SESSION_CLOSED]: {
     accent: colors.green800,
     background: colors.green100,
     label: "Session Closed",
     icon: "×",
     messageType: "in",
   },
-  [PlatformEventType.SESSION_REQUESTED]: {
+  [SessionEventType.SESSION_REQUESTED]: {
     accent: colors.teal800,
     background: colors.teal100,
     label: "Session Requested",
     icon: "?",
     messageType: "in",
   },
-  [PlatformEventType.STEP_RENDERED]: {
+  [SessionEventType.STEP_RENDERED]: {
     accent: colors.violet800,
     background: colors.violet100,
     label: "Step Rendered",
     icon: ">",
     messageType: "out",
   },
-  [PlatformEventType.STEP_SUBMITTED]: {
+  [SessionEventType.STEP_SUBMITTED]: {
     accent: colors.red800,
     background: colors.red100,
     label: "Step Submitted",
     icon: "^",
     messageType: "in",
   },
-  [PlatformEventType.ALERT_RENDERED]: {
+  [SessionEventType.ALERT_RENDERED]: {
     accent: colors.yellow800,
     background: colors.yellow100,
     label: "Alert Rendered",
     icon: "!",
     messageType: "out",
   },
-  [PlatformEventType.ALERT_RESPONDED]: {
+  [SessionEventType.ALERT_RESPONDED]: {
     accent: colors.yellow800,
     background: colors.yellow100,
     label: "Alert Responded",
     icon: "*",
     messageType: "in",
   },
-  [PlatformEventType.SESSION_RESULT]: {
+  [SessionEventType.SESSION_RESULT]: {
     accent: colors.gray800,
     background: colors.gray100,
     label: "Session Result",
     icon: "=",
     messageType: "out",
   },
-  [PlatformEventType.TAILING_STEP]: {
+  [SessionEventType.TAILING_STEP]: {
     accent: colors.gray500,
     background: colors.gray50,
     label: "Tailing Step",
     icon: "~",
     messageType: "out",
   },
-  [PlatformEventType.TAILING_END]: {
+  [SessionEventType.TAILING_END]: {
     accent: colors.gray500,
     background: colors.gray50,
     label: "Tailing End",
@@ -142,7 +142,7 @@ function DirectionIcon({ type, color }: { type: "in" | "out"; color: string }) {
 export function EventCard({ event, index }: EventCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const theme =
-    EVENT_THEMES[event.type] ?? EVENT_THEMES[PlatformEventType.SESSION_CREATED];
+    EVENT_THEMES[event.type] ?? EVENT_THEMES[SessionEventType.SESSION_CREATED];
 
   const dateLabel = new Date(event.occurredAt);
   const timeLabel =
@@ -264,7 +264,7 @@ export function EventCard({ event, index }: EventCardProps) {
   );
 }
 
-function EventPayloadSummary({ event }: { event: PlatformEventEnvelope }) {
+function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
   const { type, payload } = event;
   const fieldStyle: CSSProperties = {
     display: "flex",
@@ -290,7 +290,7 @@ function EventPayloadSummary({ event }: { event: PlatformEventEnvelope }) {
   };
 
   switch (type) {
-    case PlatformEventType.SESSION_CREATED: {
+    case SessionEventType.SESSION_CREATED: {
       return (
         <div style={fieldStyle}>
           <span style={labelStyle}>Workflow</span>
@@ -299,7 +299,7 @@ function EventPayloadSummary({ event }: { event: PlatformEventEnvelope }) {
       );
     }
 
-    case PlatformEventType.SESSION_CONNECTED: {
+    case SessionEventType.SESSION_CONNECTED: {
       const device = payload.device as Record<string, unknown> | null;
       const { sessionId, connectionId } = event;
       const videoButtonStyle: CSSProperties = {
@@ -416,7 +416,7 @@ function EventPayloadSummary({ event }: { event: PlatformEventEnvelope }) {
       );
     }
 
-    case PlatformEventType.STEP_RENDERED: {
+    case SessionEventType.STEP_RENDERED: {
       return (
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           <div style={fieldStyle}>
@@ -439,7 +439,7 @@ function EventPayloadSummary({ event }: { event: PlatformEventEnvelope }) {
       );
     }
 
-    case PlatformEventType.STEP_SUBMITTED: {
+    case SessionEventType.STEP_SUBMITTED: {
       const submittedData = payload.data;
       const preview = submittedData
         ? JSON.stringify(submittedData).slice(0, 120)
@@ -463,7 +463,7 @@ function EventPayloadSummary({ event }: { event: PlatformEventEnvelope }) {
       );
     }
 
-    case PlatformEventType.SESSION_REQUESTED: {
+    case SessionEventType.SESSION_REQUESTED: {
       const device = payload.device as Record<string, unknown> | null;
       return (
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
@@ -500,7 +500,7 @@ function EventPayloadSummary({ event }: { event: PlatformEventEnvelope }) {
       );
     }
 
-    case PlatformEventType.ALERT_RENDERED: {
+    case SessionEventType.ALERT_RENDERED: {
       return (
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           <div style={fieldStyle}>
@@ -511,7 +511,7 @@ function EventPayloadSummary({ event }: { event: PlatformEventEnvelope }) {
       );
     }
 
-    case PlatformEventType.ALERT_RESPONDED: {
+    case SessionEventType.ALERT_RESPONDED: {
       const result = String(payload.result ?? "—");
       const responded = payload.data as Record<string, unknown> | undefined;
       const preview = responded
@@ -548,7 +548,7 @@ function EventPayloadSummary({ event }: { event: PlatformEventEnvelope }) {
       );
     }
 
-    case PlatformEventType.SESSION_RESULT: {
+    case SessionEventType.SESSION_RESULT: {
       return (
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           <div style={fieldStyle}>
@@ -563,7 +563,7 @@ function EventPayloadSummary({ event }: { event: PlatformEventEnvelope }) {
       );
     }
 
-    case PlatformEventType.TAILING_STEP: {
+    case SessionEventType.TAILING_STEP: {
       return (
         <div style={fieldStyle}>
           <span style={labelStyle}>Step</span>
@@ -572,7 +572,7 @@ function EventPayloadSummary({ event }: { event: PlatformEventEnvelope }) {
       );
     }
 
-    case PlatformEventType.TAILING_END: {
+    case SessionEventType.TAILING_END: {
       return (
         <span style={{ ...valueStyle, color: colors.gray400 }}>
           Session ended for tailing connection
@@ -580,7 +580,7 @@ function EventPayloadSummary({ event }: { event: PlatformEventEnvelope }) {
       );
     }
 
-    case PlatformEventType.SESSION_CLOSED: {
+    case SessionEventType.SESSION_CLOSED: {
       const wasClean = payload.wasClean === true;
       const reason = payload.reason == null ? "" : String(payload.reason);
       return (

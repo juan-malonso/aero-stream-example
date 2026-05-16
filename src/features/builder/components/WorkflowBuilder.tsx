@@ -6,9 +6,9 @@ import { SelfConnectingEdge } from './SelfConnectingEdge';
 
 import { createStepNodeData, getBuilderStepByNodeType } from '@/aero-stream-example-library';
 import { BUILDER_NODE_TYPES } from '@/aero-stream-example-library/builderNodes';
-import { useWorkflowGraph } from '@/hooks/useWorkflow';
-import { useImplicitEdges } from '@/hooks/useImplicitEdges';
-import { generateId } from '@/lib/uuid';
+import { useWorkflowGraph } from '@/contexts/shared/workflow/useWorkflow';
+import { useImplicitEdges } from '@/contexts/builder/workflow/useImplicitEdges';
+import { generateId } from '@/lib/shared/uuid';
 import { edgeFlowStyle, edgeFieldStyle } from '@/styles/theme';
 
 import '@xyflow/react/dist/style.css';

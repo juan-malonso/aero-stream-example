@@ -1,12 +1,12 @@
-export type PlatformSessionStatus = 'ACTIVE' | 'FINISHED';
-export type PlatformSessionResultType = 'COMPLETED' | 'TERMINATED' | 'ERROR';
+export type SessionStatus = 'ACTIVE' | 'FINISHED';
+export type SessionResultType = 'COMPLETED' | 'TERMINATED' | 'ERROR';
 
-export interface PlatformSessionResult {
-  type: PlatformSessionResultType;
+export interface SessionResult {
+  type: SessionResultType;
   reason: string;
 }
 
-export const PlatformEventType = {
+export const SessionEventType = {
   SESSION_CREATED: 'SESSION_CREATED',
   SESSION_CONNECTED: 'SESSION_CONNECTED',
   SESSION_REQUESTED: 'SESSION_REQUESTED',
@@ -20,15 +20,15 @@ export const PlatformEventType = {
   SESSION_CLOSED: 'SESSION_CLOSED',
 } as const;
 
-export type PlatformEventType = (typeof PlatformEventType)[keyof typeof PlatformEventType];
+export type SessionEventType = (typeof SessionEventType)[keyof typeof SessionEventType];
 
 export const SUPPORTED_EVENT_TYPES: ReadonlySet<string> = new Set<string>(
-  Object.values(PlatformEventType),
+  Object.values(SessionEventType),
 );
 
-export interface PlatformEventEnvelope {
+export interface SessionEventEnvelope {
   eventId: string;
-  type: PlatformEventType;
+  type: SessionEventType;
   occurredAt: string;
   sessionId: string;
   workflowId: string;
@@ -41,27 +41,27 @@ export interface ConnectionGroup {
   connectionId: string;
   connectedAt: string;
   device: Record<string, unknown> | null;
-  events: PlatformEventEnvelope[];
+  events: SessionEventEnvelope[];
 }
 
-export interface PlatformSession {
+export interface Session {
   sessionId: string;
   workflowId: string;
   createdAt: string;
   lastActivityAt: string;
   eventCount: number;
-  status: PlatformSessionStatus;
-  result?: PlatformSessionResult;
-  events: PlatformEventEnvelope[];
+  status: SessionStatus;
+  result?: SessionResult;
+  events: SessionEventEnvelope[];
   connections: ConnectionGroup[];
 }
 
-export interface PlatformSessionSummary {
+export interface SessionSummary {
   sessionId: string;
   workflowId: string;
   createdAt: string;
   lastActivityAt: string;
   eventCount: number;
-  status: PlatformSessionStatus;
-  result?: PlatformSessionResult;
+  status: SessionStatus;
+  result?: SessionResult;
 }

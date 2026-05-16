@@ -1,7 +1,7 @@
 'use client';
 
 import { Header } from '@/components/Header';
-import { WorkflowProvider } from '@/context/WorkflowContext';
+import { WorkflowProvider } from '@/contexts/shared/workflow/WorkflowContext';
 import { colors } from '@/styles/tokens';
 
 import type { CSSProperties, ReactNode } from 'react';

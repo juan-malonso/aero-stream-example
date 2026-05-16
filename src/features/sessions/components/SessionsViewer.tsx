@@ -2,16 +2,16 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-import type { PlatformSession, PlatformSessionSummary } from '@/lib/platform/types';
+import type { Session, SessionSummary } from '@/lib/sessions/types';
 import { colors, shadows, typography } from '@/styles/tokens';
 
 import { SessionDetail } from './SessionDetail';
 import { SessionList } from './SessionList';
 
-export function PlatformViewer() {
-  const [sessions, setSessions] = useState<PlatformSessionSummary[]>([]);
+export function SessionsViewer() {
+  const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
-  const [selectedSession, setSelectedSession] = useState<PlatformSession | null>(null);
+  const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [isLoadingList, setIsLoadingList] = useState(true);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
 
@@ -19,10 +19,10 @@ export function PlatformViewer() {
     try {
       const response = await fetch('/api/sessions');
       if (!response.ok) return;
-      const json = (await response.json()) as { data: PlatformSessionSummary[] };
+      const json = (await response.json()) as { data: SessionSummary[] };
       setSessions(json.data);
     } catch (error: unknown) {
-      console.error('Failed to fetch platform sessions:', error);
+      console.error('Failed to fetch sessions:', error);
     } finally {
       setIsLoadingList(false);
     }
@@ -38,7 +38,7 @@ export function PlatformViewer() {
     try {
       const response = await fetch(`/api/sessions/${sessionId}`);
       if (!response.ok) return;
-      const json = (await response.json()) as { data: PlatformSession };
+      const json = (await response.json()) as { data: Session };
       setSelectedSession(json.data);
     } catch (error: unknown) {
       console.error('Failed to fetch session detail:', error);

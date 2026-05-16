@@ -8,11 +8,12 @@ Use a route-owned microfrontend architecture inside the existing `aero-stream-ex
 - Live surface: `/live`
 - Sessions surface: `/sessions`
 - Shared step module: `src/aero-stream-example-library`
-- Shared workflow state: `src/context/WorkflowContext.tsx`
+- Shared workflow state: `src/contexts/shared/workflow/WorkflowContext.tsx`
 - Shared UI primitives and visual language: `src/components/ui`, `src/styles`
+- Microfrontend libraries: `src/lib/builder`, `src/lib/live`, `src/lib/sessions`, and `src/lib/shared`
 - Worker deployment path: Next.js App Router built for Cloudflare Workers through the OpenNext Cloudflare adapter
 
-This keeps the current React and Next.js implementation where it is useful, but the architecture does not depend on a tab-only app shell. Each surface has a route boundary, a feature boundary, and explicit shared-library imports.
+This keeps the current React and Next.js implementation where it is useful, but the architecture does not depend on a tab-only app shell. Each surface has a route boundary, a feature boundary, a context boundary when it owns state, and explicit shared-library imports.
 
 ## Options Considered
 
@@ -40,15 +41,24 @@ This keeps the current React and Next.js implementation where it is useful, but 
 
 ### Builder
 
-`src/app/(microfrontends)/builder/page.tsx` and `src/features/builder` own workflow authoring. Builder consumes step configuration from `aero-stream-example-library`.
+`src/app/(microfrontends)/builder/page.tsx` and `src/features/builder` own workflow authoring. Builder consumes step configuration from `aero-stream-example-library`, Builder workflow services from `src/lib/builder/workflow`, and Builder-only context hooks from `src/contexts/builder/workflow`.
 
 ### Live
 
-`src/app/(microfrontends)/live/page.tsx` and `src/features/live` own session creation and Pilot execution. Live consumes step renderers from `aero-stream-example-library`.
+`src/app/(microfrontends)/live/page.tsx` and `src/features/live` own session creation and Pilot execution. Live consumes step renderers from `aero-stream-example-library` and Tower runtime helpers from `src/lib/live/tower`.
 
 ### Sessions
 
-`src/app/(microfrontends)/sessions/page.tsx`, `src/features/sessions`, and `src/app/api/sessions/**` own session review and event reception. Legacy `/api/platform/**` API aliases are intentionally removed so inbound events use the Sessions-owned endpoint.
+`src/app/(microfrontends)/sessions/page.tsx`, `src/features/sessions`, `src/lib/sessions`, and `src/app/api/sessions/**` own session review and event reception. Legacy `/api/platform/**` API aliases are intentionally removed so inbound events use the Sessions-owned endpoint.
+
+### Shared Context And Libraries
+
+`src/contexts/shared/workflow` owns workflow state shared by Builder and Live. `src/lib/shared` owns cross-surface infrastructure such as Worker endpoint configuration and Controller video helpers. Surface-specific libraries must stay under their owning microfrontend folder:
+
+- `src/lib/builder/**`
+- `src/lib/live/**`
+- `src/lib/sessions/**`
+- `src/lib/shared/**`
 
 ### Step Library
 
@@ -70,6 +80,8 @@ The first migration includes exactly the current step types:
 - Feature surfaces may import from `src/aero-stream-example-library`.
 - The step library owns the complete Builder and Live step components; `src/components/steps` is not a step boundary anymore.
 - The step library must not import Builder, Live, or Sessions feature components.
+- Surface-specific services live under `src/lib/<surface>` and shared services under `src/lib/shared`.
+- Surface-specific context hooks live under `src/contexts/<surface>` and shared contexts under `src/contexts/shared`.
 - Sessions APIs must stay inside `aero-stream-example`.
 - Tower runtime code, Pilot, and Controller are out of scope for this requirement; Tower destination configuration may point local example flows at `/api/sessions/events`.
 

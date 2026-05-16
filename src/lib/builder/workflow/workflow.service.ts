@@ -1,5 +1,5 @@
 import { type TowerWorkflow, type WorkflowMetadata } from './workflow.ts';
-import { getControllerAdminHeaders, getControllerApiUrl } from '../config/workerEndpoints.ts';
+import { getControllerAdminHeaders, getControllerApiUrl } from '../../shared/config/workerEndpoints.ts';
 
 interface WorkflowServiceOptions {
   controllerAdminToken?: string;

@@ -1,11 +1,11 @@
 'use client';
 
-import { type WorkflowConfig, type WorkflowMetadata } from '@/lib/workflow/workflow';
-import { workflowService } from '@/lib/workflow/workflow.service';
-import { parseReactFlowToTower, parseTowerToReactFlow } from '@/lib/workflow/workflowAdapter';
-
-import React, { createContext, type ReactNode, useCallback, useEffect, useState, useContext } from 'react';
 import { applyEdgeChanges, applyNodeChanges, type Edge, type Node, type OnEdgesChange, type OnNodesChange } from '@xyflow/react';
+import React, { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
+
+import { type WorkflowConfig, type WorkflowMetadata } from '@/lib/builder/workflow/workflow';
+import { workflowService } from '@/lib/builder/workflow/workflow.service';
+import { parseReactFlowToTower, parseTowerToReactFlow } from '@/lib/builder/workflow/workflowAdapter';
 
 interface WorkflowMetadataContextProps {
   workflows: WorkflowMetadata[];

@@ -87,10 +87,17 @@ src/
 │   ├── builder/             # Visual workflow builder UI
 │   ├── live/                # Live workflow execution view
 │   └── sessions/            # Session review microfrontend
+├── contexts/
+│   ├── builder/             # Builder-owned state helpers
+│   └── shared/              # Contexts shared across surfaces
+├── lib/
+│   ├── builder/             # Builder-owned workflow libraries
+│   ├── live/                # Live-owned Tower runtime libraries
+│   ├── sessions/            # Sessions-owned event store and types
+│   └── shared/              # Cross-surface config and video helpers
 ├── components/
 │   └── ui/                  # Shared UI primitives
-├── context/                 # WorkflowContext
-└── hooks/                   # useWorkflow
+└── styles/                  # Shared tokens and global styles
 ```
 
 ## Connecting to Controller and Tower
@@ -101,7 +108,7 @@ src/
 4. Switch to `/live` to create a session and execute the workflow through Tower/Pilot.
 5. Use `/sessions` to review session events received by the example app.
 
-Controller workflow/video route details are still owned by the upstream Controller task. This example keeps those calls isolated in `src/lib/workflow/workflow.service.ts` and `src/lib/video/downloadService.ts` so final path changes stay local to the client boundary.
+Controller workflow/video route details are still owned by the upstream Controller task. This example keeps those calls isolated in `src/lib/builder/workflow/workflow.service.ts` and `src/lib/shared/video/downloadService.ts` so final path changes stay local to the client boundary.
 
 ## Adding Custom Steps
 

@@ -5,9 +5,9 @@ import { PerformanceStats } from './developer';
 import { PilotConnection, type PilotConnectionHandle } from './implement';
 
 import { useCallback, useRef, useState } from 'react';
-import { useWorkflowMetadata } from '@/hooks/useWorkflow';
+import { useWorkflowMetadata } from '@/contexts/shared/workflow/useWorkflow';
 import { Row, Column, Select, Button, Input } from '@/components/ui';
-import { towerRuntimeService } from '@/lib/tower/towerRuntime.service.ts';
+import { towerRuntimeService } from '@/lib/live/tower/towerRuntime.service.ts';
 import { colors, radii, shadows, typography } from '@/styles/tokens';
 import { sectionHeaderStyle } from '@/styles/theme';
 

@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 
-import type { PlatformSessionSummary } from '@/lib/platform/types';
+import type { SessionSummary } from '@/lib/sessions/types';
 import { colors, radii, typography } from '@/styles/tokens';
 
 interface SessionListProps {
-  sessions: PlatformSessionSummary[];
+  sessions: SessionSummary[];
   selectedSessionId: string | null;
   isLoading: boolean;
   onSelectSession: (sessionId: string) => void;
@@ -49,7 +49,7 @@ export function SessionList({ sessions, selectedSessionId, isLoading, onSelectSe
 }
 
 interface SessionListItemProps {
-  session: PlatformSessionSummary;
+  session: SessionSummary;
   isSelected: boolean;
   onSelect: () => void;
 }

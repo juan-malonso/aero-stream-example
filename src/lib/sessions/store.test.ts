@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { addEvent, clearPlatformSessionsForTest, getSessionDetail, getSessionSummaries } from './store.ts';
-import { PlatformEventType, type PlatformEventEnvelope } from './types.ts';
+import { addEvent, clearSessionsForTest, getSessionDetail, getSessionSummaries } from './store.ts';
+import { SessionEventType, type SessionEventEnvelope } from './types.ts';
 
-function event(overrides: Partial<PlatformEventEnvelope> = {}): PlatformEventEnvelope {
+function event(overrides: Partial<SessionEventEnvelope> = {}): SessionEventEnvelope {
   return {
     eventId: overrides.eventId ?? 'event-1',
-    type: overrides.type ?? PlatformEventType.SESSION_CREATED,
+    type: overrides.type ?? SessionEventType.SESSION_CREATED,
     occurredAt: overrides.occurredAt ?? '2026-05-16T00:00:00.000Z',
     sessionId: overrides.sessionId ?? 'session-1',
     workflowId: overrides.workflowId ?? 'workflow-1',
@@ -18,12 +18,12 @@ function event(overrides: Partial<PlatformEventEnvelope> = {}): PlatformEventEnv
 }
 
 test('stores session events for summaries and detail review', () => {
-  clearPlatformSessionsForTest();
+  clearSessionsForTest();
 
   addEvent(event());
   addEvent(event({
     eventId: 'event-2',
-    type: PlatformEventType.SESSION_CONNECTED,
+    type: SessionEventType.SESSION_CONNECTED,
     occurredAt: '2026-05-16T00:01:00.000Z',
     connectionId: 'connection-1',
     payload: { device: { kind: 'browser' } },
@@ -40,12 +40,12 @@ test('stores session events for summaries and detail review', () => {
 });
 
 test('marks session result as finished', () => {
-  clearPlatformSessionsForTest();
+  clearSessionsForTest();
 
   addEvent(event());
   addEvent(event({
     eventId: 'event-2',
-    type: PlatformEventType.SESSION_RESULT,
+    type: SessionEventType.SESSION_RESULT,
     payload: { type: 'COMPLETED', reason: 'done' },
   }));
 

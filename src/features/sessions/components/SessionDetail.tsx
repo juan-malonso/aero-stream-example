@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { ConnectionGroup, PlatformSession } from "@/lib/platform/types";
-import { PlatformEventType } from "@/lib/platform/types";
+import type { ConnectionGroup, Session } from "@/lib/sessions/types";
+import { SessionEventType } from "@/lib/sessions/types";
 import { colors, radii, shadows, typography } from "@/styles/tokens";
 import { EventCard } from "./EventCard";
 
 interface SessionDetailProps {
-  session: PlatformSession | null;
+  session: Session | null;
   isLoading: boolean;
 }
 
@@ -472,10 +472,10 @@ export function SessionDetail({ session, isLoading }: SessionDetailProps) {
   }
 
   const globalEvents = session.events.filter(
-    (e) => !e.connectionId && e.type !== PlatformEventType.SESSION_RESULT,
+    (e) => !e.connectionId && e.type !== SessionEventType.SESSION_RESULT,
   );
   const resultEvents = session.events.filter(
-    (e) => e.type === PlatformEventType.SESSION_RESULT,
+    (e) => e.type === SessionEventType.SESSION_RESULT,
   );
 
   // Group all connection events into ±5ms buckets so near-simultaneous events
