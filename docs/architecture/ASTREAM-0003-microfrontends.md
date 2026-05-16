@@ -48,7 +48,7 @@ This keeps the current React and Next.js implementation where it is useful, but 
 
 ### Sessions
 
-`src/app/(microfrontends)/sessions/page.tsx`, `src/features/sessions`, and `src/app/api/sessions/**` own session review and event reception. Existing `/api/platform/**` routes remain as compatibility aliases.
+`src/app/(microfrontends)/sessions/page.tsx`, `src/features/sessions`, and `src/app/api/sessions/**` own session review and event reception. Legacy `/api/platform/**` API aliases are intentionally removed so inbound events use the Sessions-owned endpoint.
 
 ### Step Library
 
@@ -71,7 +71,7 @@ The first migration includes exactly the current step types:
 - The step library may import reusable step UI components from `src/components/steps`.
 - The step library must not import Builder, Live, or Sessions feature components.
 - Sessions APIs must stay inside `aero-stream-example`.
-- Tower, Pilot, and Controller repositories are out of scope for this requirement.
+- Tower runtime code, Pilot, and Controller are out of scope for this requirement; Tower destination configuration may point local example flows at `/api/sessions/events`.
 
 ## Validation
 
