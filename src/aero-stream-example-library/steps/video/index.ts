@@ -1,4 +1,4 @@
 export { videoBuilderStep } from './builder';
-export { VideoNode } from './node';
-export { VideoComponent } from './VideoComponent';
+export { VideoNode } from './builder';
+export { VideoComponent } from './live';
 export { videoLiveStep } from './live';

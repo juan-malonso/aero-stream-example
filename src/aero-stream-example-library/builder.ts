@@ -1,9 +1,9 @@
 import type { StepNodeData } from './builder/types.ts';
 
-import { doneBuilderStep } from './steps/done/builder.ts';
-import { kycBuilderStep } from './steps/kyc/builder.ts';
-import { videoBuilderStep } from './steps/video/builder.ts';
-import { welcomeBuilderStep } from './steps/welcome/builder.ts';
+import { doneBuilderStep } from './steps/done/builder';
+import { kycBuilderStep } from './steps/kyc/builder';
+import { videoBuilderStep } from './steps/video/builder';
+import { welcomeBuilderStep } from './steps/welcome/builder';
 import type { BuilderStepDefinition, ComponentMeta } from './types.ts';
 
 export const BUILDER_STEP_DEFINITIONS = [

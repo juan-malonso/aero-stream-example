@@ -54,10 +54,8 @@ This keeps the current React and Next.js implementation where it is useful, but 
 
 `src/aero-stream-example-library` owns the current example step set. Each step folder has:
 
-- `builder.ts` for Builder configuration metadata and mappings.
-- `node.tsx` for the Builder node rendering for that step.
-- `<StepName>Component.tsx` for the complete Live component implementation.
-- `live.tsx` for Pilot Live registration.
+- `builder.tsx` for Builder configuration metadata, mappings, and Builder node rendering.
+- `live.tsx` for the complete Pilot Live component implementation and Live registration.
 - `index.ts` for step-local exports.
 
 The first migration includes exactly the current step types:

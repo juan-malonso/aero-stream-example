@@ -1,4 +1,6 @@
 import { colors } from '../../../styles/tokens.ts';
+import { StepNode } from '../../builder/StepNode';
+import type { StepNodeData } from '../../builder/types';
 import type { BuilderStepDefinition } from '../../types.ts';
 
 export const kycBuilderStep: BuilderStepDefinition = {
@@ -11,3 +13,7 @@ export const kycBuilderStep: BuilderStepDefinition = {
   propKeys: ['title', 'description'],
   accentColor: colors.emerald500,
 };
+
+export function KYCNode({ id, data }: { id: string; data: StepNodeData }) {
+  return <StepNode id={id} data={data} accentColor={kycBuilderStep.accentColor} />;
+}

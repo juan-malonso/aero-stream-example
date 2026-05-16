@@ -1,4 +1,4 @@
 export { welcomeBuilderStep } from './builder';
-export { WelcomeNode } from './node';
-export { WelcomeComponent } from './WelcomeComponent';
+export { WelcomeNode } from './builder';
+export { WelcomeComponent } from './live';
 export { welcomeLiveStep } from './live';

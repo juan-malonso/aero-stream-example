@@ -1,4 +1,6 @@
 import { colors } from '../../../styles/tokens.ts';
+import { StepNode } from '../../builder/StepNode';
+import type { StepNodeData } from '../../builder/types';
 import type { BuilderStepDefinition } from '../../types.ts';
 
 export const videoBuilderStep: BuilderStepDefinition = {
@@ -11,3 +13,7 @@ export const videoBuilderStep: BuilderStepDefinition = {
   propKeys: ['title', 'subtitle'],
   accentColor: colors.cyan500,
 };
+
+export function VideoNode({ id, data }: { id: string; data: StepNodeData }) {
+  return <StepNode id={id} data={data} accentColor={videoBuilderStep.accentColor} />;
+}

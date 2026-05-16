@@ -1,7 +1,7 @@
-import { DoneNode } from './steps/done/node';
-import { KYCNode } from './steps/kyc/node';
-import { VideoNode } from './steps/video/node';
-import { WelcomeNode } from './steps/welcome/node';
+import { DoneNode } from './steps/done/builder';
+import { KYCNode } from './steps/kyc/builder';
+import { VideoNode } from './steps/video/builder';
+import { WelcomeNode } from './steps/welcome/builder';
 
 export const BUILDER_NODE_TYPES = {
   welcomeStep: WelcomeNode,

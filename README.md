@@ -109,14 +109,12 @@ Steps are owned by `src/aero-stream-example-library`. Add one folder per step an
 
 ```text
 src/aero-stream-example-library/steps/my-step/
-├── builder.ts
-├── node.tsx
-├── MyStepComponent.tsx
+├── builder.tsx
 ├── live.tsx
 └── index.ts
 ```
 
-Then export the step from the aggregate Builder, Builder node, and Live registries. The Live component receives `{ data, submit, reject }` props from the SDK.
+Then export the step from the aggregate Builder, Builder node, and Live registries. `builder.tsx` owns Builder metadata plus node rendering; `live.tsx` owns the Live component plus SDK registration.
 
 ## License
 
