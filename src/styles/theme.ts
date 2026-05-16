@@ -3,8 +3,8 @@
 // Components import styles from here, never from raw tokens directly.
 // ---------------------------------------------------------------------------
 
-import { type CSSProperties } from 'react';
-import { colors, radii, shadows, typography } from './tokens';
+import { type CSSProperties } from "react";
+import { colors, radii, shadows, typography } from "./tokens";
 
 // ---------------------------------------------------------------------------
 // Badge styles
@@ -12,20 +12,23 @@ import { colors, radii, shadows, typography } from './tokens';
 
 export const BADGE_PALETTE: Record<string, { bg: string; text: string }> = {
   FRONT: { bg: colors.blue100, text: colors.blue700 },
-  BACK:  { bg: colors.yellow100, text: colors.yellow700 },
+  BACK: { bg: colors.yellow100, text: colors.yellow700 },
 };
 
 export const badgeStyle = (mode: string): CSSProperties => {
-  const palette = BADGE_PALETTE[mode] ?? { bg: colors.gray100, text: colors.gray700 };
+  const palette = BADGE_PALETTE[mode] ?? {
+    bg: colors.gray100,
+    text: colors.gray700,
+  };
   return {
-    display: 'inline-block',
-    padding: '2px 6px',
-    fontSize: typography.sizes['2xs'],
+    display: "inline-block",
+    padding: "2px 6px",
+    fontSize: typography.sizes["2xs"],
     fontWeight: typography.weights.bold,
     borderRadius: radii.full,
     background: palette.bg,
     color: palette.text,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
   };
 };
 
@@ -38,26 +41,26 @@ export const cardStyle: CSSProperties = {
   borderRadius: radii.lg,
   background: colors.white,
   fontSize: typography.sizes.md,
-  minWidth: '240px',
-  display: 'flex',
-  flexDirection: 'column',
+  minWidth: "240px",
+  display: "flex",
+  flexDirection: "column",
   boxShadow: shadows.md,
   fontFamily: typography.fontFamily,
 };
 
 export const cardHeaderStyle = (accentColor: string): CSSProperties => ({
   fontWeight: typography.weights.semibold,
-  textAlign: 'center',
+  textAlign: "center",
   borderBottom: `3px solid ${accentColor}`,
   borderTopLeftRadius: radii.lg,
   borderTopRightRadius: radii.lg,
-  padding: '10px 12px',
+  padding: "10px 12px",
   background: colors.gray50,
   color: colors.gray800,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  gap: '4px',
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: "4px",
 });
 
 // ---------------------------------------------------------------------------
@@ -69,27 +72,27 @@ export const handleStyles = {
     background: colors.stepFlow,
     width: `${size}px`,
     height: `${size}px`,
-    border: 'none',
+    border: "none",
   }),
   flowTarget: (size = 10): CSSProperties => ({
     background: colors.white,
     width: `${size}px`,
     height: `${size}px`,
     border: `3px solid ${colors.stepFlow}`,
-    boxSizing: 'border-box' as const,
+    boxSizing: "border-box" as const,
   }),
   fieldSource: (size = 10): CSSProperties => ({
     background: colors.fieldData,
     width: `${size}px`,
     height: `${size}px`,
-    border: 'none',
+    border: "none",
   }),
   fieldTarget: (size = 10): CSSProperties => ({
     background: colors.white,
     width: `${size}px`,
     height: `${size}px`,
     border: `3px solid ${colors.fieldData}`,
-    boxSizing: 'border-box' as const,
+    boxSizing: "border-box" as const,
   }),
 };
 
@@ -100,9 +103,9 @@ export const handleStyles = {
 export const sectionLabelStyle = (color: string): CSSProperties => ({
   color,
   fontSize: typography.sizes.xs,
-  marginBottom: '6px',
-  textTransform: 'uppercase',
-  letterSpacing: '0.5px',
+  marginBottom: "6px",
+  textTransform: "uppercase",
+  letterSpacing: "0.5px",
   fontWeight: typography.weights.semibold,
 });
 
@@ -111,19 +114,19 @@ export const sectionLabelStyle = (color: string): CSSProperties => ({
 // ---------------------------------------------------------------------------
 
 export const inputBaseStyle: CSSProperties = {
-  width: '100%',
-  boxSizing: 'border-box',
-  padding: '6px',
+  width: "100%",
+  boxSizing: "border-box",
+  padding: "6px",
   border: `1px solid ${colors.gray300}`,
   borderRadius: radii.md,
-  outline: 'none',
+  outline: "none",
   color: colors.gray700,
   fontFamily: typography.fontFamily,
 };
 
 export const inputSmallStyle: CSSProperties = {
   ...inputBaseStyle,
-  padding: '4px 6px',
+  padding: "4px 6px",
   fontSize: typography.sizes.sm,
 };
 
@@ -146,36 +149,36 @@ export const edgeFieldStyle: CSSProperties = {
 // ---------------------------------------------------------------------------
 
 export const sidebarContainerStyle: CSSProperties = {
-  width: '330px',
+  width: "330px",
   borderRight: `1px solid ${colors.gray200}`,
-  display: 'grid',
-  gridTemplateRows: '1fr 1fr',
+  display: "grid",
+  gridTemplateRows: "1fr 1fr",
   background: colors.gray50,
-  height: '100%',
+  height: "100%",
   fontFamily: typography.fontFamily,
 };
 
 export const toolboxItemStyle = (accentColor: string): CSSProperties => ({
-  padding: '12px 16px',
+  padding: "12px 16px",
   border: `1px solid ${colors.gray200}`,
   borderBottom: `3px solid ${accentColor}`,
   borderRadius: radii.lg,
-  cursor: 'grab',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
+  cursor: "grab",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
   background: colors.white,
   boxShadow: shadows.xs,
   fontSize: typography.sizes.base,
   fontWeight: typography.weights.medium,
   color: colors.gray700,
-  transition: 'transform 0.1s, box-shadow 0.1s',
+  transition: "transform 0.1s, box-shadow 0.1s",
 });
 
 export const sectionHeaderStyle: CSSProperties = {
   fontSize: typography.sizes.base,
   fontWeight: typography.weights.bold,
-  color: 'var(--surface-primary700, var(--color-gray500))',
-  textTransform: 'uppercase',
-  letterSpacing: '0.05em',
+  color: "var(--surface-primary500, var(--color-gray500))",
+  textTransform: "uppercase",
+  letterSpacing: "0.05em",
 };

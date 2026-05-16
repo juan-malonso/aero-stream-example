@@ -86,7 +86,7 @@ export function PilotExample() {
       copyFeedbackTimeoutRef.current = setTimeout(() => {
         setIsSessionCopied(false);
         copyFeedbackTimeoutRef.current = null;
-      }, 2000);
+      }, 1000);
     } catch (error) {
       console.error("Unable to copy session ID:", error);
     }
@@ -205,9 +205,9 @@ export function PilotExample() {
                     aria-label="Session UUID"
                     style={{
                       paddingRight: "2rem",
-                      borderColor: isSessionIdValid
-                        ? "var(--surface-primary600, var(--color-blue600))"
-                        : colors.red500,
+                      border: isSessionIdValid
+                        ? "2px solid var(--surface-primary600, var(--color-blue600))"
+                        : "2px solid var(--surface-red500, var(--color-red500))",
                       color: isSessionIdValid
                         ? "var(--surface-primary600, var(--color-blue600))"
                         : colors.red700,
@@ -239,7 +239,6 @@ export function PilotExample() {
                   onClick={() => {
                     void handleCopySessionId();
                   }}
-                  disabled={!sessionId}
                   variant="secondary"
                   size="lg"
                   aria-label="Copy session UUID"
@@ -248,10 +247,10 @@ export function PilotExample() {
                     height: "38px",
                     padding: 0,
                     borderRadius: "8px",
-                    borderColor: isSessionCopied
-                      ? colors.green500
-                      : colors.gray300,
-                    color: isSessionCopied ? colors.green600 : colors.gray700,
+                    border: isSessionCopied
+                      ? "2px solid var(--surface-green600, var(--color-green600))"
+                      : "2px solid var(--surface-gray300, var(--color-gray300))",
+                    color: isSessionCopied ? colors.green600 : colors.gray600,
                   }}
                 >
                   {isSessionCopied ? (
@@ -298,6 +297,8 @@ export function PilotExample() {
                     height: "38px",
                     padding: 0,
                     borderRadius: "8px",
+                    border:
+                      "2px solid var(--surface-gray300, var(--color-gray300))",
                   }}
                 >
                   ↻

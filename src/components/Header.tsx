@@ -1,21 +1,40 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import React, { useState, type CSSProperties } from 'react';
-import { colors, typography } from '@/styles/tokens';
-import { Row } from '@/components/ui';
-import { getMicrofrontendTheme, MICROFRONTEND_THEMES, type MicrofrontendTheme } from '@/styles/microfrontends';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import React, { useState, type CSSProperties } from "react";
+import { colors, typography } from "@/styles/tokens";
+import { Row } from "@/components/ui";
+import {
+  getMicrofrontendTheme,
+  MICROFRONTEND_THEMES,
+  type MicrofrontendTheme,
+} from "@/styles/microfrontends";
 
 interface NavItemProps {
   theme: MicrofrontendTheme;
+  current: MicrofrontendTheme;
   isActive: boolean;
 }
 
-function SurfaceIcon({ icon, color, size = 20 }: { icon: MicrofrontendTheme['icon']; color: string; size?: number }) {
-  if (icon === 'puzzle') {
+function SurfaceIcon({
+  icon,
+  color,
+  size = 20,
+}: {
+  icon: MicrofrontendTheme["icon"];
+  color: string;
+  size?: number;
+}) {
+  if (icon === "puzzle") {
     return (
-      <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <svg
+        aria-hidden="true"
+        width={size}
+        height={size}
+        viewBox="1 1 22 22"
+        fill="none"
+      >
         <path
           fillRule="evenodd"
           clipRule="evenodd"
@@ -26,9 +45,15 @@ function SurfaceIcon({ icon, color, size = 20 }: { icon: MicrofrontendTheme['ico
     );
   }
 
-  if (icon === 'play') {
+  if (icon === "play") {
     return (
-      <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <svg
+        aria-hidden="true"
+        width={size}
+        height={size}
+        viewBox="1 1 22 22"
+        fill="none"
+      >
         <path
           fillRule="evenodd"
           d="M12 23C5.92487 23 1 18.0751 1 12C1 5.92487 5.92487 1 12 1C18.0751 1 23 5.92487 23 12C23 18.0751 18.0751 23 12 23ZM12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21ZM8 17V7C8 6.21456 8.86395 5.73572 9.53 6.152L17.53 11.152C18.1567 11.5437 18.1567 12.4563 17.53 12.848L9.53 17.848C8.86395 18.2643 8 17.7854 8 17ZM15.1132 12L10 8.80425V15.1958L15.1132 12Z"
@@ -39,7 +64,13 @@ function SurfaceIcon({ icon, color, size = 20 }: { icon: MicrofrontendTheme['ico
   }
 
   return (
-    <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <svg
+      aria-hidden="true"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+    >
       <path
         d="M3 5.67541V3C3 2.44772 2.55228 2 2 2C1.44772 2 1 2.44772 1 3V7C1 8.10457 1.89543 9 3 9H7C7.55229 9 8 8.55229 8 8C8 7.44772 7.55229 7 7 7H4.52186C4.54218 6.97505 4.56157 6.94914 4.57995 6.92229C5.621 5.40094 7.11009 4.22911 8.85191 3.57803C10.9074 2.80968 13.173 2.8196 15.2217 3.6059C17.2704 4.3922 18.9608 5.90061 19.9745 7.8469C20.9881 9.79319 21.2549 12.043 20.7247 14.1724C20.1945 16.3018 18.9039 18.1638 17.0959 19.4075C15.288 20.6513 13.0876 21.1909 10.9094 20.9247C8.73119 20.6586 6.72551 19.605 5.27028 17.9625C4.03713 16.5706 3.27139 14.8374 3.06527 13.0055C3.00352 12.4566 2.55674 12.0079 2.00446 12.0084C1.45217 12.0088 0.995668 12.4579 1.04626 13.0078C1.25994 15.3309 2.2082 17.5356 3.76666 19.2946C5.54703 21.3041 8.00084 22.5931 10.6657 22.9188C13.3306 23.2444 16.0226 22.5842 18.2345 21.0626C20.4464 19.541 22.0254 17.263 22.6741 14.6578C23.3228 12.0526 22.9963 9.30013 21.7562 6.91897C20.5161 4.53782 18.448 2.69239 15.9415 1.73041C13.4351 0.768419 10.6633 0.756291 8.14853 1.69631C6.06062 2.47676 4.26953 3.86881 3 5.67541Z"
         fill={color}
@@ -52,32 +83,43 @@ function SurfaceIcon({ icon, color, size = 20 }: { icon: MicrofrontendTheme['ico
   );
 }
 
-function NavItem({ theme, isActive }: NavItemProps) {
+function NavItem({ theme, current, isActive }: NavItemProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const activeColor = theme.primary600;
-  const iconColor = isActive ? activeColor : (isHovered ? theme.primary500 : colors.gray500);
-  const interactionColor = isActive ? activeColor : (isHovered ? theme.primary600 : colors.gray500);
+  const activeColor = current.primary700;
+  const iconColor = isActive
+    ? activeColor
+    : isHovered
+      ? current.primary500
+      : colors.gray500;
+  const interactionColor = isActive
+    ? activeColor
+    : isHovered
+      ? current.primary600
+      : colors.gray500;
 
   const navItemStyle: CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '0.5rem',
-    padding: '0 1.25rem',
-    width: '190px',
-    height: '100%',
-    cursor: 'pointer',
-    fontSize: '0.95rem',
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "0.5rem",
+    padding: "0 1.25rem",
+    width: "190px",
+    height: "100%",
+    cursor: "pointer",
+    fontSize: "0.95rem",
     fontWeight: 500,
     color: interactionColor,
-    borderBottom: isActive ? `3px solid ${activeColor}` : (isHovered ? `3px solid ${theme.primary200}` : '3px solid transparent'),
-    transition: 'all 0.2s ease',
-    backgroundColor: isActive ? theme.primary50 : (isHovered ? theme.primary50 : 'transparent'),
-    borderTop: 'none',
-    borderLeft: 'none',
-    borderRight: 'none',
-    outline: 'none',
-    textDecoration: 'none',
+    transition: "all 0.2s ease",
+    backgroundColor: isActive
+      ? current.primary100
+      : isHovered
+        ? current.primary50
+        : "transparent",
+    borderTop: "none",
+    borderLeft: "none",
+    borderRight: "none",
+    outline: "none",
+    textDecoration: "none",
   };
 
   return (
@@ -87,19 +129,25 @@ function NavItem({ theme, isActive }: NavItemProps) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <span style={{
-        width: '28px',
-        height: '28px',
-        flex: '0 0 32px',
-        minWidth: '32px',
-        minHeight: '32px',
-        borderRadius: '8px',
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: isActive ? theme.primary100 : (isHovered ? theme.primary50 : 'transparent'),
-        border: `1px solid ${isActive || isHovered ? theme.primary200 : colors.gray200}`,
-      }}>
+      <span
+        style={{
+          width: "28px",
+          height: "28px",
+          flex: "0 0 32px",
+          minWidth: "32px",
+          minHeight: "32px",
+          borderRadius: "8px",
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: isActive
+            ? current.primary100
+            : isHovered
+              ? current.primary50
+              : "transparent",
+          border: `1px solid ${isActive || isHovered ? current.primary200 : colors.gray200}`,
+        }}
+      >
         <SurfaceIcon icon={theme.icon} color={iconColor} />
       </span>
       {theme.label}
@@ -114,92 +162,128 @@ export function Header() {
 
   React.useEffect(() => {
     // Force dark mode on mount
-    document.body.classList.add('dark');
+    document.body.classList.add("dark");
   }, []);
 
   const headerStyle: CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '0 2rem',
-    height: '4rem',
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "0 2rem",
+    height: "4rem",
     borderBottom: `1px solid ${colors.gray200}`,
     backgroundColor: colors.white,
-    position: 'sticky',
+    position: "sticky",
     top: 0,
     zIndex: 50,
   };
 
   const titleStyle: CSSProperties = {
     fontFamily: typography.fontFamily,
-    fontSize: '1.5rem',
+    fontSize: "1.5rem",
     fontWeight: 600,
     color: colors.gray800,
-    marginRight: '2rem',
+    marginRight: "2rem",
   };
 
   const toggleTheme = () => {
     setIsDark(!isDark);
     if (!isDark) {
-      document.body.classList.add('dark');
+      document.body.classList.add("dark");
     } else {
-      document.body.classList.remove('dark');
+      document.body.classList.remove("dark");
     }
   };
 
   return (
     <header style={headerStyle}>
-      <div style={{ display: 'flex', alignItems: 'center', height: '100%', gap: '4rem' }}>
-        <h1 style={{ ...titleStyle, letterSpacing: '-0.025em', display: 'flex', gap: '0.4rem', alignItems: 'center', margin: 0 }}>
-          <div style={{ color: activeTheme.primary600, fontWeight: 800 }}>Aero</div>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          height: "100%",
+          gap: "4rem",
+        }}
+      >
+        <h1
+          style={{
+            ...titleStyle,
+            letterSpacing: "-0.025em",
+            display: "flex",
+            gap: "0.4rem",
+            alignItems: "center",
+            margin: 0,
+          }}
+        >
+          <div style={{ color: activeTheme.primary500, fontWeight: 800 }}>
+            Aero
+          </div>
           <div style={{ color: colors.gray600, fontWeight: 300 }}>Stream</div>
         </h1>
 
-        <nav style={{ display: 'flex', height: '100%', alignItems: 'center', gap: '0.5rem' }}>
+        <nav
+          style={{
+            display: "flex",
+            height: "100%",
+            alignItems: "center",
+            gap: "0.5rem",
+          }}
+        >
           {MICROFRONTEND_THEMES.map((theme) => (
             <NavItem
               key={theme.key}
               theme={theme}
+              current={activeTheme}
               isActive={pathname === theme.href}
             />
           ))}
         </nav>
       </div>
       <Row gap="0.75rem" align="center">
-        <div style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '0.5rem',
-          padding: '0.45rem 0.65rem',
-          border: `1px solid ${activeTheme.primary200}`,
-          borderRadius: '8px',
-          background: activeTheme.primary50,
-          color: activeTheme.primary700,
-          fontSize: typography.sizes.base,
-          fontWeight: typography.weights.semibold,
-        }}>
-          <SurfaceIcon icon={activeTheme.icon} color={activeTheme.primary600} size={16} />
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "0.5rem",
+            padding: "0.45rem 0.65rem",
+            border: `1px solid ${activeTheme.primary200}`,
+            borderRadius: "8px",
+            background: activeTheme.primary50,
+            color: activeTheme.primary700,
+            fontSize: typography.sizes.base,
+            fontWeight: typography.weights.semibold,
+          }}
+        >
+          <SurfaceIcon
+            icon={activeTheme.icon}
+            color={activeTheme.primary600}
+            size={16}
+          />
           {activeTheme.shortLabel}
         </div>
         <button
           onClick={toggleTheme}
           style={{
-            padding: '0.4rem 1rem',
+            padding: "0.4rem 1rem",
             border: `1px solid ${colors.gray300}`,
-            backgroundColor: 'transparent',
+            backgroundColor: "transparent",
             color: colors.gray700,
-            borderRadius: '0.5rem',
-            fontSize: '0.85rem',
+            borderRadius: "0.5rem",
+            fontSize: "0.85rem",
             fontWeight: 600,
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em'
+            cursor: "pointer",
+            transition: "all 0.2s ease",
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = colors.gray100; }}
-          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = colors.gray100;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "transparent";
+          }}
         >
-          {isDark ? 'Light Theme' : 'Dark Theme'}
+          {isDark ? "Light Theme" : "Dark Theme"}
         </button>
       </Row>
     </header>

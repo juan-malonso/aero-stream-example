@@ -2,10 +2,12 @@
   /* =========================================
      BASE & GRAYS
   ========================================= */
-  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
   --color-white: #ffffff;
   --color-black: #000000;
-  
+
   --color-gray50: #f9fafb;
   --color-gray100: #f3f4f6;
   --color-gray200: #e5e7eb;
@@ -181,7 +183,7 @@
   /* =========================================
      SEMANTICS / ALIASES
   ========================================= */
-  --color-stepFlow: var(--color-green500);
+  --color-stepFlow: var(--color-pink500);
   --color-fieldData: var(--color-amber500);
 }
 
@@ -354,11 +356,16 @@ body {
   font-family: var(--font-family);
   background-color: var(--color-gray50);
   color: var(--color-gray900);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-input, button, select, textarea {
+input,
+button,
+select,
+textarea {
   font-family: inherit;
 }

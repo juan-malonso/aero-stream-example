@@ -1,10 +1,10 @@
-import { StepCard } from '../../live/StepCard';
+import { StepCard } from "../../live/StepCard";
 
-import { type AeroStreamComponent } from 'aero-stream-pilot';
-import React from 'react';
-import { Column, Row, Button } from '@/components/ui';
-import { colors } from '@/styles/tokens';
-import type { LiveStepDefinition } from '../../types';
+import { type AeroStreamComponent } from "aero-stream-pilot";
+import React from "react";
+import { Column, Row, Button } from "@/components/ui";
+import { colors } from "@/styles/tokens";
+import type { LiveStepDefinition } from "../../types";
 
 export const DoneComponent: AeroStreamComponent<React.ReactNode> = ({
   data,
@@ -18,7 +18,7 @@ export const DoneComponent: AeroStreamComponent<React.ReactNode> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    submit({ status: 'finished' });
+    submit({ status: "finished" });
   };
 
   const handleReject = () => {
@@ -26,12 +26,43 @@ export const DoneComponent: AeroStreamComponent<React.ReactNode> = ({
   };
 
   return (
-    <StepCard title={config.title} message={config.message} onReject={handleReject}>
-      <Column onSubmit={handleSubmit} style={{ width: '100%', maxWidth: '24rem', marginBottom: '50px'}} gap="1.5rem" align="stretch">
+    <StepCard
+      title={config.title}
+      message={config.message}
+      onReject={handleReject}
+    >
+      <Column
+        onSubmit={handleSubmit}
+        style={{ width: "100%", maxWidth: "24rem", marginBottom: "50px" }}
+        gap="1.5rem"
+        align="stretch"
+      >
         <Row justify="center">
-          <div style={{ width: '5rem', height: '5rem', backgroundColor: colors.gray100, color: colors.green600, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg style={{ width: '2.5rem', height: '2.5rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path>
+          <div
+            style={{
+              width: "5rem",
+              height: "5rem",
+              backgroundColor: colors.gray100,
+              color: colors.pink600,
+              borderRadius: "50%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <svg
+              style={{ width: "2.5rem", height: "2.5rem" }}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="3"
+                d="M5 13l4 4L19 7"
+              ></path>
             </svg>
           </div>
         </Row>
@@ -39,9 +70,9 @@ export const DoneComponent: AeroStreamComponent<React.ReactNode> = ({
           type="button"
           onClick={handleSubmit}
           variant="primary"
-          style={{ width: '100%', padding: '0.75rem 1.5rem', fontSize: '1rem' }}
+          style={{ width: "100%", padding: "0.75rem 1.5rem", fontSize: "1rem" }}
         >
-           Finish
+          Finish
         </Button>
       </Column>
     </StepCard>
@@ -49,6 +80,6 @@ export const DoneComponent: AeroStreamComponent<React.ReactNode> = ({
 };
 
 export const doneLiveStep: LiveStepDefinition = {
-  executionType: 'DoneComponent',
+  executionType: "DoneComponent",
   render: (props) => <DoneComponent {...props} />,
 };

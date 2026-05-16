@@ -2855,23 +2855,23 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"aero-stream-pilot-core@file:lib/aero-stream-pilot-core/pkg::locator=aero-stream-pilot%40file%3A..%2Faero-stream%2Fapps%2Faero-stream-pilot%23..%2Faero-stream%2Fapps%2Faero-stream-pilot%3A%3Ahash%3D137087%26locator%3Daero-stream-example%2540workspace%253A.":
+"aero-stream-pilot-core@file:lib/aero-stream-pilot-core/pkg::locator=aero-stream-pilot%40file%3A..%2Faero-stream%2Fapps%2Faero-stream-pilot%23..%2Faero-stream%2Fapps%2Faero-stream-pilot%3A%3Ahash%3D863307%26locator%3Daero-stream-example%2540workspace%253A.":
   version: 0.1.0
-  resolution: "aero-stream-pilot-core@file:lib/aero-stream-pilot-core/pkg#lib/aero-stream-pilot-core/pkg::hash=01ecf6&locator=aero-stream-pilot%40file%3A..%2Faero-stream%2Fapps%2Faero-stream-pilot%23..%2Faero-stream%2Fapps%2Faero-stream-pilot%3A%3Ahash%3D137087%26locator%3Daero-stream-example%2540workspace%253A."
+  resolution: "aero-stream-pilot-core@file:lib/aero-stream-pilot-core/pkg#lib/aero-stream-pilot-core/pkg::hash=01ecf6&locator=aero-stream-pilot%40file%3A..%2Faero-stream%2Fapps%2Faero-stream-pilot%23..%2Faero-stream%2Fapps%2Faero-stream-pilot%3A%3Ahash%3D863307%26locator%3Daero-stream-example%2540workspace%253A."
   checksum: 10c0/f4a6c21d74a67032e3e515e184c192d7b4fd1b79bc9bbbf708f4c9d494ceaf42c8c3251e899e0c69d04304c2c4f117043eade028773810daeec0b15e840a3c89
   languageName: node
   linkType: hard
 
 "aero-stream-pilot@file:../aero-stream/apps/aero-stream-pilot::locator=aero-stream-example%40workspace%3A.":
   version: 1.0.0
-  resolution: "aero-stream-pilot@file:../aero-stream/apps/aero-stream-pilot#../aero-stream/apps/aero-stream-pilot::hash=137087&locator=aero-stream-example%40workspace%3A."
+  resolution: "aero-stream-pilot@file:../aero-stream/apps/aero-stream-pilot#../aero-stream/apps/aero-stream-pilot::hash=863307&locator=aero-stream-example%40workspace%3A."
   dependencies:
     "@mediapipe/tasks-vision": "npm:^0.10.34"
     aero-stream-pilot-core: "file:lib/aero-stream-pilot-core/pkg"
   peerDependencies:
     react: "*"
     react-dom: "*"
-  checksum: 10c0/42692c3286a732e2c8a8bc3f66d292f902af0f78058b02efb007bced9fbc295a0f4c5f964caf07ce1603906f071e38220ed03111c09b3823ceb32c42d1722ede
+  checksum: 10c0/01925c2a8087fbb15125b266bcc58e95c7decba03d947abbdd604b2594e4c886dbbe23fef6a9eaadc2fcf8b0b0f50a8624b025d2aebf90c580686a840cc0162f
   languageName: node
   linkType: hard
 
