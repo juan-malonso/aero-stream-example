@@ -49,7 +49,7 @@ This keeps the current React and Next.js implementation where it is useful, but 
 
 ### Sessions
 
-`src/app/(microfrontends)/sessions/page.tsx`, `src/features/sessions`, `src/lib/sessions`, and `src/app/api/sessions/**` own session review and event reception. Legacy `/api/platform/**` API aliases are intentionally removed so inbound events use the Sessions-owned endpoint.
+`src/app/(microfrontends)/sessions/page.tsx`, `src/features/sessions`, `src/lib/sessions`, and `src/app/api/sessions/**` own session review and event reception. Legacy Platform API aliases are intentionally removed so inbound events use the Sessions-owned endpoint.
 
 ### Shared Context And Libraries
 
