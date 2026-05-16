@@ -1,4 +1,4 @@
-import { StepCard } from '../../StepCard';
+import { StepCard } from '../StepCard';
 
 import { type AeroStreamErrorScreen } from 'aero-stream-pilot';
 import React from 'react';

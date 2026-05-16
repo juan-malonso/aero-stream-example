@@ -1,7 +1,6 @@
 import { type TowerWorkflow, type WorkflowConfig, type WorkflowStep, type WorkflowTransition } from './workflow';
 import { EXECUTION_TYPE_TO_NODE, NODE_TYPE_TO_EXECUTION } from './componentRegistry';
-import { getBuilderStepByExecutionType } from '@/aero-stream-example-library';
-import { type OutputConfig, type StepNodeData } from '@/components/steps/types';
+import { getBuilderStepByExecutionType, type OutputConfig, type StepNodeData } from '@/aero-stream-example-library';
 
 import { type Edge, type Node } from '@xyflow/react';
 import { colors } from '@/styles/tokens';

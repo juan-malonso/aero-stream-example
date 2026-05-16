@@ -1,4 +1,4 @@
-import { VideoComponent } from '@/components/steps';
+import { VideoComponent } from './VideoComponent';
 import type { LiveStepDefinition } from '../../types';
 
 export const videoLiveStep: LiveStepDefinition = {

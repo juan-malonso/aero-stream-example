@@ -3,9 +3,9 @@
 import { Sidebar } from './Sidebar';
 import { StartNode } from './StartNode';
 import { SelfConnectingEdge } from './SelfConnectingEdge';
-import { WelcomeNode, KYCNode, VideoNode, DoneNode } from '@/components/steps/nodes';
 
 import { createStepNodeData, getBuilderStepByNodeType } from '@/aero-stream-example-library';
+import { BUILDER_NODE_TYPES } from '@/aero-stream-example-library/builderNodes';
 import { useWorkflowGraph } from '@/hooks/useWorkflow';
 import { useImplicitEdges } from '@/hooks/useImplicitEdges';
 import { generateId } from '@/lib/uuid';
@@ -24,13 +24,10 @@ import {
   type ReactFlowInstance,
 } from '@xyflow/react';
 import React, { useCallback, useRef, useState } from 'react';
-import { type OutputConfig, type StepNodeData } from '@/components/steps/types';
+import { type OutputConfig, type StepNodeData } from '@/aero-stream-example-library';
 
 const nodeTypes = {
-  welcomeStep: WelcomeNode,
-  kycStep: KYCNode,
-  videoStep: VideoNode,
-  doneStep: DoneNode,
+  ...BUILDER_NODE_TYPES,
   startNode: StartNode,
 };
 

@@ -1,4 +1,4 @@
-import { DoneComponent } from '@/components/steps';
+import { DoneComponent } from './DoneComponent';
 import type { LiveStepDefinition } from '../../types';
 
 export const doneLiveStep: LiveStepDefinition = {

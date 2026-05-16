@@ -1,4 +1,4 @@
-import { StepCard } from '../StepCard';
+import { StepCard } from '../../live/StepCard';
 
 import { type AeroStreamComponent } from 'aero-stream-pilot';
 import React from 'react';

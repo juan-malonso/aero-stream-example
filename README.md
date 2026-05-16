@@ -88,7 +88,6 @@ src/
 │   ├── live/                # Live workflow execution view
 │   └── sessions/            # Session review microfrontend
 ├── components/
-│   ├── steps/               # Step components (Welcome, Video, KYC, Done)
 │   └── ui/                  # Shared UI primitives
 ├── context/                 # WorkflowContext
 └── hooks/                   # useWorkflow
@@ -111,11 +110,13 @@ Steps are owned by `src/aero-stream-example-library`. Add one folder per step an
 ```text
 src/aero-stream-example-library/steps/my-step/
 ├── builder.ts
+├── node.tsx
+├── MyStepComponent.tsx
 ├── live.tsx
 └── index.ts
 ```
 
-Then export the step from the aggregate Builder and Live registries. The Live component receives `{ data, submit, reject }` props from the SDK.
+Then export the step from the aggregate Builder, Builder node, and Live registries. The Live component receives `{ data, submit, reject }` props from the SDK.
 
 ## License
 

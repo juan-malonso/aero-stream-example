@@ -54,8 +54,10 @@ This keeps the current React and Next.js implementation where it is useful, but 
 
 `src/aero-stream-example-library` owns the current example step set. Each step folder has:
 
-- `builder.ts` for Builder configuration, node metadata, and mappings.
-- `live.tsx` for Pilot Live rendering.
+- `builder.ts` for Builder configuration metadata and mappings.
+- `node.tsx` for the Builder node rendering for that step.
+- `<StepName>Component.tsx` for the complete Live component implementation.
+- `live.tsx` for Pilot Live registration.
 - `index.ts` for step-local exports.
 
 The first migration includes exactly the current step types:
@@ -68,7 +70,7 @@ The first migration includes exactly the current step types:
 ## Import Rules
 
 - Feature surfaces may import from `src/aero-stream-example-library`.
-- The step library may import reusable step UI components from `src/components/steps`.
+- The step library owns the complete Builder and Live step components; `src/components/steps` is not a step boundary anymore.
 - The step library must not import Builder, Live, or Sessions feature components.
 - Sessions APIs must stay inside `aero-stream-example`.
 - Tower runtime code, Pilot, and Controller are out of scope for this requirement; Tower destination configuration may point local example flows at `/api/sessions/events`.

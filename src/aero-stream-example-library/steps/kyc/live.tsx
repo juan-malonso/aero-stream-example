@@ -1,4 +1,4 @@
-import { KYCComponent } from '@/components/steps';
+import { KYCComponent } from './KYCComponent';
 import type { LiveStepDefinition } from '../../types';
 
 export const kycLiveStep: LiveStepDefinition = {

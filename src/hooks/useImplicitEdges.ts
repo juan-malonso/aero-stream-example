@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { type Edge, type Node } from '@xyflow/react';
-import { type OutputConfig } from '@/components/steps/types';
+import { type OutputConfig } from '@/aero-stream-example-library';
 import { edgeFieldStyle } from '@/styles/theme';
 
 const FIELD_REF_PATTERN = /\{\{steps\.([a-zA-Z0-9_-]+)\.result\.([a-zA-Z0-9_]+)\}\}/;

@@ -1,4 +1,4 @@
-import { StepCard } from '../StepCard';
+import { StepCard } from '../../live/StepCard';
 import { Column, Button } from '@/components/ui';
 import { colors } from '@/styles/tokens';
 

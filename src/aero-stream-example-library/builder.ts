@@ -1,4 +1,4 @@
-import type { StepNodeData } from '../components/steps/types.ts';
+import type { StepNodeData } from './builder/types.ts';
 
 import { doneBuilderStep } from './steps/done/builder.ts';
 import { kycBuilderStep } from './steps/kyc/builder.ts';
@@ -58,3 +58,5 @@ export function createStepNodeData(step: BuilderStepDefinition, label = step.lab
     specs: step.defaultSpecs ? { ...step.defaultSpecs } : {},
   };
 }
+
+export type { OutputConfig, StepNodeData } from './builder/types.ts';

@@ -3,7 +3,7 @@
 import { ConnectionStatus } from '@/constants';
 
 import { createLiveStepLibrary } from '@/aero-stream-example-library/live';
-import { AlertScreen, CompletionScreen, ErrorScreen, InfoScreen } from '@/components/steps';
+import { AlertScreen, CompletionScreen, ErrorScreen, InfoScreen } from '@/aero-stream-example-library/live/screens';
 
 import {
   type AeroStreamAlertScreenParams,
