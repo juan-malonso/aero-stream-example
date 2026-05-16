@@ -31,7 +31,7 @@ export function ComponentToolbox() {
             draggable
           >
             <div style={{ fontWeight: 700 }}>{step.toolboxLabel}</div>
-            <ExecutionBadge mode="FRONT" />
+            <ExecutionBadge mode={step.executionMode ?? "FRONT"} />
           </div>
         ))}
       </Column>

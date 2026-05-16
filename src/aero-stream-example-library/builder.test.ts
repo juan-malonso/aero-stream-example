@@ -45,6 +45,23 @@ const expectedSteps = [
   },
 ];
 
+const expectedBackendSteps = [
+  {
+    dir: 'request',
+    builderExport: 'requestBuilderStep',
+    nodeExport: 'RequestNode',
+    executionType: 'request',
+    nodeType: 'requestStep',
+  },
+  {
+    dir: 'mapping',
+    builderExport: 'mappingBuilderStep',
+    nodeExport: 'MappingNode',
+    executionType: 'mapping',
+    nodeType: 'mappingStep',
+  },
+];
+
 function readLibraryFile(relativePath: string): string {
   return readFileSync(join(libraryDir, relativePath), 'utf8');
 }
@@ -63,10 +80,17 @@ test('keeps each step grouped into Builder and Live files', () => {
       `${step.dir} has no separate component file`,
     );
   }
+
+  for (const step of expectedBackendSteps) {
+    const stepDir = join(libraryDir, 'steps', step.dir);
+    assert.ok(existsSync(join(stepDir, 'builder.tsx')), `${step.dir} builder.tsx exists`);
+    assert.equal(existsSync(join(stepDir, 'live.tsx')), false, `${step.dir} has no live.tsx`);
+    assert.ok(existsSync(join(stepDir, 'index.ts')), `${step.dir} index.ts exists`);
+  }
 });
 
 test('keeps Builder metadata and node rendering in one file per step', () => {
-  for (const step of expectedSteps) {
+  for (const step of [...expectedSteps, ...expectedBackendSteps]) {
     const builder = readLibraryFile(`steps/${step.dir}/builder.tsx`);
 
     assert.match(builder, new RegExp(`export const ${step.builderExport}`));
@@ -82,7 +106,7 @@ test('keeps Live registration and component rendering in one file per step', () 
 
     assert.match(live, new RegExp(`export const ${step.componentExport}`));
     assert.match(live, new RegExp(`export const ${step.liveExport}`));
-    assert.match(live, new RegExp(`executionType: '${step.executionType}'`));
+    assert.match(live, new RegExp(`executionType: ['"]${step.executionType}['"]`));
     assert.match(live, new RegExp(`<${step.componentExport} \\{\\.\\.\\.props\\} />`));
   }
 });
@@ -90,7 +114,7 @@ test('keeps Live registration and component rendering in one file per step', () 
 test('keeps aggregate Builder and node registries wired to step Builder files', () => {
   const builderRegistry = readLibraryFile('builder.ts');
 
-  for (const step of expectedSteps) {
+  for (const step of [...expectedSteps, ...expectedBackendSteps]) {
     assert.match(builderRegistry, new RegExp(`from './steps/${step.dir}/builder'`));
     assert.match(builderRegistry, new RegExp(`component: ${step.nodeExport}`));
     assert.match(builderRegistry, new RegExp(`nodeType: ${step.builderExport}\\.nodeType`));
