@@ -2,18 +2,17 @@
 
 import { ConnectionStatus } from '@/constants';
 
-import { AlertScreen, CompletionScreen, ErrorScreen, InfoScreen, KYCComponent, VideoComponent, WelcomeComponent, DoneComponent } from '@/components/steps';
+import { createLiveStepLibrary } from '@/aero-stream-example-library';
+import { AlertScreen, CompletionScreen, ErrorScreen, InfoScreen } from '@/aero-stream-example-library/live/screens';
 
 import {
-  type AeroStreamComponentParams,
-  type AeroStreamLibrary,
   type AeroStreamAlertScreenParams,
   AeroStreamPilot,
   PilotLogMode,
 } from 'aero-stream-pilot';
 import { useCallback, useEffect, useImperativeHandle, useRef, useState, forwardRef } from 'react';
 import { Column } from '@/components/ui';
-import { getPilotLiveUrl } from '@/lib/tower/towerRuntime.service.ts';
+import { getPilotLiveUrl } from '@/lib/live/tower/towerRuntime.service.ts';
 import { colors, typography } from '@/styles/tokens';
 
 interface PilotConnectionProps {
@@ -34,12 +33,7 @@ export interface PilotConnectionHandle {
 
 export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnectionProps>(
   function PilotConnection({ workflowId, sessionId, secret, onSessionId, onStatusChange, onConnectionOpenChange, onTimeTick, onTimeReset }, ref) {
-  const stepLibrary: AeroStreamLibrary<React.ReactNode> = {
-    WelcomeComponent: (props: AeroStreamComponentParams) => <WelcomeComponent {...props} />,
-    VideoComponent: (props: AeroStreamComponentParams) => <VideoComponent {...props} />,
-    KYCComponent: (props: AeroStreamComponentParams) => <KYCComponent {...props} />,
-    DoneComponent: (props: AeroStreamComponentParams) => <DoneComponent {...props} />,
-  };
+  const stepLibrary = createLiveStepLibrary();
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const connectionWatchRef = useRef<ReturnType<typeof setInterval> | null>(null);

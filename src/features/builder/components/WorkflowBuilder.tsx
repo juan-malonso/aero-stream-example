@@ -3,12 +3,11 @@
 import { Sidebar } from './Sidebar';
 import { StartNode } from './StartNode';
 import { SelfConnectingEdge } from './SelfConnectingEdge';
-import { WelcomeNode, KYCNode, VideoNode, DoneNode } from '@/components/steps/nodes';
 
-import { useWorkflowGraph } from '@/hooks/useWorkflow';
-import { useImplicitEdges } from '@/hooks/useImplicitEdges';
-import { COMPONENT_REGISTRY, NODE_TYPE_TO_EXECUTION } from '@/lib/workflow/componentRegistry';
-import { generateId } from '@/lib/uuid';
+import { BUILDER_NODE_TYPES, createStepNodeData, getBuilderStepByNodeType } from '@/aero-stream-example-library';
+import { useWorkflowGraph } from '@/contexts/shared/workflow/useWorkflow';
+import { useImplicitEdges } from '@/contexts/builder/workflow/useImplicitEdges';
+import { generateId } from '@/lib/shared/uuid';
 import { edgeFlowStyle, edgeFieldStyle } from '@/styles/theme';
 
 import '@xyflow/react/dist/style.css';
@@ -24,13 +23,10 @@ import {
   type ReactFlowInstance,
 } from '@xyflow/react';
 import React, { useCallback, useRef, useState } from 'react';
-import { type OutputConfig, type StepNodeData } from '@/components/steps/types';
+import { type OutputConfig, type StepNodeData } from '@/aero-stream-example-library';
 
 const nodeTypes = {
-  welcomeStep: WelcomeNode,
-  kycStep: KYCNode,
-  videoStep: VideoNode,
-  doneStep: DoneNode,
+  ...BUILDER_NODE_TYPES,
   startNode: StartNode,
 };
 
@@ -47,13 +43,9 @@ function WorkflowCanvas() {
     (params: Connection | Edge) => {
       setEdges((eds) => {
         const isFieldEdge = params.sourceHandle?.includes('field-');
-        let filtered = eds;
-
-        if (isFieldEdge) {
-          filtered = eds.filter(e => e.target !== params.target || e.targetHandle !== params.targetHandle);
-        } else {
-          filtered = eds.filter(e => e.source !== params.source || e.sourceHandle !== params.sourceHandle);
-        }
+        const filtered = isFieldEdge
+          ? eds.filter(e => e.target !== params.target || e.targetHandle !== params.targetHandle)
+          : eds.filter(e => e.source !== params.source || e.sourceHandle !== params.sourceHandle);
 
         return addEdge({
           ...params,
@@ -112,17 +104,10 @@ function WorkflowCanvas() {
         y: event.clientY,
       });
 
-      const executionType = NODE_TYPE_TO_EXECUTION[type] || type;
-      const meta = COMPONENT_REGISTRY[executionType];
+      const stepDefinition = getBuilderStepByNodeType(type);
+      if (!stepDefinition) return;
 
-      const nodeData: StepNodeData = {
-        label,
-        fields: meta?.fields || [],
-        props: meta ? Object.fromEntries(meta.propKeys.map((k) => [k, ''])) : {},
-        execution: { mode: 'FRONT', type: executionType },
-        hideOutputs: executionType === 'DoneComponent',
-        specs: executionType === 'DoneComponent' ? { stopWorkflow: true } : {},
-      };
+      const nodeData: StepNodeData = createStepNodeData(stepDefinition, label);
 
       const newNode = {
         id: generateId(),
@@ -162,7 +147,7 @@ function WorkflowCanvas() {
 
 export const WorkflowBuilder = () => {
   return (
-    <div style={{ display: 'flex', flexGrow: 1, height: '100%', width: '100%' }}>
+    <div style={{ display: 'flex', flexGrow: 1, height: '100%', width: '100%', background: 'var(--surface-canvas, transparent)' }}>
       <ReactFlowProvider>
         <Sidebar />
         <WorkflowCanvas />

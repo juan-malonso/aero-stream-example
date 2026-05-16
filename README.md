@@ -60,44 +60,68 @@ yarn build
 yarn start
 ```
 
+## Building for Cloudflare Workers
+
+The example is organized as route-owned microfrontends and can be converted into a Worker with OpenNext:
+
+```bash
+yarn build:worker
+yarn preview:worker
+yarn deploy
+```
+
+The Worker config lives in `wrangler.jsonc`. The application surfaces are:
+
+- `/builder`
+- `/live`
+- `/sessions`
+
 ## Project Structure
 
 ```
 src/
-├── app/                     # Next.js app router
+├── app/                     # Next.js app router and Worker-owned API routes
+├── aero-stream-example-library/
+│   └── steps/               # Step folders with Builder and Live definitions
 ├── features/
 │   ├── builder/             # Visual workflow builder UI
-│   └── live/                # Live workflow execution view
+│   ├── live/                # Live workflow execution view
+│   └── sessions/            # Session review microfrontend
+├── contexts/
+│   ├── builder/             # Builder-owned state helpers
+│   └── shared/              # Contexts shared across surfaces
+├── lib/
+│   ├── builder/             # Builder-owned workflow libraries
+│   ├── live/                # Live-owned Tower runtime libraries
+│   ├── sessions/            # Sessions-owned event store and types
+│   └── shared/              # Cross-surface config and video helpers
 ├── components/
-│   ├── steps/               # Step components (Welcome, Video, KYC, Done)
 │   └── ui/                  # Shared UI primitives
-├── context/                 # WorkflowContext
-└── hooks/                   # useWorkflow
+└── styles/                  # Shared tokens and global styles
 ```
 
 ## Connecting to Controller and Tower
 
 1. Start Controller and Tower against their shared local development state.
 2. Optionally set `NEXT_PUBLIC_CONTROLLER_API_URL`, `NEXT_PUBLIC_TOWER_INIT_URL`, and `NEXT_PUBLIC_TOWER_LIVE_URL` in `.env.local` when not using the default local ports.
-3. Use the **Builder** tab to create or select a workflow through Controller.
-4. Switch to the **Live** tab to create a session and execute the workflow through Tower/Pilot.
+3. Use `/builder` to create or select a workflow through Controller.
+4. Switch to `/live` to create a session and execute the workflow through Tower/Pilot.
+5. Use `/sessions` to review session events received by the example app.
 
-Controller workflow/video route details are still owned by the upstream Controller task. This example keeps those calls isolated in `src/lib/workflow/workflow.service.ts` and `src/lib/video/downloadService.ts` so final path changes stay local to the client boundary.
+Controller workflow/video route details are still owned by the upstream Controller task. This example keeps those calls isolated in `src/lib/builder/workflow/workflow.service.ts` and `src/lib/shared/video/downloadService.ts` so final path changes stay local to the client boundary.
 
 ## Adding Custom Steps
 
-Implement a step component and register it in the step library in `src/features/live/components/implement/PilotConnection.tsx`:
+Steps are owned by `src/aero-stream-example-library`. Add one folder per step and keep Builder configuration separate from Live rendering:
 
-```typescript
-import { MyCustomStep } from "@/components/steps/MyCustomStep";
-
-const stepLibrary = {
-  MyCustomStep,
-  // ... existing steps
-};
+```text
+src/aero-stream-example-library/steps/my-step/
+├── builder.tsx
+├── live.tsx
+└── index.ts
 ```
 
-The component receives `{ data, submit, reject }` props from the SDK.
+Then export the step from the aggregate Builder, Builder node, and Live registries. `builder.tsx` owns Builder metadata plus node rendering; `live.tsx` owns the Live component plus SDK registration.
 
 ## License
 

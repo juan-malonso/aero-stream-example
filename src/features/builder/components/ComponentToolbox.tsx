@@ -1,5 +1,5 @@
 import React from 'react';
-import { COMPONENT_REGISTRY } from '@/lib/workflow/componentRegistry';
+import { BUILDER_STEP_DEFINITIONS } from '@/aero-stream-example-library';
 import { ExecutionBadge } from '@/components/shared/ExecutionBadge';
 import { sectionHeaderStyle, toolboxItemStyle } from '@/styles/theme';
 import { Column, Row } from '@/components/ui';
@@ -23,22 +23,17 @@ export function ComponentToolbox() {
       </Row>
 
       <Column gap="0.75rem" align="stretch" style={{ padding: '0.75rem' }}>
-        <div style={toolboxItemStyle(COMPONENT_REGISTRY.WelcomeComponent.accentColor)} onDragStart={(event) => onDragStart(event, 'welcomeStep', 'Welcome')} draggable>
-          <div style={{ fontWeight: 700 }}>Welcome Node</div>
-          <ExecutionBadge mode="FRONT" />
-        </div>
-        <div style={toolboxItemStyle(COMPONENT_REGISTRY.KYCComponent.accentColor)} onDragStart={(event) => onDragStart(event, 'kycStep', 'KYC')} draggable>
-          <div style={{ fontWeight: 700 }}>KYC Node</div>
-          <ExecutionBadge mode="FRONT" />
-        </div>
-        <div style={toolboxItemStyle(COMPONENT_REGISTRY.VideoComponent.accentColor)} onDragStart={(event) => onDragStart(event, 'videoStep', 'Video')} draggable>
-          <div style={{ fontWeight: 700 }}>Video Node</div>
-          <ExecutionBadge mode="FRONT" />
-        </div>
-        <div style={toolboxItemStyle(COMPONENT_REGISTRY.DoneComponent.accentColor)} onDragStart={(event) => onDragStart(event, 'doneStep', 'Done')} draggable>
-          <div style={{ fontWeight: 700 }}>Done Node</div>
-          <ExecutionBadge mode="FRONT" />
-        </div>
+        {BUILDER_STEP_DEFINITIONS.map((step) => (
+          <div
+            key={step.id}
+            style={toolboxItemStyle(step.accentColor)}
+            onDragStart={(event) => onDragStart(event, step.nodeType, step.label)}
+            draggable
+          >
+            <div style={{ fontWeight: 700 }}>{step.toolboxLabel}</div>
+            <ExecutionBadge mode="FRONT" />
+          </div>
+        ))}
       </Column>
     </Column>
   );
