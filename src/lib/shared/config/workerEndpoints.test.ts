@@ -32,6 +32,34 @@ test("defaults local worker endpoints for development", () => {
   assert.equal(endpoints.towerLiveUrl, "ws://localhost:8787/squawk/live");
 });
 
+test("defaults local worker endpoints for a production bundle served on localhost", () => {
+  const previousWindow = (globalThis as { window?: Window }).window;
+  Object.defineProperty(globalThis, "window", {
+    configurable: true,
+    value: { location: { hostname: "localhost" } },
+  });
+
+  try {
+    const endpoints = resolveWorkerEndpoints({
+      NODE_ENV: "production",
+    });
+
+    assert.equal(endpoints.controllerAdminToken, "local-test-admin-token");
+    assert.equal(endpoints.controllerApiUrl, "http://localhost:8788/api");
+    assert.equal(endpoints.towerInitUrl, "http://localhost:8787/squawk/init");
+    assert.equal(endpoints.towerLiveUrl, "ws://localhost:8787/squawk/live");
+  } finally {
+    if (previousWindow === undefined) {
+      Reflect.deleteProperty(globalThis, "window");
+    } else {
+      Object.defineProperty(globalThis, "window", {
+        configurable: true,
+        value: previousWindow,
+      });
+    }
+  }
+});
+
 test("normalizes Controller and Tower full endpoint URLs", () => {
   const endpoints = resolveWorkerEndpoints({
     NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN: "local-test-admin-token",

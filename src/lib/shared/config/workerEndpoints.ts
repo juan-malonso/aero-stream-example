@@ -84,7 +84,14 @@ function valueOrLocalDefault(
   localDefault: string,
 ): string | undefined {
   if (value?.trim()) return value;
-  return env.NODE_ENV !== "production" ? localDefault : undefined;
+  return env.NODE_ENV !== "production" || isLocalBrowserHost()
+    ? localDefault
+    : undefined;
+}
+
+function isLocalBrowserHost(): boolean {
+  if (typeof window === "undefined") return false;
+  return LOCAL_HOSTNAMES.has(window.location.hostname);
 }
 
 function resolveControllerAdminToken(
@@ -95,7 +102,10 @@ function resolveControllerAdminToken(
   if (raw) return raw;
 
   const { hostname } = new URL(controllerApiUrl);
-  if (env.NODE_ENV !== "production" && LOCAL_HOSTNAMES.has(hostname)) {
+  if (
+    (env.NODE_ENV !== "production" || isLocalBrowserHost()) &&
+    LOCAL_HOSTNAMES.has(hostname)
+  ) {
     return LOCAL_TEST_CONTROLLER_ADMIN_TOKEN;
   }
 
