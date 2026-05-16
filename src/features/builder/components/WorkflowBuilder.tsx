@@ -147,7 +147,7 @@ function WorkflowCanvas() {
 
 export const WorkflowBuilder = () => {
   return (
-    <div style={{ display: 'flex', flexGrow: 1, height: '100%', width: '100%' }}>
+    <div style={{ display: 'flex', flexGrow: 1, height: '100%', width: '100%', background: 'var(--surface-canvas, transparent)' }}>
       <ReactFlowProvider>
         <Sidebar />
         <WorkflowCanvas />

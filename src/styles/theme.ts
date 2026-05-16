@@ -175,7 +175,7 @@ export const toolboxItemStyle = (accentColor: string): CSSProperties => ({
 export const sectionHeaderStyle: CSSProperties = {
   fontSize: typography.sizes.base,
   fontWeight: typography.weights.bold,
-  color: colors.gray500,
+  color: 'var(--surface-primary700, var(--color-gray500))',
   textTransform: 'uppercase',
   letterSpacing: '0.05em',
 };

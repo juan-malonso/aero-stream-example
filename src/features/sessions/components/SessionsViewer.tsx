@@ -53,7 +53,7 @@ export function SessionsViewer() {
       height: '100%',
       width: '100%',
       overflow: 'hidden',
-      background: colors.gray200,
+      background: 'var(--surface-canvas, var(--color-gray200))',
     }}>
       {/* Session List — Left Pane */}
       <aside style={{
@@ -73,7 +73,7 @@ export function SessionsViewer() {
           <div style={{
             fontSize: typography.sizes.base,
             fontWeight: typography.weights.bold,
-            color: colors.gray500,
+            color: 'var(--surface-primary700, var(--color-gray500))',
             textTransform: 'uppercase',
             letterSpacing: '0.05em',
           }}>

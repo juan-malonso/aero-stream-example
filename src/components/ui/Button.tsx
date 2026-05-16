@@ -22,7 +22,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     } else {
       switch (variant) {
         case 'primary':
-          bgColor = isActive ? colors.blue600 : colors.blue500;
+          bgColor = isActive ? 'var(--surface-primary600, var(--color-blue600))' : 'var(--surface-primary500, var(--color-blue500))';
           color = colors.white;
           borderColor = 'transparent';
           break;
