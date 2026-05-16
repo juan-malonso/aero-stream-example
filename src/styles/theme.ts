@@ -4,7 +4,7 @@
 // ---------------------------------------------------------------------------
 
 import { type CSSProperties } from 'react';
-import { colors, radii, shadows, spacing, typography } from './tokens';
+import { colors, radii, shadows, typography } from './tokens';
 
 // ---------------------------------------------------------------------------
 // Badge styles

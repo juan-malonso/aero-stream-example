@@ -14,7 +14,7 @@ interface RecordingMetadata {
   missingRanges?: unknown[];
 }
 
-export function LiveViewer({ viewingId, onClose }: { viewingId: string | null; onClose: () => void }) {
+export function LiveViewer({ viewingId, onClose: _onClose }: { viewingId: string | null; onClose: () => void }) {
   const viewerVideoRef = useRef<HTMLVideoElement>(null);
   const [vttUrl, setVttUrl] = useState('');
   const [gapWarning, setGapWarning] = useState('');

@@ -1,5 +1,6 @@
 import { type TowerWorkflow, type WorkflowConfig, type WorkflowStep, type WorkflowTransition } from './workflow';
-import { COMPONENT_REGISTRY, EXECUTION_TYPE_TO_NODE, NODE_TYPE_TO_EXECUTION } from './componentRegistry';
+import { EXECUTION_TYPE_TO_NODE, NODE_TYPE_TO_EXECUTION } from './componentRegistry';
+import { getBuilderStepByExecutionType } from '@/aero-stream-example-library';
 import { type OutputConfig, type StepNodeData } from '@/components/steps/types';
 
 import { type Edge, type Node } from '@xyflow/react';
@@ -41,7 +42,7 @@ export function parseTowerToReactFlow(towerWorkflow: TowerWorkflow): { nodes: No
   placeNode('start_node', 0);
 
   // Unlinked nodes
-  let maxCol = Math.max(0, ...Object.keys(colCounts).map(Number));
+  const maxCol = Math.max(0, ...Object.keys(colCounts).map(Number));
   for (const stepId of Object.keys(towerWorkflow.steps)) {
     if (!visited.has(stepId)) {
       placeNode(stepId, maxCol + 1);
@@ -73,7 +74,7 @@ export function parseTowerToReactFlow(towerWorkflow: TowerWorkflow): { nodes: No
 
     const executionType = step.execution.type;
     const nodeType = EXECUTION_TYPE_TO_NODE[executionType] || 'welcomeStep';
-    const meta = COMPONENT_REGISTRY[executionType];
+    const stepDefinition = getBuilderStepByExecutionType(executionType);
 
     const currentOutputs: OutputConfig[] = [];
     const nodeData = {
@@ -82,7 +83,7 @@ export function parseTowerToReactFlow(towerWorkflow: TowerWorkflow): { nodes: No
       props: { ...step.props },
       specs: executionType === 'DoneComponent' ? { stopWorkflow: true, ...step.specs } : { ...step.specs },
       execution: { ...step.execution },
-      fields: meta?.fields || [],
+      fields: stepDefinition?.fields || [],
       hideOutputs: executionType === 'DoneComponent' || step.specs?.stopWorkflow === true,
       outputs: currentOutputs,
     };

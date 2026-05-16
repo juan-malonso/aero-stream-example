@@ -17,7 +17,7 @@ export function PlatformViewer() {
 
   const fetchSessions = useCallback(async () => {
     try {
-      const response = await fetch('/api/platform/sessions');
+      const response = await fetch('/api/sessions');
       if (!response.ok) return;
       const json = (await response.json()) as { data: PlatformSessionSummary[] };
       setSessions(json.data);
@@ -36,7 +36,7 @@ export function PlatformViewer() {
     setSelectedSessionId(sessionId);
     setIsLoadingDetail(true);
     try {
-      const response = await fetch(`/api/platform/sessions/${sessionId}`);
+      const response = await fetch(`/api/sessions/${sessionId}`);
       if (!response.ok) return;
       const json = (await response.json()) as { data: PlatformSession };
       setSelectedSession(json.data);
@@ -77,7 +77,7 @@ export function PlatformViewer() {
             textTransform: 'uppercase',
             letterSpacing: '0.05em',
           }}>
-            Operations
+            Sessions
           </div>
         </div>
         <div style={{ flex: 1, overflowY: 'auto' }}>

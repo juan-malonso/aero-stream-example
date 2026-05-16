@@ -5,8 +5,8 @@ import type {
   PlatformSessionResult,
   PlatformSessionStatus,
   PlatformSessionSummary,
-} from './types';
-import { PlatformEventType } from './types';
+} from './types.ts';
+import { PlatformEventType } from './types.ts';
 
 /**
  * Process-level singleton for platform event storage.
@@ -127,4 +127,8 @@ export function getSessionDetail(sessionId: string): PlatformSession | null {
     status: session.status ?? 'ACTIVE',
     connections: deriveConnectionGroups(session.events),
   };
+}
+
+export function clearPlatformSessionsForTest(): void {
+  getStore().clear();
 }

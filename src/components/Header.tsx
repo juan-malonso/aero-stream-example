@@ -1,21 +1,18 @@
 'use client';
 
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import React, { useState, type CSSProperties } from 'react';
 import { colors, typography } from '@/styles/tokens';
 import { Row } from '@/components/ui';
 
-interface HeaderProps {
-  activeTab: 'builder' | 'live' | 'platform';
-  setActiveTab: (tab: 'builder' | 'live' | 'platform') => void;
-}
-
 interface NavItemProps {
+  href: string;
   label: string;
   isActive: boolean;
-  onClick: () => void;
 }
 
-function NavItem({ label, isActive, onClick }: NavItemProps) {
+function NavItem({ href, label, isActive }: NavItemProps) {
   const [isHovered, setIsHovered] = useState(false);
 
   const navItemStyle: CSSProperties = {
@@ -35,22 +32,24 @@ function NavItem({ label, isActive, onClick }: NavItemProps) {
     borderLeft: 'none',
     borderRight: 'none',
     outline: 'none',
+    textDecoration: 'none',
   };
 
   return (
-    <button
+    <Link
+      href={href}
       style={navItemStyle}
-      onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {label}
-    </button>
+    </Link>
   );
 }
 
-export function Header({ activeTab, setActiveTab }: HeaderProps) {
+export function Header() {
   const [isDark, setIsDark] = useState(true);
+  const pathname = usePathname();
 
   React.useEffect(() => {
     // Force dark mode on mount
@@ -97,19 +96,19 @@ export function Header({ activeTab, setActiveTab }: HeaderProps) {
 
         <nav style={{ display: 'flex', height: '100%', alignItems: 'center', gap: '0.5rem' }}>
           <NavItem
+            href="/builder"
             label="Workflow Builder"
-            isActive={activeTab === 'builder'}
-            onClick={() => setActiveTab('builder')}
+            isActive={pathname === '/builder'}
           />
           <NavItem
+            href="/live"
             label="Session Player"
-            isActive={activeTab === 'live'}
-            onClick={() => setActiveTab('live')}
+            isActive={pathname === '/live'}
           />
           <NavItem
-            label="Session Platform"
-            isActive={activeTab === 'platform'}
-            onClick={() => setActiveTab('platform')}
+            href="/sessions"
+            label="Sessions"
+            isActive={pathname === '/sessions'}
           />
         </nav>
       </div>

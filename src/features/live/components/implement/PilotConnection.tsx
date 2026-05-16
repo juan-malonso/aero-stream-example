@@ -2,11 +2,10 @@
 
 import { ConnectionStatus } from '@/constants';
 
-import { AlertScreen, CompletionScreen, ErrorScreen, InfoScreen, KYCComponent, VideoComponent, WelcomeComponent, DoneComponent } from '@/components/steps';
+import { createLiveStepLibrary } from '@/aero-stream-example-library/live';
+import { AlertScreen, CompletionScreen, ErrorScreen, InfoScreen } from '@/components/steps';
 
 import {
-  type AeroStreamComponentParams,
-  type AeroStreamLibrary,
   type AeroStreamAlertScreenParams,
   AeroStreamPilot,
   PilotLogMode,
@@ -34,12 +33,7 @@ export interface PilotConnectionHandle {
 
 export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnectionProps>(
   function PilotConnection({ workflowId, sessionId, secret, onSessionId, onStatusChange, onConnectionOpenChange, onTimeTick, onTimeReset }, ref) {
-  const stepLibrary: AeroStreamLibrary<React.ReactNode> = {
-    WelcomeComponent: (props: AeroStreamComponentParams) => <WelcomeComponent {...props} />,
-    VideoComponent: (props: AeroStreamComponentParams) => <VideoComponent {...props} />,
-    KYCComponent: (props: AeroStreamComponentParams) => <KYCComponent {...props} />,
-    DoneComponent: (props: AeroStreamComponentParams) => <DoneComponent {...props} />,
-  };
+  const stepLibrary = createLiveStepLibrary();
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const connectionWatchRef = useRef<ReturnType<typeof setInterval> | null>(null);
