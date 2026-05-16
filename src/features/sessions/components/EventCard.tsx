@@ -21,7 +21,7 @@ interface EventTheme {
 }
 
 const EVENT_THEMES: Record<SessionEventType, EventTheme> = {
-  [SessionEventType.SESSION_CREATED]: {
+  [SessionEventType.SESSION_CREATE]: {
     accent: colors.gray800,
     background: colors.gray100,
     label: "Session Created",
@@ -70,10 +70,10 @@ const EVENT_THEMES: Record<SessionEventType, EventTheme> = {
     icon: "!",
     messageType: "out",
   },
-  [SessionEventType.ALERT_RESPONDED]: {
+  [SessionEventType.ALERT_SUBMITTED]: {
     accent: colors.yellow800,
     background: colors.yellow100,
-    label: "Alert Responded",
+    label: "Alert Submitted",
     icon: "*",
     messageType: "in",
   },
@@ -84,17 +84,17 @@ const EVENT_THEMES: Record<SessionEventType, EventTheme> = {
     icon: "=",
     messageType: "out",
   },
-  [SessionEventType.TAILING_STEP]: {
+  [SessionEventType.TAILING_RENDERED]: {
     accent: colors.gray500,
     background: colors.gray50,
-    label: "Tailing Step",
+    label: "Tailing Rendered",
     icon: "~",
     messageType: "out",
   },
-  [SessionEventType.TAILING_END]: {
+  [SessionEventType.TAILING_CLOSED]: {
     accent: colors.gray500,
     background: colors.gray50,
-    label: "Tailing End",
+    label: "Tailing Closed",
     icon: "x",
     messageType: "out",
   },
@@ -142,7 +142,7 @@ function DirectionIcon({ type, color }: { type: "in" | "out"; color: string }) {
 export function EventCard({ event, index }: EventCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const theme =
-    EVENT_THEMES[event.type] ?? EVENT_THEMES[SessionEventType.SESSION_CREATED];
+    EVENT_THEMES[event.type] ?? EVENT_THEMES[SessionEventType.SESSION_CREATE];
 
   const dateLabel = new Date(event.occurredAt);
   const timeLabel =
@@ -290,7 +290,7 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
   };
 
   switch (type) {
-    case SessionEventType.SESSION_CREATED: {
+    case SessionEventType.SESSION_CREATE: {
       return (
         <div style={fieldStyle}>
           <span style={labelStyle}>Workflow</span>
@@ -511,7 +511,7 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
       );
     }
 
-    case SessionEventType.ALERT_RESPONDED: {
+    case SessionEventType.ALERT_SUBMITTED: {
       const result = String(payload.result ?? "—");
       const responded = payload.data as Record<string, unknown> | undefined;
       const preview = responded
@@ -563,7 +563,7 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
       );
     }
 
-    case SessionEventType.TAILING_STEP: {
+    case SessionEventType.TAILING_RENDERED: {
       return (
         <div style={fieldStyle}>
           <span style={labelStyle}>Step</span>
@@ -572,7 +572,7 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
       );
     }
 
-    case SessionEventType.TAILING_END: {
+    case SessionEventType.TAILING_CLOSED: {
       return (
         <span style={{ ...valueStyle, color: colors.gray400 }}>
           Session ended for tailing connection

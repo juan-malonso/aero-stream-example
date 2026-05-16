@@ -7,7 +7,7 @@ import { SessionEventType, type SessionEventEnvelope } from './types.ts';
 function event(overrides: Partial<SessionEventEnvelope> = {}): SessionEventEnvelope {
   return {
     eventId: overrides.eventId ?? 'event-1',
-    type: overrides.type ?? SessionEventType.SESSION_CREATED,
+    type: overrides.type ?? SessionEventType.SESSION_CREATE,
     occurredAt: overrides.occurredAt ?? '2026-05-16T00:00:00.000Z',
     sessionId: overrides.sessionId ?? 'session-1',
     workflowId: overrides.workflowId ?? 'workflow-1',
@@ -52,4 +52,18 @@ test('marks session result as finished', () => {
   const [summary] = getSessionSummaries();
   assert.equal(summary?.status, 'FINISHED');
   assert.deepEqual(summary?.result, { type: 'COMPLETED', reason: 'done' });
+});
+
+test('stores Tower session create events', () => {
+  clearSessionsForTest();
+
+  addEvent(event({
+    eventId: 'event-session-create',
+    type: SessionEventType.SESSION_CREATE,
+    payload: { workflowId: 'workflow-1' },
+  }));
+
+  const [summary] = getSessionSummaries();
+  assert.equal(summary?.sessionId, 'session-1');
+  assert.equal(summary?.eventCount, 1);
 });
