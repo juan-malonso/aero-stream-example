@@ -2,7 +2,7 @@
 
 import { ConnectionStatus } from '@/constants';
 
-import { createLiveStepLibrary } from '@/aero-stream-example-library/live';
+import { createLiveStepLibrary } from '@/aero-stream-example-library';
 import { AlertScreen, CompletionScreen, ErrorScreen, InfoScreen } from '@/aero-stream-example-library/live/screens';
 
 import {

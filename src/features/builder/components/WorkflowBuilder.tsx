@@ -4,8 +4,7 @@ import { Sidebar } from './Sidebar';
 import { StartNode } from './StartNode';
 import { SelfConnectingEdge } from './SelfConnectingEdge';
 
-import { createStepNodeData, getBuilderStepByNodeType } from '@/aero-stream-example-library';
-import { BUILDER_NODE_TYPES } from '@/aero-stream-example-library/builderNodes';
+import { BUILDER_NODE_TYPES, createStepNodeData, getBuilderStepByNodeType } from '@/aero-stream-example-library';
 import { useWorkflowGraph } from '@/contexts/shared/workflow/useWorkflow';
 import { useImplicitEdges } from '@/contexts/builder/workflow/useImplicitEdges';
 import { generateId } from '@/lib/shared/uuid';

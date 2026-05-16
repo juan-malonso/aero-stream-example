@@ -1,10 +1,19 @@
+import type { ReactNode } from 'react';
+
 import type { StepNodeData } from './builder/types.ts';
 
-import { doneBuilderStep } from './steps/done/builder';
-import { kycBuilderStep } from './steps/kyc/builder';
-import { videoBuilderStep } from './steps/video/builder';
-import { welcomeBuilderStep } from './steps/welcome/builder';
+import { DoneNode, doneBuilderStep } from './steps/done/builder';
+import { KYCNode, kycBuilderStep } from './steps/kyc/builder';
+import { VideoNode, videoBuilderStep } from './steps/video/builder';
+import { WelcomeNode, welcomeBuilderStep } from './steps/welcome/builder';
 import type { BuilderStepDefinition, ComponentMeta } from './types.ts';
+
+export type BuilderNodeComponent = (props: { id: string; data: StepNodeData }) => ReactNode;
+
+export interface BuilderNodeDefinition {
+  nodeType: string;
+  component: BuilderNodeComponent;
+}
 
 export const BUILDER_STEP_DEFINITIONS = [
   welcomeBuilderStep,
@@ -19,6 +28,17 @@ export const BUILDER_STEPS_BY_EXECUTION_TYPE: Record<string, BuilderStepDefiniti
 
 export const BUILDER_STEPS_BY_NODE_TYPE: Record<string, BuilderStepDefinition> = Object.fromEntries(
   BUILDER_STEP_DEFINITIONS.map((step) => [step.nodeType, step]),
+);
+
+export const BUILDER_NODE_DEFINITIONS = [
+  { nodeType: welcomeBuilderStep.nodeType, component: WelcomeNode },
+  { nodeType: kycBuilderStep.nodeType, component: KYCNode },
+  { nodeType: videoBuilderStep.nodeType, component: VideoNode },
+  { nodeType: doneBuilderStep.nodeType, component: DoneNode },
+] as const satisfies readonly BuilderNodeDefinition[];
+
+export const BUILDER_NODE_TYPES: Record<string, BuilderNodeComponent> = Object.fromEntries(
+  BUILDER_NODE_DEFINITIONS.map((node) => [node.nodeType, node.component]),
 );
 
 export const COMPONENT_REGISTRY: Record<string, ComponentMeta> = Object.fromEntries(
@@ -46,6 +66,10 @@ export function getBuilderStepByExecutionType(executionType: string): BuilderSte
 
 export function getBuilderStepByNodeType(nodeType: string): BuilderStepDefinition | undefined {
   return BUILDER_STEPS_BY_NODE_TYPE[nodeType];
+}
+
+export function getBuilderNodeByNodeType(nodeType: string): BuilderNodeComponent | undefined {
+  return BUILDER_NODE_TYPES[nodeType];
 }
 
 export function createStepNodeData(step: BuilderStepDefinition, label = step.label): StepNodeData {

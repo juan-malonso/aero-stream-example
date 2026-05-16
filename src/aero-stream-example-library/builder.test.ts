@@ -89,12 +89,31 @@ test('keeps Live registration and component rendering in one file per step', () 
 
 test('keeps aggregate Builder and node registries wired to step Builder files', () => {
   const builderRegistry = readLibraryFile('builder.ts');
-  const nodeRegistry = readLibraryFile('builderNodes.tsx');
 
   for (const step of expectedSteps) {
     assert.match(builderRegistry, new RegExp(`from './steps/${step.dir}/builder'`));
-    assert.match(nodeRegistry, new RegExp(`from './steps/${step.dir}/builder'`));
+    assert.match(builderRegistry, new RegExp(`component: ${step.nodeExport}`));
+    assert.match(builderRegistry, new RegExp(`nodeType: ${step.builderExport}\\.nodeType`));
   }
+
+  assert.match(builderRegistry, /export const BUILDER_NODE_DEFINITIONS/);
+  assert.match(builderRegistry, /export const BUILDER_NODE_TYPES/);
+  assert.match(builderRegistry, /export function getBuilderNodeByNodeType/);
+  assert.equal(existsSync(join(libraryDir, 'builderNodes.tsx')), false);
+});
+
+test('keeps aggregate Live step and component registries wired to step Live files', () => {
+  const liveRegistry = readLibraryFile('live.tsx');
+
+  for (const step of expectedSteps) {
+    assert.match(liveRegistry, new RegExp(`from './steps/${step.dir}/live'`));
+    assert.match(liveRegistry, new RegExp(`component: ${step.componentExport}`));
+    assert.match(liveRegistry, new RegExp(`executionType: ${step.liveExport}\\.executionType`));
+  }
+
+  assert.match(liveRegistry, /export const LIVE_COMPONENT_DEFINITIONS/);
+  assert.match(liveRegistry, /export const LIVE_COMPONENTS_BY_EXECUTION_TYPE/);
+  assert.match(liveRegistry, /export function getLiveComponentByExecutionType/);
 });
 
 test('does not keep old split step component files', () => {
