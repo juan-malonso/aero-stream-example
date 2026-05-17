@@ -9,7 +9,7 @@ export const requestBuilderStep: BuilderStepDefinition = {
   toolboxLabel: 'Request Backend',
   nodeType: 'requestStep',
   executionType: 'request',
-  executionMode: 'BACK',
+  executionMode: 'REQUEST',
   fields: ['firstName', 'lastName', 'address', 'city', 'country', 'email', 'phone', 'company'],
   propKeys: [],
   accentColor: colors.pink500,

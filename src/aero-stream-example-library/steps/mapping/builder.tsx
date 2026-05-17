@@ -9,7 +9,7 @@ export const mappingBuilderStep: BuilderStepDefinition = {
   toolboxLabel: 'Mapping Backend',
   nodeType: 'mappingStep',
   executionType: 'mapping',
-  executionMode: 'BACK',
+  executionMode: 'MAPPER',
   fields: ['givenName', 'familyName', 'contactEmail', 'city'],
   propKeys: [],
   accentColor: colors.emerald600,
