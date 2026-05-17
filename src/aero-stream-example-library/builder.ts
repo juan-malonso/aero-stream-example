@@ -4,6 +4,8 @@ import type { StepNodeData } from './builder/types.ts';
 
 import { DoneNode, doneBuilderStep } from './steps/done/builder';
 import { KYCNode, kycBuilderStep } from './steps/kyc/builder';
+import { MappingNode, mappingBuilderStep } from './steps/mapping/builder';
+import { RequestNode, requestBuilderStep } from './steps/request/builder';
 import { VideoNode, videoBuilderStep } from './steps/video/builder';
 import { WelcomeNode, welcomeBuilderStep } from './steps/welcome/builder';
 import type { BuilderStepDefinition, ComponentMeta } from './types.ts';
@@ -17,6 +19,8 @@ export interface BuilderNodeDefinition {
 
 export const BUILDER_STEP_DEFINITIONS = [
   welcomeBuilderStep,
+  requestBuilderStep,
+  mappingBuilderStep,
   kycBuilderStep,
   videoBuilderStep,
   doneBuilderStep,
@@ -32,6 +36,8 @@ export const BUILDER_STEPS_BY_NODE_TYPE: Record<string, BuilderStepDefinition> =
 
 export const BUILDER_NODE_DEFINITIONS = [
   { nodeType: welcomeBuilderStep.nodeType, component: WelcomeNode },
+  { nodeType: requestBuilderStep.nodeType, component: RequestNode },
+  { nodeType: mappingBuilderStep.nodeType, component: MappingNode },
   { nodeType: kycBuilderStep.nodeType, component: KYCNode },
   { nodeType: videoBuilderStep.nodeType, component: VideoNode },
   { nodeType: doneBuilderStep.nodeType, component: DoneNode },
@@ -77,7 +83,7 @@ export function createStepNodeData(step: BuilderStepDefinition, label = step.lab
     label,
     fields: [...step.fields],
     props: Object.fromEntries(step.propKeys.map((key) => [key, step.defaultProps?.[key] ?? ''])),
-    execution: { mode: 'FRONT', type: step.executionType },
+    execution: { mode: step.executionMode ?? 'FRONT', type: step.executionType },
     hideOutputs: step.hideOutputs ?? false,
     specs: step.defaultSpecs ? { ...step.defaultSpecs } : {},
   };

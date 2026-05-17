@@ -77,6 +77,20 @@ const EVENT_THEMES: Record<SessionEventType, EventTheme> = {
     icon: "*",
     messageType: "in",
   },
+  [SessionEventType.BACKEND_REQUEST]: {
+    accent: colors.pink600,
+    background: colors.pink100,
+    label: "Backend Request",
+    icon: "R",
+    messageType: "out",
+  },
+  [SessionEventType.BACKEND_MAPPING]: {
+    accent: colors.emerald700,
+    background: colors.emerald100,
+    label: "Backend Mapping",
+    icon: "M",
+    messageType: "out",
+  },
   [SessionEventType.SESSION_RESULT]: {
     accent: colors.gray800,
     background: colors.gray100,
@@ -544,6 +558,46 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
               </span>
             </div>
           )}
+        </div>
+      );
+    }
+
+    case SessionEventType.BACKEND_REQUEST: {
+      const data = payload.data as Record<string, unknown> | undefined;
+      const preview = data ? JSON.stringify(data).slice(0, 120) : "—";
+      return (
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+          <div style={fieldStyle}>
+            <span style={labelStyle}>Step</span>
+            <span style={valueStyle}>{String(payload.stepId ?? "—")}</span>
+          </div>
+          <div style={fieldStyle}>
+            <span style={labelStyle}>Data</span>
+            <span style={valueStyle}>
+              {preview}
+              {preview.length >= 120 ? "..." : ""}
+            </span>
+          </div>
+        </div>
+      );
+    }
+
+    case SessionEventType.BACKEND_MAPPING: {
+      const output = payload.output as Record<string, unknown> | undefined;
+      const preview = output ? JSON.stringify(output).slice(0, 120) : "—";
+      return (
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+          <div style={fieldStyle}>
+            <span style={labelStyle}>Step</span>
+            <span style={valueStyle}>{String(payload.stepId ?? "—")}</span>
+          </div>
+          <div style={fieldStyle}>
+            <span style={labelStyle}>Output</span>
+            <span style={valueStyle}>
+              {preview}
+              {preview.length >= 120 ? "..." : ""}
+            </span>
+          </div>
         </div>
       );
     }

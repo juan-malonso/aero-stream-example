@@ -8,6 +8,7 @@ export interface BuilderStepDefinition {
   toolboxLabel: string;
   nodeType: string;
   executionType: string;
+  executionMode?: 'FRONT' | 'BACK';
   fields: string[];
   propKeys: string[];
   accentColor: string;
