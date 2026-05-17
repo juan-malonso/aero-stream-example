@@ -77,14 +77,14 @@ const EVENT_THEMES: Record<SessionEventType, EventTheme> = {
     icon: "*",
     messageType: "in",
   },
-  [SessionEventType.BACKEND_REQUEST_COMPLETED]: {
+  [SessionEventType.BACKEND_REQUEST]: {
     accent: colors.pink600,
     background: colors.pink100,
     label: "Backend Request",
     icon: "R",
     messageType: "out",
   },
-  [SessionEventType.BACKEND_MAPPING_COMPLETED]: {
+  [SessionEventType.BACKEND_MAPPING]: {
     accent: colors.emerald700,
     background: colors.emerald100,
     label: "Backend Mapping",
@@ -562,7 +562,7 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
       );
     }
 
-    case SessionEventType.BACKEND_REQUEST_COMPLETED: {
+    case SessionEventType.BACKEND_REQUEST: {
       const data = payload.data as Record<string, unknown> | undefined;
       const preview = data ? JSON.stringify(data).slice(0, 120) : "—";
       return (
@@ -582,7 +582,7 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
       );
     }
 
-    case SessionEventType.BACKEND_MAPPING_COMPLETED: {
+    case SessionEventType.BACKEND_MAPPING: {
       const output = payload.output as Record<string, unknown> | undefined;
       const preview = output ? JSON.stringify(output).slice(0, 120) : "—";
       return (

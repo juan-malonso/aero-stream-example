@@ -33,18 +33,18 @@ test('normalizes legacy session-created event names', () => {
 
 test('accepts backend request and mapping events', () => {
   const requestResult = parseSessionEvent(event({
-    type: 'BACKEND_REQUEST_COMPLETED',
+    type: 'BACKEND_REQUEST',
     payload: { stepId: 'request-data', stepType: 'request', data: { firstName: 'Ada' } },
   }));
   const mappingResult = parseSessionEvent(event({
-    type: 'BACKEND_MAPPING_COMPLETED',
+    type: 'BACKEND_MAPPING',
     payload: { stepId: 'map-data', stepType: 'mapping', output: { givenName: 'Ada' } },
   }));
 
   assert.equal(requestResult.ok, true);
-  assert.equal(requestResult.ok && requestResult.event.type, SessionEventType.BACKEND_REQUEST_COMPLETED);
+  assert.equal(requestResult.ok && requestResult.event.type, SessionEventType.BACKEND_REQUEST);
   assert.equal(mappingResult.ok, true);
-  assert.equal(mappingResult.ok && mappingResult.event.type, SessionEventType.BACKEND_MAPPING_COMPLETED);
+  assert.equal(mappingResult.ok && mappingResult.event.type, SessionEventType.BACKEND_MAPPING);
 });
 
 test('rejects unsupported event types', () => {

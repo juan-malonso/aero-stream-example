@@ -15,6 +15,9 @@ export const requestBuilderStep: BuilderStepDefinition = {
   accentColor: colors.pink500,
   defaultSpecs: {
     endpoint: 'http://localhost:3000/api/sessions/request',
+    method: 'GET',
+    headers: '{}',
+    body: '',
   },
 };
 

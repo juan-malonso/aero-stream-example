@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { ConnectionGroup, Session } from "@/lib/sessions/types";
+import type {
+  ConnectionGroup,
+  Session,
+  SessionEventEnvelope,
+} from "@/lib/sessions/types";
 import { SessionEventType } from "@/lib/sessions/types";
 import { colors, radii, shadows, typography } from "@/styles/tokens";
 import { EventCard } from "./EventCard";
@@ -97,6 +101,7 @@ const STRIP_GAP = 2;
 
 interface ConnectionGridProps {
   connections: ConnectionGroup[];
+  transversalEvents: SessionEventEnvelope[];
   eventRowMap: Map<string, number>;
   connectionEventIndex: Map<string, number>;
   emptyCells: { row: number; colIndex: number }[];
@@ -104,6 +109,7 @@ interface ConnectionGridProps {
 
 function ConnectionGrid({
   connections,
+  transversalEvents,
   eventRowMap,
   connectionEventIndex,
   emptyCells,
@@ -114,7 +120,7 @@ function ConnectionGrid({
   const [rightHidden, setRightHidden] = useState<number[]>([]);
   const [isOverflowing, setIsOverflowing] = useState(false);
 
-  const colCount = connections.length;
+  const colCount = Math.max(connections.length, 1);
 
   // For each connection, the sorted list of grid rows where it has events.
   // Used to decide the empty-cell icon (eye vs cross).
@@ -342,6 +348,24 @@ function ConnectionGrid({
             ));
           })}
 
+          {/* Backend events span the full session width. */}
+          {transversalEvents.map((event, index) => {
+            const row = eventRowMap.get(event.eventId);
+            if (!row) return null;
+            return (
+              <div
+                key={event.eventId}
+                style={{
+                  gridColumn: `1 / ${colCount + 1}`,
+                  gridRow: row * 2,
+                  minWidth: 0,
+                }}
+              >
+                <EventCard event={event} index={index} />
+              </div>
+            );
+          })}
+
           {/* Empty-cell placeholders */}
           {emptyCells.map(({ row, colIndex }) => {
             const rows = connEventRows[colIndex] ?? [];
@@ -436,6 +460,13 @@ function ConnectionGrid({
   );
 }
 
+function isBackendSessionEvent(event: SessionEventEnvelope): boolean {
+  return (
+    event.type === SessionEventType.BACKEND_REQUEST ||
+    event.type === SessionEventType.BACKEND_MAPPING
+  );
+}
+
 export function SessionDetail({ session, isLoading }: SessionDetailProps) {
   if (isLoading) {
     return (
@@ -472,8 +503,12 @@ export function SessionDetail({ session, isLoading }: SessionDetailProps) {
   }
 
   const globalEvents = session.events.filter(
-    (e) => !e.connectionId && e.type !== SessionEventType.SESSION_RESULT,
+    (e) =>
+      !e.connectionId &&
+      e.type !== SessionEventType.SESSION_RESULT &&
+      !isBackendSessionEvent(e),
   );
+  const transversalEvents = session.events.filter(isBackendSessionEvent);
   const resultEvents = session.events.filter(
     (e) => e.type === SessionEventType.SESSION_RESULT,
   );
@@ -484,8 +519,8 @@ export function SessionDetail({ session, isLoading }: SessionDetailProps) {
   const eventRowMap = new Map<string, number>();
   {
     const TIME_WINDOW_MS = 5;
-    const allEvents = session.connections
-      .flatMap((group) => group.events)
+    const connectionEvents = session.connections.flatMap((group) => group.events);
+    const allEvents = [...connectionEvents, ...transversalEvents]
       .sort(
         (a, b) =>
           new Date(a.occurredAt).getTime() - new Date(b.occurredAt).getTime(),
@@ -506,9 +541,18 @@ export function SessionDetail({ session, isLoading }: SessionDetailProps) {
 
     let currentRow = 2; // row 1 is the headers
     for (const bucket of buckets) {
+      const backendEvents = bucket.filter(isBackendSessionEvent);
+      for (const event of backendEvents) {
+        eventRowMap.set(event.eventId, currentRow);
+        currentRow += 1;
+      }
+
+      const connectionBucket = bucket.filter((event) => !isBackendSessionEvent(event));
+      if (connectionBucket.length === 0) continue;
+
       // Group by connection within this bucket
       const byConn = new Map<string, Bucket>();
-      for (const event of bucket) {
+      for (const event of connectionBucket) {
         const key = event.connectionId ?? "__global__";
         if (!byConn.has(key)) byConn.set(key, []);
         byConn.get(key)!.push(event);
@@ -532,6 +576,11 @@ export function SessionDetail({ session, isLoading }: SessionDetailProps) {
   });
 
   const occupiedByRow = new Map<number, Set<number>>();
+  const transversalRows = new Set<number>();
+  transversalEvents.forEach((event) => {
+    const row = eventRowMap.get(event.eventId);
+    if (row !== undefined) transversalRows.add(row);
+  });
   session.connections.forEach((group, colIndex) => {
     group.events.forEach((event) => {
       const row = eventRowMap.get(event.eventId)!;
@@ -544,7 +593,7 @@ export function SessionDetail({ session, isLoading }: SessionDetailProps) {
       Array.from({ length: session.connections.length }, (_, colIndex) => ({
         row,
         colIndex,
-      })).filter(({ colIndex }) => !occupied.has(colIndex)),
+      })).filter(({ colIndex }) => !occupied.has(colIndex) && !transversalRows.has(row)),
   );
 
   return (
@@ -640,9 +689,10 @@ export function SessionDetail({ session, isLoading }: SessionDetailProps) {
         <EventCard key={event.eventId} event={event} index={index} />
       ))}
 
-      {session.connections.length > 0 && (
+      {(session.connections.length > 0 || transversalEvents.length > 0) && (
         <ConnectionGrid
           connections={session.connections}
+          transversalEvents={transversalEvents}
           eventRowMap={eventRowMap}
           connectionEventIndex={connectionEventIndex}
           emptyCells={emptyCells}
