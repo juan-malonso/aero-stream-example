@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 import type { StepNodeData } from './builder/types.ts';
 
-import { DoneNode, doneBuilderStep } from './steps/done/builder';
+import { FinishNode, finishBuilderStep } from './steps/finish/builder';
 import { KYCNode, kycBuilderStep } from './steps/kyc/builder';
 import { MappingNode, mappingBuilderStep } from './steps/mapping/builder';
 import { RequestNode, requestBuilderStep } from './steps/request/builder';
@@ -23,7 +23,7 @@ export const BUILDER_STEP_DEFINITIONS = [
   mappingBuilderStep,
   kycBuilderStep,
   videoBuilderStep,
-  doneBuilderStep,
+  finishBuilderStep,
 ] as const satisfies readonly BuilderStepDefinition[];
 
 export const BUILDER_STEPS_BY_EXECUTION_TYPE: Record<string, BuilderStepDefinition> = Object.fromEntries(
@@ -40,7 +40,7 @@ export const BUILDER_NODE_DEFINITIONS = [
   { nodeType: mappingBuilderStep.nodeType, component: MappingNode },
   { nodeType: kycBuilderStep.nodeType, component: KYCNode },
   { nodeType: videoBuilderStep.nodeType, component: VideoNode },
-  { nodeType: doneBuilderStep.nodeType, component: DoneNode },
+  { nodeType: finishBuilderStep.nodeType, component: FinishNode },
 ] as const satisfies readonly BuilderNodeDefinition[];
 
 export const BUILDER_NODE_TYPES: Record<string, BuilderNodeComponent> = Object.fromEntries(

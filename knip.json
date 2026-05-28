@@ -1,0 +1,42 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "next.config.mjs",
+    "open-next.config.ts",
+    "src/aero-stream-example-library/steps/index.ts",
+    "src/features/builder/components/index.ts",
+    "src/app/**/*.{ts,tsx}",
+    "src/**/*.test.ts",
+    "src/**/*.unit.test.ts",
+    "src/**/*.integration.test.ts",
+    "src/**/*.contract.test.ts",
+    "src/**/*.e2e.test.ts"
+  ],
+  "ignore": [
+    ".dependency-graph/**",
+    ".next/**",
+    ".open-next/**",
+    ".vercel/**",
+    "dist/**",
+    "src/features/sessions/components/SessionReplay.tsx"
+  ],
+  "ignoreBinaries": [
+    "eslint",
+    "next",
+    "opennextjs-cloudflare",
+    "wrangler"
+  ],
+  "ignoreDependencies": [
+    "madge",
+    "sharp",
+    "@types/node",
+    "@types/react",
+    "@types/react-dom"
+  ],
+  "project": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "*.ts",
+    "*.tsx"
+  ]
+}

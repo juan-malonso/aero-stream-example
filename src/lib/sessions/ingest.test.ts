@@ -31,6 +31,22 @@ test('normalizes legacy session-created event names', () => {
   assert.equal(result.ok && result.event.type, SessionEventType.SESSION_CREATE);
 });
 
+test('accepts frontend render events', () => {
+  const stepResult = parseSessionEvent(event({
+    type: 'STEP_RENDERED',
+    payload: { stepId: 'front-data', stepType: 'form', props: {} },
+  }));
+  const finishResult = parseSessionEvent(event({
+    type: 'FINISH_RENDER',
+    payload: { stepId: 'finish-data', stepType: 'FinishComponent', props: {} },
+  }));
+
+  assert.equal(stepResult.ok, true);
+  assert.equal(stepResult.ok && stepResult.event.type, SessionEventType.STEP_RENDERED);
+  assert.equal(finishResult.ok, true);
+  assert.equal(finishResult.ok && finishResult.event.type, SessionEventType.FINISH_RENDER);
+});
+
 test('accepts backend request and mapping events', () => {
   const requestResult = parseSessionEvent(event({
     type: 'BACKEND_REQUEST',

@@ -13,6 +13,8 @@ import { Card, Input, Label, Select, Button, Row } from "@/components/ui";
 
 export type { OutputConfig, StepNodeData };
 
+const REMOVED_SPEC_KEYS = new Set(["stop".concat("Workflow")]);
+
 // --- Private Components (Not Exported) --- //
 
 interface NodeFieldProps {
@@ -477,14 +479,12 @@ export function StepNode({
   const outputs = data.outputs || [];
   const fields = data.fields || [];
   const props = data.props || {};
-  const specs = data.specs || {};
+  const specs = cleanSpecs(data.specs || {});
   const propEntries = Object.entries(props) as [string, string][];
 
   const handleSpecChange = (key: string, value: unknown) => {
     const updatedSpecs = { ...specs, [key]: value };
-    const patch: Record<string, unknown> = { specs: updatedSpecs };
-    if (key === "stopWorkflow") patch.hideOutputs = Boolean(value);
-    updateNodeData(id, patch);
+    updateNodeData(id, { specs: updatedSpecs });
   };
 
   const handlePropChange = (key: string, value: string) => {
@@ -571,5 +571,11 @@ export function StepNode({
         />
       </div>
     </Card>
+  );
+}
+
+function cleanSpecs(specs: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(specs).filter(([key]) => !REMOVED_SPEC_KEYS.has(key)),
   );
 }

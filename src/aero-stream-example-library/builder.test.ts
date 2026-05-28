@@ -35,13 +35,13 @@ const expectedSteps = [
     nodeType: 'videoStep',
   },
   {
-    dir: 'done',
-    builderExport: 'doneBuilderStep',
-    nodeExport: 'DoneNode',
-    liveExport: 'doneLiveStep',
-    componentExport: 'DoneComponent',
-    executionType: 'DoneComponent',
-    nodeType: 'doneStep',
+    dir: 'finish',
+    builderExport: 'finishBuilderStep',
+    nodeExport: 'FinishNode',
+    liveExport: 'finishLiveStep',
+    componentExport: 'FinishComponent',
+    executionType: 'FinishComponent',
+    nodeType: 'finishStep',
   },
 ];
 
@@ -100,6 +100,21 @@ test('keeps Builder metadata and node rendering in one file per step', () => {
   }
 });
 
+test('keeps Finish mode as the terminal Builder step', () => {
+  const finishBuilder = readLibraryFile('steps/finish/builder.tsx');
+  const builderRegistry = readLibraryFile('builder.ts');
+  const definitions = builderRegistry.match(
+    /export const BUILDER_STEP_DEFINITIONS = \[([\S\s]*?)] as const/,
+  );
+
+  assert.ok(definitions);
+  const entries = [...definitions[1].matchAll(/(\w+BuilderStep),/g)].map((match) => match[1]);
+
+  assert.equal(entries.at(-1), 'finishBuilderStep');
+  assert.match(finishBuilder, /executionMode: 'FINISH'/);
+  assert.match(finishBuilder, /hideOutputs: true/);
+});
+
 test('keeps Live registration and component rendering in one file per step', () => {
   for (const step of expectedSteps) {
     const live = readLibraryFile(`steps/${step.dir}/live.tsx`);
@@ -107,7 +122,7 @@ test('keeps Live registration and component rendering in one file per step', () 
     assert.match(live, new RegExp(`export const ${step.componentExport}`));
     assert.match(live, new RegExp(`export const ${step.liveExport}`));
     assert.match(live, new RegExp(`executionType: ['"]${step.executionType}['"]`));
-    assert.match(live, new RegExp(`<${step.componentExport} \\{\\.\\.\\.props\\} />`));
+    assert.match(live, new RegExp(`<${step.componentExport} \\{\\.\\.\\.(props|properties)\\} />`));
   }
 });
 

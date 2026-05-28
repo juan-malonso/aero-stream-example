@@ -1,7 +1,7 @@
 import type { AeroStreamComponent, AeroStreamLibrary } from 'aero-stream-pilot';
 import type { ReactNode } from 'react';
 
-import { DoneComponent, doneLiveStep } from './steps/done/live';
+import { FinishComponent, finishLiveStep } from './steps/finish/live';
 import { KYCComponent, kycLiveStep } from './steps/kyc/live';
 import { VideoComponent, videoLiveStep } from './steps/video/live';
 import { WelcomeComponent, welcomeLiveStep } from './steps/welcome/live';
@@ -16,7 +16,7 @@ export const LIVE_STEP_DEFINITIONS = [
   welcomeLiveStep,
   videoLiveStep,
   kycLiveStep,
-  doneLiveStep,
+  finishLiveStep,
 ] as const satisfies readonly LiveStepDefinition[];
 
 export const LIVE_STEPS_BY_EXECUTION_TYPE: Record<string, LiveStepDefinition> = Object.fromEntries(
@@ -27,7 +27,7 @@ export const LIVE_COMPONENT_DEFINITIONS = [
   { executionType: welcomeLiveStep.executionType, component: WelcomeComponent },
   { executionType: videoLiveStep.executionType, component: VideoComponent },
   { executionType: kycLiveStep.executionType, component: KYCComponent },
-  { executionType: doneLiveStep.executionType, component: DoneComponent },
+  { executionType: finishLiveStep.executionType, component: FinishComponent },
 ] as const satisfies readonly LiveComponentDefinition[];
 
 export const LIVE_COMPONENTS_BY_EXECUTION_TYPE: Record<string, AeroStreamComponent<ReactNode>> = Object.fromEntries(

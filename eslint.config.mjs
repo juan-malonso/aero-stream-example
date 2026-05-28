@@ -1,7 +1,17 @@
-import js from '@eslint/js';
+import eslint from '@eslint/js';
+import eslintCommentsPlugin from '@eslint-community/eslint-plugin-eslint-comments';
 import nextPlugin from '@next/eslint-plugin-next';
-import eslintConfigPrettier from 'eslint-config-prettier';
+import prettierConfig from 'eslint-config-prettier';
+import importPlugin from 'eslint-plugin-import';
+import promisePlugin from 'eslint-plugin-promise';
+import regexpPlugin from 'eslint-plugin-regexp';
+import sonarjsPlugin from 'eslint-plugin-sonarjs';
+import simpleImportSort from 'eslint-plugin-simple-import-sort';
+import unicornPlugin from 'eslint-plugin-unicorn';
+import unusedImportsPlugin from 'eslint-plugin-unused-imports';
 import tseslint from 'typescript-eslint';
+
+import { createAeroStreamAppLintConfig } from '../aero-stream/eslint.config.mjs';
 
 const browserGlobals = {
   clearInterval: 'readonly',
@@ -18,26 +28,24 @@ const browserGlobals = {
   URL: 'readonly',
 };
 
-export default [
-  {
-    ignores: [
-      '.next/**',
-      '.open-next/**',
-      '.wrangler/**',
-      'node_modules/**',
-      'next-env.d.ts',
-    ],
-  },
-  js.configs.recommended,
-  ...tseslint.configs.recommended,
+export default tseslint.config(
+  ...createAeroStreamAppLintConfig({
+    eslint,
+    eslintCommentsPlugin,
+    globals: browserGlobals,
+    importPlugin,
+    prettierConfig,
+    promisePlugin,
+    regexpPlugin,
+    sonarjsPlugin,
+    simpleImportSort,
+    tsconfigRootDir: import.meta.dirname,
+    tseslint,
+    unicornPlugin,
+    unusedImportsPlugin,
+  }),
   {
     files: ['**/*.{ts,tsx}'],
-    languageOptions: {
-      globals: browserGlobals,
-      parserOptions: {
-        project: false,
-      },
-    },
     plugins: {
       '@next/next': nextPlugin,
     },
@@ -45,12 +53,7 @@ export default [
       ...nextPlugin.configs.recommended.rules,
       ...nextPlugin.configs['core-web-vitals'].rules,
       '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unused-vars': ['error', {
-        argsIgnorePattern: '^_',
-        varsIgnorePattern: '^_',
-      }],
       'no-console': 'off',
     },
   },
-  eslintConfigPrettier,
-];
+);

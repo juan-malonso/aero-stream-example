@@ -1,6 +1,5 @@
-import type { ReactNode } from 'react';
-
 import type { AeroStreamComponentParams } from 'aero-stream-pilot';
+import type { ReactNode } from 'react';
 
 export interface BuilderStepDefinition {
   id: string;
@@ -8,7 +7,7 @@ export interface BuilderStepDefinition {
   toolboxLabel: string;
   nodeType: string;
   executionType: string;
-  executionMode?: 'FRONT' | 'MAPPER' | 'REQUEST';
+  executionMode?: 'FINISH' | 'FRONT' | 'MAPPER' | 'REQUEST';
   fields: string[];
   propKeys: string[];
   accentColor: string;

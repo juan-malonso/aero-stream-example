@@ -22,6 +22,7 @@ const START_OFFSET_X = 100;
 const STEP_OFFSET_X = 250;
 const ROW_Y = 200;
 const NODE_GAP_Y = 400;
+const REMOVED_SPEC_KEYS = new Set(["stop".concat("Workflow")]);
 
 export function parseTowerToReactFlow(towerWorkflow: TowerWorkflow): {
   nodes: Node[];
@@ -50,7 +51,11 @@ export function parseTowerToReactFlow(towerWorkflow: TowerWorkflow): {
     if (id === "start_node" && towerWorkflow.start) {
       placeNode(towerWorkflow.start, col + 1);
     } else if (id !== "start_node" && towerWorkflow.steps[id]) {
-      towerWorkflow.steps[id].transitions.forEach((t) => {
+      const step = towerWorkflow.steps[id];
+      const stepDefinition = getBuilderStepByExecutionType(step.execution.type);
+      if (stepDefinition?.hideOutputs) return;
+
+      step.transitions.forEach((t) => {
         placeNode(t.next, col + 1);
       });
     }
@@ -94,18 +99,15 @@ export function parseTowerToReactFlow(towerWorkflow: TowerWorkflow): {
     const stepDefinition = getBuilderStepByExecutionType(executionType);
 
     const currentOutputs: OutputConfig[] = [];
+    const hideOutputs = stepDefinition?.hideOutputs ?? false;
     const nodeData = {
       label: step.name,
       stepName: step.name,
       props: { ...step.props },
-      specs:
-        executionType === "DoneComponent"
-          ? { stopWorkflow: true, ...step.specs }
-          : { ...step.specs },
+      specs: cleanSpecs(step.specs),
       execution: { ...step.execution },
       fields: stepDefinition?.fields || [],
-      hideOutputs:
-        executionType === "DoneComponent" || step.specs?.stopWorkflow === true,
+      hideOutputs,
       outputs: currentOutputs,
     };
 
@@ -115,6 +117,8 @@ export function parseTowerToReactFlow(towerWorkflow: TowerWorkflow): {
       position: nodePositions[stepId] || { x: 0, y: 0 },
       data: nodeData,
     });
+
+    if (hideOutputs) return;
 
     step.transitions.forEach((transition, tIndex) => {
       let sourceHandle = "default";
@@ -205,41 +209,43 @@ export function parseReactFlowToTower(
 
     const sortedTransitions: WorkflowTransition[] = [];
 
-    (nodeData.outputs || []).forEach((output) => {
-      const edge = outEdges.find((e) => e.sourceHandle === output.id);
-      if (edge) {
-        const sym = opMap[output.operator] || "==";
-        let varField = output.field || "";
-        if (
-          typeof varField === "string" &&
-          varField !== "" &&
-          !varField.startsWith("{{")
-        ) {
-          varField = `{{${varField}}}`;
-        }
+    if (!nodeData.hideOutputs) {
+      (nodeData.outputs || []).forEach((output) => {
+        const edge = outEdges.find((e) => e.sourceHandle === output.id);
+        if (edge) {
+          const sym = opMap[output.operator] || "==";
+          let varField = output.field || "";
+          if (
+            typeof varField === "string" &&
+            varField !== "" &&
+            !varField.startsWith("{{")
+          ) {
+            varField = `{{${varField}}}`;
+          }
 
+          sortedTransitions.push({
+            condition: {
+              [sym]: [{ var: varField }, output.value],
+            },
+            next: edge.target,
+          });
+        }
+      });
+
+      const defaultEdge = outEdges.find((e) => e.sourceHandle === "default");
+      if (defaultEdge) {
         sortedTransitions.push({
-          condition: {
-            [sym]: [{ var: varField }, output.value],
-          },
-          next: edge.target,
+          condition: true,
+          next: defaultEdge.target,
         });
       }
-    });
-
-    const defaultEdge = outEdges.find((e) => e.sourceHandle === "default");
-    if (defaultEdge) {
-      sortedTransitions.push({
-        condition: true,
-        next: defaultEdge.target,
-      });
     }
 
     steps[node.id] = {
       execution: nodeData.execution || { mode: "FRONT", type: executionType },
       name: nodeData.stepName || nodeData.label || "",
       props: nodeData.props || {},
-      specs: nodeData.specs || {},
+      specs: cleanSpecs(nodeData.specs),
       transitions: sortedTransitions,
     };
   });
@@ -255,4 +261,12 @@ export function parseReactFlowToTower(
       secret: "my-super-secret-token",
     },
   };
+}
+
+function cleanSpecs(specs?: Record<string, unknown>): Record<string, unknown> {
+  if (!specs) return {};
+
+  return Object.fromEntries(
+    Object.entries(specs).filter(([key]) => !REMOVED_SPEC_KEYS.has(key)),
+  );
 }

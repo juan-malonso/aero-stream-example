@@ -3,11 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "architecture:check": "yarn deps",
     "dev": "next dev -p 3000",
     "build": "next build",
     "build:worker": "opennextjs-cloudflare build",
     "preview:worker": "opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare deploy",
+    "deps": "node ../aero-stream/scripts/dependency-analysis.mjs src --name example",
     "start": "next start",
     "lint": "eslint .",
     "test": "node --experimental-strip-types --test src/aero-stream-example-library/builder.test.ts src/lib/sessions/ingest.test.ts src/lib/shared/config/workerEndpoints.test.ts src/lib/sessions/store.test.ts src/lib/live/tower/towerRuntime.service.test.ts src/lib/shared/video/downloadService.test.ts src/lib/builder/workflow/workflow.service.test.ts"
@@ -20,7 +22,7 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "3.3.5",
+    "@eslint-community/eslint-plugin-eslint-comments": "^4.7.1",
     "@eslint/js": "10.0.1",
     "@next/eslint-plugin-next": "^16.2.6",
     "@opennextjs/cloudflare": "^1.19.10",
@@ -30,7 +32,15 @@
     "eslint": "10.2.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-import": "2.32.0",
+    "eslint-plugin-promise": "^7.3.0",
+    "eslint-plugin-regexp": "^3.1.0",
     "eslint-plugin-simple-import-sort": "12.1.1",
+    "eslint-plugin-sonarjs": "^4.0.3",
+    "eslint-plugin-unicorn": "^64.0.0",
+    "eslint-plugin-unused-imports": "^4.4.1",
+    "knip": "^6.14.2",
+    "madge": "^8.0.0",
+    "sharp": "^0.34.5",
     "typescript": "^5.4.5",
     "typescript-eslint": "8.58.0",
     "wrangler": "^4.92.0"

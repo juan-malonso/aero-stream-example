@@ -49,6 +49,13 @@ const EVENT_THEMES: Record<SessionEventType, EventTheme> = {
     icon: "?",
     messageType: "in",
   },
+  [SessionEventType.FINISH_RENDER]: {
+    accent: colors.violet800,
+    background: colors.violet100,
+    label: "Finish Render",
+    icon: ">",
+    messageType: "out",
+  },
   [SessionEventType.STEP_RENDERED]: {
     accent: colors.violet800,
     background: colors.violet100,
@@ -430,6 +437,7 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
       );
     }
 
+    case SessionEventType.FINISH_RENDER:
     case SessionEventType.STEP_RENDERED: {
       return (
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
@@ -441,7 +449,7 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
             <span style={labelStyle}>Type</span>
             <span style={valueStyle}>{String(payload.stepType ?? "—")}</span>
           </div>
-          {payload.end === true && (
+          {event.type === SessionEventType.FINISH_RENDER && (
             <div style={fieldStyle}>
               <span style={labelStyle}>Final</span>
               <span style={{ ...valueStyle, color: colors.amber600 }}>
