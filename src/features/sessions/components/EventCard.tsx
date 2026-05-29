@@ -63,6 +63,13 @@ const EVENT_THEMES: Record<SessionEventType, EventTheme> = {
     icon: ">",
     messageType: "out",
   },
+  [SessionEventType.STEP_RESPONSE]: {
+    accent: colors.teal800,
+    background: colors.teal100,
+    label: "Step Response",
+    icon: "=",
+    messageType: "out",
+  },
   [SessionEventType.STEP_SUBMITTED]: {
     accent: colors.red800,
     background: colors.red100,
@@ -83,20 +90,6 @@ const EVENT_THEMES: Record<SessionEventType, EventTheme> = {
     label: "Alert Submitted",
     icon: "*",
     messageType: "in",
-  },
-  [SessionEventType.BACKEND_REQUEST]: {
-    accent: colors.pink600,
-    background: colors.pink100,
-    label: "Backend Request",
-    icon: "R",
-    messageType: "out",
-  },
-  [SessionEventType.BACKEND_MAPPING]: {
-    accent: colors.emerald700,
-    background: colors.emerald100,
-    label: "Backend Mapping",
-    icon: "M",
-    messageType: "out",
   },
   [SessionEventType.SESSION_RESULT]: {
     accent: colors.gray800,
@@ -570,9 +563,9 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
       );
     }
 
-    case SessionEventType.BACKEND_REQUEST: {
-      const data = payload.data as Record<string, unknown> | undefined;
-      const preview = data ? JSON.stringify(data).slice(0, 120) : "—";
+    case SessionEventType.STEP_RESPONSE: {
+      const result = payload.result as Record<string, unknown> | undefined;
+      const preview = result ? JSON.stringify(result).slice(0, 120) : "—";
       return (
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           <div style={fieldStyle}>
@@ -580,27 +573,7 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
             <span style={valueStyle}>{String(payload.stepId ?? "—")}</span>
           </div>
           <div style={fieldStyle}>
-            <span style={labelStyle}>Data</span>
-            <span style={valueStyle}>
-              {preview}
-              {preview.length >= 120 ? "..." : ""}
-            </span>
-          </div>
-        </div>
-      );
-    }
-
-    case SessionEventType.BACKEND_MAPPING: {
-      const output = payload.output as Record<string, unknown> | undefined;
-      const preview = output ? JSON.stringify(output).slice(0, 120) : "—";
-      return (
-        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-          <div style={fieldStyle}>
-            <span style={labelStyle}>Step</span>
-            <span style={valueStyle}>{String(payload.stepId ?? "—")}</span>
-          </div>
-          <div style={fieldStyle}>
-            <span style={labelStyle}>Output</span>
+            <span style={labelStyle}>Result</span>
             <span style={valueStyle}>
               {preview}
               {preview.length >= 120 ? "..." : ""}

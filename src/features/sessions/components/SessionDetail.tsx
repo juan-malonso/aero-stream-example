@@ -461,10 +461,7 @@ function ConnectionGrid({
 }
 
 function isBackendSessionEvent(event: SessionEventEnvelope): boolean {
-  return (
-    event.type === SessionEventType.BACKEND_REQUEST ||
-    event.type === SessionEventType.BACKEND_MAPPING
-  );
+  return event.type === SessionEventType.STEP_RESPONSE;
 }
 
 export function SessionDetail({ session, isLoading }: SessionDetailProps) {

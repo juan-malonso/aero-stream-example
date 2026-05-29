@@ -101,6 +101,9 @@ export function parseTowerToReactFlow(towerWorkflow: TowerWorkflow): {
     const currentOutputs: OutputConfig[] = [];
     const hideOutputs = stepDefinition?.hideOutputs ?? false;
     const nodeData = {
+      code: step.code
+        ? { ...step.code }
+        : stepDefinition?.defaultCode ? { ...stepDefinition.defaultCode } : undefined,
       label: step.name,
       stepName: step.name,
       props: { ...step.props },
@@ -242,7 +245,8 @@ export function parseReactFlowToTower(
     }
 
     steps[node.id] = {
-      execution: nodeData.execution || { mode: "FRONT", type: executionType },
+      code: nodeData.code,
+      execution: nodeData.execution || { mode: "CLIENT", type: executionType },
       name: nodeData.stepName || nodeData.label || "",
       props: nodeData.props || {},
       specs: cleanSpecs(nodeData.specs),

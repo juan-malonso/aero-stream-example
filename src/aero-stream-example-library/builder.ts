@@ -2,10 +2,9 @@ import type { ReactNode } from 'react';
 
 import type { StepNodeData } from './builder/types.ts';
 
+import { CodeNode, codeBuilderStep } from './steps/code/builder';
 import { FinishNode, finishBuilderStep } from './steps/finish/builder';
 import { KYCNode, kycBuilderStep } from './steps/kyc/builder';
-import { MappingNode, mappingBuilderStep } from './steps/mapping/builder';
-import { RequestNode, requestBuilderStep } from './steps/request/builder';
 import { VideoNode, videoBuilderStep } from './steps/video/builder';
 import { WelcomeNode, welcomeBuilderStep } from './steps/welcome/builder';
 import type { BuilderStepDefinition, ComponentMeta } from './types.ts';
@@ -19,8 +18,7 @@ export interface BuilderNodeDefinition {
 
 export const BUILDER_STEP_DEFINITIONS = [
   welcomeBuilderStep,
-  requestBuilderStep,
-  mappingBuilderStep,
+  codeBuilderStep,
   kycBuilderStep,
   videoBuilderStep,
   finishBuilderStep,
@@ -36,8 +34,7 @@ export const BUILDER_STEPS_BY_NODE_TYPE: Record<string, BuilderStepDefinition> =
 
 export const BUILDER_NODE_DEFINITIONS = [
   { nodeType: welcomeBuilderStep.nodeType, component: WelcomeNode },
-  { nodeType: requestBuilderStep.nodeType, component: RequestNode },
-  { nodeType: mappingBuilderStep.nodeType, component: MappingNode },
+  { nodeType: codeBuilderStep.nodeType, component: CodeNode },
   { nodeType: kycBuilderStep.nodeType, component: KYCNode },
   { nodeType: videoBuilderStep.nodeType, component: VideoNode },
   { nodeType: finishBuilderStep.nodeType, component: FinishNode },
@@ -81,9 +78,10 @@ export function getBuilderNodeByNodeType(nodeType: string): BuilderNodeComponent
 export function createStepNodeData(step: BuilderStepDefinition, label = step.label): StepNodeData {
   return {
     label,
+    code: step.defaultCode ? { ...step.defaultCode } : undefined,
     fields: [...step.fields],
     props: Object.fromEntries(step.propKeys.map((key) => [key, step.defaultProps?.[key] ?? ''])),
-    execution: { mode: step.executionMode ?? 'FRONT', type: step.executionType },
+    execution: { mode: step.executionMode ?? 'CLIENT', type: step.executionType },
     hideOutputs: step.hideOutputs ?? false,
     specs: step.defaultSpecs ? { ...step.defaultSpecs } : {},
   };

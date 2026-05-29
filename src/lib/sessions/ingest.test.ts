@@ -47,20 +47,19 @@ test('accepts frontend render events', () => {
   assert.equal(finishResult.ok && finishResult.event.type, SessionEventType.FINISH_RENDER);
 });
 
-test('accepts backend request and mapping events', () => {
-  const requestResult = parseSessionEvent(event({
-    type: 'BACKEND_REQUEST',
-    payload: { stepId: 'request-data', stepType: 'request', data: { firstName: 'Ada' } },
-  }));
-  const mappingResult = parseSessionEvent(event({
-    type: 'BACKEND_MAPPING',
-    payload: { stepId: 'map-data', stepType: 'mapping', output: { givenName: 'Ada' } },
+test('accepts normalized step response events', () => {
+  const responseResult = parseSessionEvent(event({
+    type: 'STEP_RESPONSE',
+    payload: {
+      mode: 'SERVER',
+      result: { firstName: 'Ada' },
+      stepId: 'request-data',
+      stepType: 'code',
+    },
   }));
 
-  assert.equal(requestResult.ok, true);
-  assert.equal(requestResult.ok && requestResult.event.type, SessionEventType.BACKEND_REQUEST);
-  assert.equal(mappingResult.ok, true);
-  assert.equal(mappingResult.ok && mappingResult.event.type, SessionEventType.BACKEND_MAPPING);
+  assert.equal(responseResult.ok, true);
+  assert.equal(responseResult.ok && responseResult.event.type, SessionEventType.STEP_RESPONSE);
 });
 
 test('rejects unsupported event types', () => {

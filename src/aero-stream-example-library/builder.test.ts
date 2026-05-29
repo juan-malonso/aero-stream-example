@@ -47,18 +47,11 @@ const expectedSteps = [
 
 const expectedBackendSteps = [
   {
-    dir: 'request',
-    builderExport: 'requestBuilderStep',
-    nodeExport: 'RequestNode',
-    executionType: 'request',
-    nodeType: 'requestStep',
-  },
-  {
-    dir: 'mapping',
-    builderExport: 'mappingBuilderStep',
-    nodeExport: 'MappingNode',
-    executionType: 'mapping',
-    nodeType: 'mappingStep',
+    dir: 'code',
+    builderExport: 'codeBuilderStep',
+    nodeExport: 'CodeNode',
+    executionType: 'code',
+    nodeType: 'codeStep',
   },
 ];
 

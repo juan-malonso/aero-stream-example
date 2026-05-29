@@ -12,10 +12,9 @@ import { colors, radii, shadows, typography } from "./tokens";
 // ---------------------------------------------------------------------------
 
 export const BADGE_PALETTE: Record<string, { bg: string; text: string }> = {
+  CLIENT: { bg: colors.blue100, text: colors.blue700 },
   FINISH: { bg: colors.violet100, text: colors.violet800 },
-  FRONT: { bg: colors.blue100, text: colors.blue700 },
-  MAPPER: { bg: colors.emerald100, text: colors.emerald700 },
-  REQUEST: { bg: colors.yellow100, text: colors.yellow700 },
+  SERVER: { bg: colors.teal100, text: colors.teal700 },
 };
 
 export const badgeStyle = (mode: string): CSSProperties => {

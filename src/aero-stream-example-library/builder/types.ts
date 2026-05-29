@@ -6,6 +6,11 @@ export interface OutputConfig {
 }
 
 export interface StepNodeData {
+  code?: {
+    entrypoint?: string;
+    language: "ts";
+    source: string;
+  };
   label: string;
   stepName?: string;
   fields?: string[];

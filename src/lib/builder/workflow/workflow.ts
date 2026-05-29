@@ -9,6 +9,11 @@ export interface WorkflowTransition {
 }
 
 export interface WorkflowStep {
+  code?: {
+    entrypoint?: string;
+    language: "ts";
+    source: string;
+  };
   execution: WorkflowExecution;
   name: string;
   props: Record<string, string>;
