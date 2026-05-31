@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { ConnectionStatus } from "@/constants";
 import { colors, radii, typography } from "@/styles/tokens";
 
+import type { TransportPerformanceStats } from "./transportPerformance";
+
 type RuntimeVisibilityState = DocumentVisibilityState | "unknown";
 
 interface BrowserPerformanceMemory {
@@ -25,10 +27,8 @@ interface RuntimePerformanceMetrics {
 
 interface PerformanceStatsProperties {
   connectionTime: number;
-  hasSessionId: boolean;
-  isConnectionOpen: boolean;
-  isSessionIdValid: boolean;
   status: ConnectionStatus;
+  transportStats: TransportPerformanceStats;
 }
 
 interface MetricRowProperties {
@@ -145,18 +145,15 @@ function usePerformanceMetrics() {
 
 export function PerformanceStats({
   connectionTime,
-  hasSessionId,
-  isConnectionOpen,
-  isSessionIdValid,
   status,
+  transportStats,
 }: PerformanceStatsProperties) {
   const metrics = usePerformanceMetrics();
   const statusMeta = getStatusMeta(status);
   const fpsProgress = clampProgress(Math.round((metrics.fps / 60) * 100));
   const fpsGap = metrics.fps > 0 ? Math.max(0, 60 - metrics.fps) : null;
   const heapProgress = metrics.heapPressure ?? undefined;
-  const sessionState = getSessionState(hasSessionId, isSessionIdValid);
-  const transportState = getTransportState(status, isConnectionOpen);
+  const transportActivity = getTransportActivity(transportStats);
 
   return (
     <section style={panelStyle} aria-label="Runtime health and performance">
@@ -164,27 +161,44 @@ export function PerformanceStats({
         <div style={summaryTitleStyle}>
           <div style={summaryLabelStyle}>Health & Performance</div>
         </div>
-        <div style={{ ...statusBadgeStyle, color: statusMeta.color }}>
-          <span
-            aria-hidden="true"
-            style={{ ...statusDotStyle, backgroundColor: statusMeta.color }}
-          />
-          Runtime {statusMeta.label}
+        <div style={summaryRuntimeStyle}>
+          <div style={{ ...statusBadgeStyle, color: statusMeta.color }}>
+            <span
+              aria-hidden="true"
+              style={{ ...statusDotStyle, backgroundColor: statusMeta.color }}
+            />
+            Runtime {statusMeta.label}
+          </div>
+          <div style={uptimeBadgeStyle}>{formatTime(connectionTime)}</div>
         </div>
       </div>
 
-      <MetricGroup title="Flow execution">
+      <MetricGroup title="Transport performance">
         <ReadinessRow
-          label="Session ID"
-          state={sessionState.state}
-          value={sessionState.value}
+          label="Activity"
+          state={transportActivity.state}
+          value={transportActivity.value}
         />
-        <ReadinessRow
-          label="Transport"
-          state={transportState.state}
-          value={transportState.value}
+        <MetricRow
+          label="TX throughput"
+          value={`${formatBytes(transportStats.outboundBytesPerSecond)}/s`}
+          detail={`${transportStats.outboundMessages} messages, ${formatBytes(transportStats.outboundBytes)} total`}
         />
-        <MetricRow label="Uptime" value={formatTime(connectionTime)} />
+        <MetricRow
+          label="RX throughput"
+          value={`${formatBytes(transportStats.inboundBytesPerSecond)}/s`}
+          detail={`${transportStats.inboundMessages} messages, ${formatBytes(transportStats.inboundBytes)} total`}
+        />
+        <MetricRow
+          label="Video payload"
+          value={formatBytes(transportStats.outboundMediaBytes)}
+          detail={`${transportStats.outboundVideoMessages} video chunks sent`}
+        />
+        <MetricRow
+          label="Last frame"
+          value={transportStats.lastType ?? "--"}
+          detail={`${formatBytes(transportStats.lastEncodedBytes)} transport${transportStats.lastMediaBytes > 0 ? `, ${formatBytes(transportStats.lastMediaBytes)} media` : ""}`}
+        />
       </MetricGroup>
 
       <MetricGroup title="Render performance">
@@ -212,18 +226,18 @@ export function PerformanceStats({
       <MetricGroup title="Browser resources">
         <MetricRow
           label="JS heap used"
-          value={formatMb(metrics.heapUsedMb)}
+          value={
+            metrics.heapUsedMb === null || metrics.heapLimitMb === null
+              ? "--"
+              : `${formatMb(metrics.heapUsedMb)} / ${formatMb(metrics.heapLimitMb)}`
+          }
           detail={
             metrics.heapTotalMb === null
               ? "Chrome-only metric"
-              : `${formatMb(metrics.heapTotalMb)} allocated`
+              : "Used / limit"
           }
           progress={heapProgress}
           progressColor={getHeapColor(metrics.heapPressure)}
-        />
-        <MetricRow
-          label="JS heap limit"
-          value={formatMb(metrics.heapLimitMb)}
         />
         <MetricRow
           label="Network"
@@ -315,33 +329,19 @@ function getStatusMeta(status: ConnectionStatus) {
   }
 }
 
-function getSessionState(
-  hasSessionId: boolean,
-  isSessionIdValid: boolean,
+function getTransportActivity(
+  stats: TransportPerformanceStats,
 ): Pick<ReadinessRowProperties, "state" | "value"> {
-  if (!hasSessionId) {
-    return { state: "waiting", value: "Pending" };
+  if (stats.lastActivityAgeMs === null) {
+    return { state: "waiting", value: "No traffic" };
   }
-  if (!isSessionIdValid) {
-    return { state: "blocked", value: "Invalid" };
+  if (stats.lastActivityAgeMs > 1500) {
+    return { state: "waiting", value: "Idle" };
   }
-  return { state: "ready", value: "Valid" };
-}
-
-function getTransportState(
-  status: ConnectionStatus,
-  isConnectionOpen: boolean,
-): Pick<ReadinessRowProperties, "state" | "value"> {
-  if (status === ConnectionStatus.error) {
-    return { state: "blocked", value: "Error" };
-  }
-  if (status === ConnectionStatus.connecting) {
-    return { state: "waiting", value: "Connecting" };
-  }
-  if (isConnectionOpen || status === ConnectionStatus.active) {
-    return { state: "ready", value: "Open" };
-  }
-  return { state: "waiting", value: "Idle" };
+  return {
+    state: "ready",
+    value: stats.lastDirection === "outbound" ? "Sending" : "Receiving",
+  };
 }
 
 function getReadinessColor(state: ReadinessRowProperties["state"]) {
@@ -386,6 +386,12 @@ function formatMb(value: number | null) {
   return value === null ? "--" : `${value} MB`;
 }
 
+function formatBytes(value: number) {
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${roundToOneDecimal(value / 1024)} KiB`;
+  return `${roundToOneDecimal(value / 1024 / 1024)} MiB`;
+}
+
 function formatOnlineState(isOnline: boolean | null) {
   if (isOnline === null) {
     return "Unknown";
@@ -425,7 +431,7 @@ const summaryStyle: CSSProperties = {
   display: "flex",
   gap: "0.75rem",
   justifyContent: "space-between",
-  padding: "0.875rem 1rem",
+  padding: "0.5rem 0.3rem 0.5rem 1rem",
 };
 
 const summaryTitleStyle: CSSProperties = {
@@ -450,10 +456,11 @@ const summaryLabelStyle: CSSProperties = {
   textTransform: "uppercase",
 };
 
-const summarySubtitleStyle: CSSProperties = {
-  color: colors.gray500,
-  fontSize: typography.sizes.md,
-  fontWeight: typography.weights.medium,
+const summaryRuntimeStyle: CSSProperties = {
+  alignItems: "flex-end",
+  display: "flex",
+  flexDirection: "column",
+  gap: "0.25rem",
 };
 
 const statusBadgeStyle: CSSProperties = {
@@ -468,6 +475,15 @@ const statusBadgeStyle: CSSProperties = {
   gap: "0.375rem",
   padding: "0.25rem 0.5rem",
   textTransform: "uppercase",
+  whiteSpace: "nowrap",
+};
+
+const uptimeBadgeStyle: CSSProperties = {
+  ...statusBadgeStyle,
+  color: colors.gray600,
+  fontVariantNumeric: "tabular-nums",
+  justifyContent: "center",
+  minWidth: "4.2rem",
 };
 
 const groupStyle: CSSProperties = {

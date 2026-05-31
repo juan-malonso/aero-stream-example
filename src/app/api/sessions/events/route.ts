@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 
+import { getDestinationEventsBucket } from '../../../../lib/sessions/cloudflare';
 import { parseSessionEvent } from '../../../../lib/sessions/ingest';
-import { addEvent } from '../../../../lib/sessions/store';
+import { addEventToR2 } from '../../../../lib/sessions/r2-store';
 
 export async function POST(request: Request): Promise<NextResponse> {
   let body: unknown;
@@ -17,7 +18,8 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: parsed.error }, { status: parsed.status });
   }
 
-  addEvent(parsed.event);
+  const bucket = getDestinationEventsBucket();
+  await addEventToR2(bucket, parsed.event);
 
   return NextResponse.json({ received: true }, { status: 200 });
 }

@@ -3,9 +3,10 @@
 import {
   type AeroStreamAlertScreenParams,
   AeroStreamPilot,
+  type AeroStreamTransportEvent,
   PilotLogMode,
 } from 'aero-stream-pilot';
-import { forwardRef,useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { type CSSProperties, forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 import { createLiveStepLibrary } from '@/aero-stream-example-library';
 import { AlertScreen, CompletionScreen, ErrorScreen, InfoScreen } from '@/aero-stream-example-library/live/screens';
@@ -23,6 +24,8 @@ interface PilotConnectionProperties {
   onConnectionOpenChange: (isOpen: boolean) => void;
   onTimeTick: () => void;
   onTimeReset: () => void;
+  onTransportEvent: (event: AeroStreamTransportEvent) => void;
+  onTransportReset: () => void;
 }
 
 export interface PilotConnectionHandle {
@@ -30,8 +33,43 @@ export interface PilotConnectionHandle {
   disconnect: () => void;
 }
 
+const pilotConnectionContainerStyle: CSSProperties = {
+  position: 'relative',
+  width: '100%',
+  height: '100%',
+  backgroundColor: colors.gray300,
+  border: `1px solid ${colors.gray200}`,
+  borderRadius: '1.25rem',
+  overflow: 'hidden',
+  display: 'flex',
+  flexDirection: 'column',
+  boxShadow: '0 10px 30px rgba(0,0,0,0.04)',
+};
+
+const pilotConnectionStageStyle: CSSProperties = {
+  flex: 1,
+  position: 'relative',
+  overflow: 'hidden',
+  color: colors.gray600,
+};
+
+function ReadySyncPlaceholder(): React.ReactNode {
+  return (
+    <Column align="center" justify="center" style={{ height: '100%' }} gap="1rem">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}>
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+        <path d="m9 12 2 2 4-4" />
+      </svg>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ fontSize: typography.sizes.md, fontWeight: typography.weights.bold }}>Ready for Sync</div>
+        <div style={{ fontSize: typography.sizes.sm, color: colors.gray500 }}>Select a workflow and click connect</div>
+      </div>
+    </Column>
+  );
+}
+
 export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnectionProperties>(
-  function PilotConnection({ workflowId, sessionId, secret, onSessionId, onStatusChange, onConnectionOpenChange, onTimeTick, onTimeReset }, reference) {
+  function PilotConnection({ workflowId, sessionId, secret, onSessionId, onStatusChange, onConnectionOpenChange, onTimeTick, onTimeReset, onTransportEvent, onTransportReset }, reference) {
   const stepLibrary = createLiveStepLibrary();
 
   const timerReference = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -104,6 +142,7 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
       connectionAttemptReference.current = attemptId;
       setStatus(ConnectionStatus.connecting);
       setCompletionState('none');
+      onTransportReset();
       onSessionId(sessionId);
 
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -132,12 +171,15 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
           targetFps: 12,
           maxWidth: 1280,
           maxHeight: 720,
+          videoBitsPerSecond: 2_000_000,
+          audioBitsPerSecond: 96_000,
           socketChunkBytes: 64 * 1024,
         },
         library: stepLibrary,
         errorScreen: ErrorScreen,
         alertScreen,
         infoScreen: InfoScreen,
+        onTransport: onTransportEvent,
         renderer: setCurrentStep,
         onComplete: ({ ok }) => {
           setCompletionState(ok ? 'success' : 'error');
@@ -176,6 +218,7 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
   const handleDisconnect = () => {
     connectionAttemptReference.current += 1;
     setCompletionState('none');
+    onTransportReset();
 
     if (pilotReference.current) {
       const pilot = pilotReference.current;
@@ -203,33 +246,11 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
   }, []);
 
   return (
-    <div style={{
-      position: 'relative',
-      width: '100%',
-      height: '100%',
-      backgroundColor: colors.gray300,
-      border: `1px solid ${colors.gray200}`,
-      borderRadius: '1.25rem',
-      overflow: 'hidden',
-      display: 'flex',
-      flexDirection: 'column',
-      boxShadow: '0 10px 30px rgba(0,0,0,0.04)',
-    }}>
-      <div style={{ flex: 1, position: 'relative', overflow: 'hidden', color: colors.gray600 }}>
+    <div style={pilotConnectionContainerStyle}>
+      <div style={pilotConnectionStageStyle}>
         {completionState !== 'none' ? (
           <CompletionScreen ok={completionState === 'success'} />
-        ) : (currentStep ?? (
-          <Column align="center" justify="center" style={{ height: '100%' }} gap="1rem">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}>
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
-              <path d="m9 12 2 2 4-4" />
-            </svg>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: typography.sizes.md, fontWeight: typography.weights.bold }}>Ready for Sync</div>
-              <div style={{ fontSize: typography.sizes.sm, color: colors.gray500 }}>Select a workflow and click connect</div>
-            </div>
-          </Column>
-        ))}
+        ) : (currentStep ?? <ReadySyncPlaceholder />)}
 
         {currentAlert}
       </div>

@@ -8,14 +8,6 @@ import type {
 } from './types.ts';
 import { SessionEventType } from './types.ts';
 
-/**
- * Process-level singleton for session event storage.
- * Uses the globalThis pattern to survive Next.js hot-reload in development.
- * Data is intentionally volatile — lost on process restart.
- */
-
-const STORE_KEY = '__aerostream_sessions_store__' as const;
-
 interface StoredSession {
   sessionId: string;
   workflowId: string;
@@ -27,17 +19,7 @@ interface StoredSession {
   events: SessionEventEnvelope[];
 }
 
-interface GlobalWithStore {
-  [STORE_KEY]?: Map<string, StoredSession>;
-}
-
-function getStore(): Map<string, StoredSession> {
-  const globalReference = globalThis as unknown as GlobalWithStore;
-  globalReference[STORE_KEY] ??= new Map<string, StoredSession>();
-  return globalReference[STORE_KEY];
-}
-
-function deriveConnectionGroups(events: SessionEventEnvelope[]): ConnectionGroup[] {
+export function deriveConnectionGroups(events: SessionEventEnvelope[]): ConnectionGroup[] {
   const groupMap = new Map<string, ConnectionGroup>();
 
   for (const event of events) {
@@ -68,34 +50,39 @@ function deriveConnectionGroups(events: SessionEventEnvelope[]): ConnectionGroup
   return Array.from(groupMap.values());
 }
 
-export function addEvent(event: SessionEventEnvelope): void {
-  const store = getStore();
-  const existing = store.get(event.sessionId);
+function buildSessionsFromEvents(events: SessionEventEnvelope[]): Map<string, StoredSession> {
+  const store = new Map<string, StoredSession>();
 
-  if (existing) {
-    existing.events.push(event);
-    existing.lastActivityAt = event.occurredAt;
-    existing.eventCount = existing.events.length;
+  for (const event of events) {
+    const existing = store.get(event.sessionId);
+    if (existing) {
+      existing.events.push(event);
+      existing.lastActivityAt = event.occurredAt;
+      existing.eventCount = existing.events.length;
 
-    if (event.type === SessionEventType.SESSION_RESULT) {
-      existing.status = 'FINISHED';
-      existing.result = event.payload as unknown as SessionResult;
+      if (event.type === SessionEventType.SESSION_RESULT) {
+        existing.status = 'FINISHED';
+        existing.result = event.payload as unknown as SessionResult;
+      }
+      continue;
     }
-  } else {
+
     store.set(event.sessionId, {
       sessionId: event.sessionId,
       workflowId: event.workflowId,
       createdAt: event.occurredAt,
       lastActivityAt: event.occurredAt,
       eventCount: 1,
-      status: 'ACTIVE',
+      status: event.type === SessionEventType.SESSION_RESULT ? 'FINISHED' : 'ACTIVE',
+      result: event.type === SessionEventType.SESSION_RESULT ? event.payload as unknown as SessionResult : undefined,
       events: [event],
     });
   }
+
+  return store;
 }
 
-export function getSessionSummaries(): SessionSummary[] {
-  const store = getStore();
+function summariesFromStore(store: Map<string, StoredSession>): SessionSummary[] {
   const summaries: SessionSummary[] = [];
 
   store.forEach((session) => {
@@ -105,7 +92,7 @@ export function getSessionSummaries(): SessionSummary[] {
       createdAt: session.createdAt,
       lastActivityAt: session.lastActivityAt,
       eventCount: session.eventCount,
-      status: session.status ?? 'ACTIVE',
+      status: session.status,
       result: session.result,
     });
   });
@@ -115,18 +102,16 @@ export function getSessionSummaries(): SessionSummary[] {
   );
 }
 
-export function getSessionDetail(sessionId: string): Session | null {
-  const store = getStore();
-  const session = store.get(sessionId);
+export function getSessionSummariesFromEvents(events: SessionEventEnvelope[]): SessionSummary[] {
+  return summariesFromStore(buildSessionsFromEvents(events));
+}
+
+export function getSessionDetailFromEvents(events: SessionEventEnvelope[], sessionId: string): Session | null {
+  const session = buildSessionsFromEvents(events).get(sessionId);
   if (!session) return null;
 
   return {
     ...session,
-    status: session.status ?? 'ACTIVE',
     connections: deriveConnectionGroups(session.events),
   };
-}
-
-export function clearSessionsForTest(): void {
-  getStore().clear();
 }

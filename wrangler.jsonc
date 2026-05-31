@@ -2,10 +2,36 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "aero-stream-example",
   "main": ".open-next/worker.js",
-  "compatibility_date": "2026-05-16",
+  "compatibility_date": "2026-04-08",
   "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
+  },
+  "r2_buckets": [
+    {
+      "binding": "DESTINATION_EVENTS_BUCKET",
+      "bucket_name": "aero-stream-destination-events"
+    }
+  ],
+  "env": {
+    "dev": {
+      "route": {
+        "pattern": "example.aerostream.deploy.men",
+        "custom_domain": true
+      },
+      "r2_buckets": [
+        {
+          "binding": "DESTINATION_EVENTS_BUCKET",
+          "bucket_name": "aero-stream-dev-destination-events"
+        }
+      ],
+      "vars": {
+        "NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN": "local-test-admin-token",
+        "NEXT_PUBLIC_CONTROLLER_API_URL": "https://controller.aerostream.deploy.men/api",
+        "NEXT_PUBLIC_TOWER_INIT_URL": "https://tower.aerostream.deploy.men/squawk/init",
+        "NEXT_PUBLIC_TOWER_LIVE_URL": "wss://tower.aerostream.deploy.men/squawk/live"
+      }
+    }
   }
 }

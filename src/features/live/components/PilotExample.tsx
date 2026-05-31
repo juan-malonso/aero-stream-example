@@ -8,7 +8,7 @@ import { useWorkflowMetadata } from "@/contexts/shared/workflow/useWorkflow";
 import { towerRuntimeService } from "@/lib/live/tower/towerRuntime.service.ts";
 import { colors, radii, shadows, typography } from "@/styles/tokens";
 
-import { PerformanceStats } from "./developer";
+import { PerformanceStats, useTransportPerformance } from "./developer";
 import { PilotConnection, type PilotConnectionHandle } from "./implement";
 
 const uuidPattern =
@@ -23,6 +23,8 @@ export function PilotExample() {
   const [isConnectionOpen, setIsConnectionOpen] = useState(false);
   const [connectionTime, setConnectionTime] = useState(0);
   const [isSessionCopied, setIsSessionCopied] = useState(false);
+  const { recordTransportEvent, resetTransportPerformance, transportStats } =
+    useTransportPerformance();
 
   const pilotReference = useRef<PilotConnectionHandle>(null);
   const copyFeedbackTimeoutReference = useRef<ReturnType<typeof setTimeout> | null>(
@@ -135,6 +137,8 @@ export function PilotExample() {
           onTimeReset={() => {
             setConnectionTime(0);
           }}
+          onTransportEvent={recordTransportEvent}
+          onTransportReset={resetTransportPerformance}
         />
       </main>
 
@@ -431,10 +435,8 @@ export function PilotExample() {
           {/* Performance Stats */}
           <PerformanceStats
             connectionTime={connectionTime}
-            hasSessionId={hasSessionId}
-            isConnectionOpen={isConnectionOpen}
-            isSessionIdValid={isSessionIdValid}
             status={status}
+            transportStats={transportStats}
           />
         </div>
       </aside>

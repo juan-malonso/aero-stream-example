@@ -57,7 +57,7 @@ test('accepts normalized step response events', () => {
   const conditionResult = parseSessionEvent(event({
     type: 'STEP_CONDITION',
     payload: {
-      condition: { '==': [{ var: 'steps.backend.result.status' }, 'PHONE_GRATER'] },
+      condition: { '==': [{ var: 'steps.backend.result.status' }, 'PHONE_GREATER'] },
       nextStep: { id: 'finish-ok', name: 'OK', type: 'FinishComponent' },
       step: { id: 'backend', name: 'Backend Node', type: 'BackendComponent' },
     },

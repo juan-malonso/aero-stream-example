@@ -76,6 +76,18 @@ The Worker config lives in `wrangler.jsonc`. The application surfaces are:
 - `/live`
 - `/sessions`
 
+Sessions destination events are persisted in the required R2 binding `DESTINATION_EVENTS_BUCKET`, bucket name `aero-stream-destination-events`.
+
+Prepare the destination events buckets and lifecycle rules manually in Cloudflare before deployment. The repository intentionally does not include scripts that create buckets or mutate R2 lifecycle configuration.
+
+Validate without publishing:
+
+```bash
+yarn build
+yarn build:worker
+yarn wrangler deploy --dry-run
+```
+
 ## Project Structure
 
 ```

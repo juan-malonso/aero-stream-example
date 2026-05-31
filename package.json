@@ -9,6 +9,8 @@
     "build:worker": "opennextjs-cloudflare build",
     "preview:worker": "opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare deploy",
+    "deploy:dev": "yarn build:worker && wrangler deploy --env dev",
+    "deploy:dev:dry-run": "yarn build:worker && wrangler deploy --env dev --dry-run",
     "deps": "node ../aero-stream/scripts/dependency-analysis.mjs src --name example",
     "start": "next start",
     "lint": "eslint .",
