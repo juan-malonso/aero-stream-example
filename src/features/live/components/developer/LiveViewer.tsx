@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+
 import {
   fetchControllerResourceJson,
   fetchControllerResourceUrl,
@@ -7,7 +8,7 @@ import {
 import { radii } from '@/styles/tokens';
 
 interface RecordingMetadata {
-  status: 'recording' | 'finalized' | 'finalized_with_gaps' | 'failed' | 'failed_with_partial';
+  status: 'failed_with_partial' | 'failed' | 'finalized_with_gaps' | 'finalized' | 'recording';
   objectKey: string;
   signatureTrackKey?: string;
   gapsTrackKey?: string;
@@ -15,17 +16,17 @@ interface RecordingMetadata {
 }
 
 export function LiveViewer({ viewingId, onClose: _onClose }: { viewingId: string | null; onClose: () => void }) {
-  const viewerVideoRef = useRef<HTMLVideoElement>(null);
+  const viewerVideoReference = useRef<HTMLVideoElement>(null);
   const [vttUrl, setVttUrl] = useState('');
   const [gapWarning, setGapWarning] = useState('');
 
   useEffect(() => {
-    if (!viewingId || !viewerVideoRef.current) return;
+    if (!viewingId || !viewerVideoReference.current) return;
 
     setVttUrl('');
     setGapWarning('');
 
-    const video = viewerVideoRef.current;
+    const video = viewerVideoReference.current;
     const mediaSource = new MediaSource();
     let mediaSourceUrl = URL.createObjectURL(mediaSource);
     video.src = mediaSourceUrl;
@@ -76,8 +77,8 @@ export function LiveViewer({ viewingId, onClose: _onClose }: { viewingId: string
           sourceBuffer.appendBuffer(arrayBuffer);
           return; // Will set isAppending = false inside updateend event
         }
-      } catch (e: unknown) {
-        console.error('Error fetching/appending segment:', e);
+      } catch (error: unknown) {
+        console.error('Error fetching/appending segment:', error);
       }
       isAppending = false;
       if (queue.length > 0) void processQueue();
@@ -91,8 +92,8 @@ export function LiveViewer({ viewingId, onClose: _onClose }: { viewingId: string
           isAppending = false;
           void processQueue();
         });
-      } catch (e: unknown) {
-        console.error('Error adding source buffer:', e);
+      } catch (error: unknown) {
+        console.error('Error adding source buffer:', error);
         return;
       }
 
@@ -124,8 +125,8 @@ export function LiveViewer({ viewingId, onClose: _onClose }: { viewingId: string
               }
             }, 500);
           }
-        } catch (e: unknown) {
-          console.error('Error polling playlist:', e);
+        } catch (error: unknown) {
+          console.error('Error polling playlist:', error);
         }
       };
 
@@ -136,7 +137,7 @@ export function LiveViewer({ viewingId, onClose: _onClose }: { viewingId: string
           .then((url) => {
             if (url && !isDestroyed) setVttUrl(url);
           })
-          .catch((e: unknown) => { console.error('Error fetching VTT:', e); });
+          .catch((error: unknown) => { console.error('Error fetching VTT:', error); });
 
         void pollPlaylist();
         fetchInterval = setInterval(() => { void pollPlaylist(); }, 3000);
@@ -148,7 +149,7 @@ export function LiveViewer({ viewingId, onClose: _onClose }: { viewingId: string
       clearInterval(fetchInterval);
       if (mediaSourceUrl) URL.revokeObjectURL(mediaSourceUrl);
       if (mediaSource.readyState === 'open') {
-        try { mediaSource.endOfStream(); } catch (e: unknown) { console.error('Error ending stream:', e); }
+        try { mediaSource.endOfStream(); } catch (error: unknown) { console.error('Error ending stream:', error); }
       }
     };
   }, [viewingId]);
@@ -183,7 +184,7 @@ export function LiveViewer({ viewingId, onClose: _onClose }: { viewingId: string
         </div>
       )}
       <video
-        ref={viewerVideoRef}
+        ref={viewerVideoReference}
         autoPlay
         controls
         crossOrigin="anonymous"

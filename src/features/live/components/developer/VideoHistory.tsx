@@ -1,24 +1,24 @@
 'use client';
 
+import { Button,Column, Row } from "@/components/ui";
 import { ConnectionStatus } from "@/constants";
-import { Row, Column, Button } from "@/components/ui";
-import { colors, typography } from '@/styles/tokens';
 import { toolboxItemStyle } from "@/styles/theme";
+import { colors, typography } from '@/styles/tokens';
 
-interface VideoHistoryProps {
+interface VideoHistoryProperties {
   history: { id: string; date: string }[];
   currentSessionId: string | null;
   status: ConnectionStatus;
   onDownloadVideo?: (id: string) => void;
 }
 
-interface VideoHistoryItemProps {
+interface VideoHistoryItemProperties {
   session: { id: string; date: string };
   isActive: boolean;
   onDownload?: () => void;
 }
 
-export function VideoHistory({ history, currentSessionId, status, onDownloadVideo }: VideoHistoryProps) {
+export function VideoHistory({ history, currentSessionId, status, onDownloadVideo }: VideoHistoryProperties) {
   return (
     <Column gap="0.5rem" align="stretch" style={{ overflowY: 'auto', maxHeight: '350px', paddingRight: '0.25rem' }}>
       {history.length === 0 ? (
@@ -49,7 +49,7 @@ export function VideoHistory({ history, currentSessionId, status, onDownloadVide
   );
 }
 
-function VideoHistoryItem({ session, isActive, onDownload }: VideoHistoryItemProps) {
+function VideoHistoryItem({ session, isActive, onDownload }: VideoHistoryItemProperties) {
   const color = isActive ? colors.amber500 : colors.gray500;
 
   return (

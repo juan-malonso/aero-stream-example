@@ -3386,22 +3386,22 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"aero-stream-pilot-core@file:lib/aero-stream-pilot-core/pkg::locator=aero-stream-pilot%40file%3A..%2Faero-stream%2Fapps%2Faero-stream-pilot%23..%2Faero-stream%2Fapps%2Faero-stream-pilot%3A%3Ahash%3D15f49e%26locator%3Daero-stream-example%2540workspace%253A.":
+"aero-stream-pilot-core@file:lib/aero-stream-pilot-core/pkg::locator=aero-stream-pilot%40file%3A..%2Faero-stream%2Fapps%2Faero-stream-pilot%23..%2Faero-stream%2Fapps%2Faero-stream-pilot%3A%3Ahash%3Dd78c99%26locator%3Daero-stream-example%2540workspace%253A.":
   version: 0.1.0
-  resolution: "aero-stream-pilot-core@file:lib/aero-stream-pilot-core/pkg#lib/aero-stream-pilot-core/pkg::hash=eaede7&locator=aero-stream-pilot%40file%3A..%2Faero-stream%2Fapps%2Faero-stream-pilot%23..%2Faero-stream%2Fapps%2Faero-stream-pilot%3A%3Ahash%3D15f49e%26locator%3Daero-stream-example%2540workspace%253A."
+  resolution: "aero-stream-pilot-core@file:lib/aero-stream-pilot-core/pkg#lib/aero-stream-pilot-core/pkg::hash=eaede7&locator=aero-stream-pilot%40file%3A..%2Faero-stream%2Fapps%2Faero-stream-pilot%23..%2Faero-stream%2Fapps%2Faero-stream-pilot%3A%3Ahash%3Dd78c99%26locator%3Daero-stream-example%2540workspace%253A."
   checksum: 10c0/160d4a2d7967cf952dd056adca6a3b6195dfc66ee4c70c4a92f8044f3f05921d0f334383130ec13de4dba5e7e8a35bcebb3adfc966cb3673269e754887868814
   languageName: node
   linkType: hard
 
 "aero-stream-pilot@file:../aero-stream/apps/aero-stream-pilot::locator=aero-stream-example%40workspace%3A.":
   version: 1.0.0
-  resolution: "aero-stream-pilot@file:../aero-stream/apps/aero-stream-pilot#../aero-stream/apps/aero-stream-pilot::hash=15f49e&locator=aero-stream-example%40workspace%3A."
+  resolution: "aero-stream-pilot@file:../aero-stream/apps/aero-stream-pilot#../aero-stream/apps/aero-stream-pilot::hash=d78c99&locator=aero-stream-example%40workspace%3A."
   dependencies:
     aero-stream-pilot-core: "file:lib/aero-stream-pilot-core/pkg"
   peerDependencies:
     react: "*"
     react-dom: "*"
-  checksum: 10c0/e9f7903a487032dc3a5aedd7786707cb62ff4630cdf0a5d959f2c9a7e5e90e5234e8ae33977f89f511b8b862d6755405cb8d1c1db685801bf052ce03f787dfb5
+  checksum: 10c0/b4ca3d09c4b85a9a6ea18e20eeb68415d0659226782ee53fccd4149410fec774f656582fc94a0f439d414e9391a7bd4aa4f528c5cdb67074260cac859c8459e6
   languageName: node
   linkType: hard
 

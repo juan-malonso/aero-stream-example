@@ -1,33 +1,48 @@
-import React, { CSSProperties } from 'react';
+import type { CSSProperties, HTMLAttributes } from 'react';
+import React from 'react';
+
 import { spacing } from '@/styles/tokens';
 
-export interface RowProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface RowProperties extends HTMLAttributes<HTMLDivElement> {
   align?: CSSProperties['alignItems'];
-  justify?: CSSProperties['justifyContent'];
+  fullWidth?: boolean;
   gap?: string;
+  justify?: CSSProperties['justifyContent'];
   wrap?: boolean;
 }
 
-export const Row = React.forwardRef<HTMLDivElement, RowProps>(
-  ({ align = 'center', justify = 'flex-start', gap = spacing.md, wrap = false, style, className, children, ...props }, ref) => {
-    return (
-      <div
-        ref={ref}
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: align,
-          justifyContent: justify,
-          gap: gap,
-          flexWrap: wrap ? 'wrap' : 'nowrap',
-          ...style,
-        }}
-        className={className}
-        {...props}
-      >
-        {children}
-      </div>
-    );
-  }
+export const Row = React.forwardRef<HTMLDivElement, RowProperties>(
+  (
+    {
+      align = 'center',
+      children,
+      className,
+      fullWidth = false,
+      gap = spacing.md,
+      justify = 'flex-start',
+      style,
+      wrap = false,
+      ...properties
+    },
+    reference,
+  ) => (
+    <div
+      ref={reference}
+      className={className}
+      style={{
+        alignItems: align,
+        display: 'flex',
+        flexDirection: 'row',
+        flexWrap: wrap ? 'wrap' : 'nowrap',
+        gap,
+        justifyContent: justify,
+        width: fullWidth ? '100%' : undefined,
+        ...style,
+      }}
+      {...properties}
+    >
+      {children}
+    </div>
+  ),
 );
 Row.displayName = 'Row';

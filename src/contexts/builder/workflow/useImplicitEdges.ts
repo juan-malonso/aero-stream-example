@@ -1,11 +1,11 @@
-import { useEffect } from 'react';
 import { type Edge, type Node } from '@xyflow/react';
+import { useEffect } from 'react';
+
 import { type OutputConfig } from '@/aero-stream-example-library';
+import { findFirstStepResultBinding } from '@/lib/builder/workflow/bindings';
 import { edgeFieldStyle } from '@/styles/theme';
 
-const FIELD_REF_PATTERN = /\{\{steps\.([a-zA-Z0-9_-]+)\.result\.([a-zA-Z0-9_]+)\}\}/;
-
-interface ImplicitEdgeParams {
+interface ImplicitEdgeParameters {
   sourceId: string;
   fieldName: string;
   targetId: string;
@@ -14,7 +14,7 @@ interface ImplicitEdgeParams {
   isSourceLeft: boolean;
 }
 
-function buildImplicitEdge({ sourceId, fieldName, targetId, targetHandle, isSameNode, isSourceLeft }: ImplicitEdgeParams): Edge {
+function buildImplicitEdge({ sourceId, fieldName, targetId, targetHandle, isSameNode, isSourceLeft }: ImplicitEdgeParameters): Edge {
   const sourceHandle = isSameNode
     ? `l-field-${fieldName}`
     : (isSourceLeft ? `r-field-${fieldName}` : `l-field-${fieldName}`);
@@ -32,7 +32,7 @@ function buildImplicitEdge({ sourceId, fieldName, targetId, targetHandle, isSame
   };
 }
 
-function resolveTargetHandle(type: 'prop' | 'output', keyOrId: string, isSameNode: boolean, isSourceLeft: boolean): string {
+function resolveTargetHandle(type: 'output' | 'prop', keyOrId: string, isSameNode: boolean, isSourceLeft: boolean): string {
   if (type === 'output') return `target-${keyOrId}`;
   return (isSameNode || isSourceLeft) ? `prop-${keyOrId}` : `prop-r-${keyOrId}`;
 }
@@ -44,13 +44,12 @@ function extractImplicitEdges(nodes: Node[]): Edge[] {
     const targetId = node.id;
     const targetPos = node.position;
 
-    const processFieldRef = (val: string, type: 'prop' | 'output', keyOrId: string) => {
-      if (typeof val !== 'string') return;
-      const match = val.match(FIELD_REF_PATTERN);
-      if (!match) return;
+    const processFieldReference = (value: string, type: 'output' | 'prop', keyOrId: string) => {
+      const binding = findFirstStepResultBinding(value);
+      const fieldName = binding?.path[0];
+      if (!binding || !fieldName) return;
 
-      const sourceId = match[1];
-      const fieldName = match[2];
+      const sourceId = binding.stepId;
       const sourceNode = nodes.find((n) => n.id === sourceId);
       if (!sourceNode) return;
 
@@ -61,8 +60,12 @@ function extractImplicitEdges(nodes: Node[]): Edge[] {
       edges.push(buildImplicitEdge({ sourceId, fieldName, targetId, targetHandle, isSameNode, isSourceLeft }));
     };
 
-    Object.entries(node.data.props || {}).forEach(([k, v]) => processFieldRef(String(v), 'prop', k));
-    ((node.data.outputs as OutputConfig[]) || []).forEach((out) => processFieldRef(String(out.field), 'output', out.id));
+    Object.entries((node.data.props as Record<string, unknown> | undefined) ?? {}).forEach(([key, value]) => {
+      if (typeof value === 'string') processFieldReference(value, 'prop', key);
+    });
+    ((node.data.outputs as OutputConfig[] | undefined) ?? []).forEach((output) => {
+      processFieldReference(output.field, 'output', output.id);
+    });
   });
 
   return edges;

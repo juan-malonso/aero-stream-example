@@ -4,7 +4,7 @@ import test from 'node:test';
 import { createTowerRuntimeService, getPilotLiveUrl } from './towerRuntime.service.ts';
 
 test('creates runtime sessions through Tower', async () => {
-  const calls: Array<{ url: string; init?: RequestInit }> = [];
+  const calls: { url: string; init?: RequestInit }[] = [];
   const service = createTowerRuntimeService({
     towerInitUrl: 'http://tower.local/squawk/init',
     fetcher: async (url, init) => {

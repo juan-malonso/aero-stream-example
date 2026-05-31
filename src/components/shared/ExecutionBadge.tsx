@@ -1,4 +1,5 @@
 import { type CSSProperties } from 'react';
+
 import { badgeStyle } from '@/styles/theme';
 
 export function ExecutionBadge({ mode, style }: { mode: string; style?: CSSProperties }) {

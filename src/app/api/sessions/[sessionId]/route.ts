@@ -1,5 +1,6 @@
-import { getSessionDetail } from '@/lib/sessions/store';
 import { NextResponse } from 'next/server';
+
+import { getSessionDetail } from '@/lib/sessions/store';
 
 export async function GET(
   _request: Request,

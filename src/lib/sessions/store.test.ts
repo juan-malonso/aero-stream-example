@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { addEvent, clearSessionsForTest, getSessionDetail, getSessionSummaries } from './store.ts';
-import { SessionEventType, type SessionEventEnvelope } from './types.ts';
+import { type SessionEventEnvelope,SessionEventType } from './types.ts';
 
 function event(overrides: Partial<SessionEventEnvelope> = {}): SessionEventEnvelope {
   return {

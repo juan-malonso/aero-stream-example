@@ -5,14 +5,14 @@ import { useState } from 'react';
 import type { SessionSummary } from '@/lib/sessions/types';
 import { colors, radii, typography } from '@/styles/tokens';
 
-interface SessionListProps {
+interface SessionListProperties {
   sessions: SessionSummary[];
   selectedSessionId: string | null;
   isLoading: boolean;
   onSelectSession: (sessionId: string) => void;
 }
 
-export function SessionList({ sessions, selectedSessionId, isLoading, onSelectSession }: SessionListProps) {
+export function SessionList({ sessions, selectedSessionId, isLoading, onSelectSession }: SessionListProperties) {
   if (isLoading) {
     return (
       <div style={{ padding: '2rem', textAlign: 'center', color: colors.gray400, fontSize: typography.sizes.sm }}>
@@ -41,20 +41,20 @@ export function SessionList({ sessions, selectedSessionId, isLoading, onSelectSe
           key={session.sessionId}
           session={session}
           isSelected={session.sessionId === selectedSessionId}
-          onSelect={() => onSelectSession(session.sessionId)}
+          onSelect={() => { onSelectSession(session.sessionId); }}
         />
       ))}
     </div>
   );
 }
 
-interface SessionListItemProps {
+interface SessionListItemProperties {
   session: SessionSummary;
   isSelected: boolean;
   onSelect: () => void;
 }
 
-function SessionListItem({ session, isSelected, onSelect }: SessionListItemProps) {
+function SessionListItem({ session, isSelected, onSelect }: SessionListItemProperties) {
   const [isHovered, setIsHovered] = useState(false);
   const shortId = session.sessionId.slice(0, 8);
   const timeLabel = formatRelativeTime(session.lastActivityAt);
@@ -62,8 +62,8 @@ function SessionListItem({ session, isSelected, onSelect }: SessionListItemProps
   return (
     <button
       onClick={onSelect}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={() => { setIsHovered(true); }}
+      onMouseLeave={() => { setIsHovered(false); }}
       style={{
         display: 'flex',
         flexDirection: 'column',

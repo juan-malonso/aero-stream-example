@@ -1,19 +1,20 @@
-import { StepCard } from '../../live/StepCard';
-
 import { type AeroStreamComponent } from 'aero-stream-pilot';
 import React, { useEffect, useState } from 'react';
-import { Column, Input, Label, Button } from '@/components/ui';
+
+import { Button,Column, Input, Label } from '@/components/ui';
 import { colors } from '@/styles/tokens';
+
+import { StepCard } from '../../live/StepCard';
 import type { LiveStepDefinition } from '../../types';
 
-const FormField: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label: string }> = ({ label, name, ...props }) => (
+const FormField: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label: string }> = ({ label, name, ...properties }) => (
   <Column gap="0.5rem" align="stretch">
     <Label style={{ color: colors.gray700, fontSize: '1.125rem', textTransform: 'none', letterSpacing: 'normal' }}>
       {label}
     </Label>
     <Input
       name={name}
-      {...props}
+      {...properties}
       style={{ padding: '0.5rem', fontSize: '1rem' }}
     />
   </Column>
@@ -74,5 +75,5 @@ export const KYCComponent: AeroStreamComponent<React.ReactNode> = ({
 
 export const kycLiveStep: LiveStepDefinition = {
   executionType: 'KYCComponent',
-  render: (props) => <KYCComponent {...props} />,
+  render: (properties) => <KYCComponent {...properties} />,
 };

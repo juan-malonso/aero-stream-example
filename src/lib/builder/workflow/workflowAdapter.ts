@@ -26,9 +26,9 @@ const COLLISION_GAP_Y = 14;
 const START_NODE_WIDTH = 96;
 const START_NODE_HEIGHT = 56;
 const STEP_NODE_WIDTH = 320;
-const STEP_NODE_HEADER_HEIGHT = 44;
-const STEP_NODE_BASE_HEIGHT = 82;
-const STEP_OUTPUT_HEIGHT = 28;
+const STEP_NODE_HEADER_HEIGHT = 40;
+const STEP_NODE_BASE_HEIGHT = 80;
+const STEP_OUTPUT_HEIGHT = 24;
 const REMOVED_SPEC_KEYS = new Set(["stop".concat("Workflow")]);
 
 export function parseTowerToReactFlow(towerWorkflow: TowerWorkflow): {

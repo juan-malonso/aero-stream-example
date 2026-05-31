@@ -7,7 +7,7 @@ export interface MicrofrontendTheme {
   href: string;
   label: string;
   shortLabel: string;
-  icon: 'puzzle' | 'play' | 'history';
+  icon: 'history' | 'play' | 'puzzle';
   primary50: string;
   primary100: string;
   primary200: string;

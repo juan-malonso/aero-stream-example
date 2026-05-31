@@ -1,12 +1,12 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
+import type { CSSProperties, ReactNode } from 'react';
+
 import { Header } from '@/components/Header';
 import { WorkflowProvider } from '@/contexts/shared/workflow/WorkflowContext';
 import { getMicrofrontendTheme } from '@/styles/microfrontends';
 import { colors } from '@/styles/tokens';
-
-import { usePathname } from 'next/navigation';
-import type { CSSProperties, ReactNode } from 'react';
 
 export function MicrofrontendShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();

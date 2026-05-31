@@ -4,10 +4,11 @@ import { type CSSProperties, useState } from "react";
 
 import type { SessionEventEnvelope } from "@/lib/sessions/types";
 import { SessionEventType } from "@/lib/sessions/types";
-import { colors, radii, shadows, typography } from "@/styles/tokens";
+import { formatDisplayValue } from "@/lib/shared/display";
 import { downloadVideo, openVideo } from "@/lib/shared/video/downloadService";
+import { colors, radii, shadows, typography } from "@/styles/tokens";
 
-interface EventCardProps {
+interface EventCardProperties {
   event: SessionEventEnvelope;
   index: number;
 }
@@ -243,7 +244,7 @@ function formatCondition(condition: unknown): { left?: string; operator?: string
   return { text: JSON.stringify(condition) };
 }
 
-export function EventCard({ event, index }: EventCardProps) {
+export function EventCard({ event, index }: EventCardProperties) {
   const [isExpanded, setIsExpanded] = useState(false);
   const theme =
     EVENT_THEMES[event.type] ?? EVENT_THEMES[SessionEventType.SESSION_CREATE];
@@ -251,12 +252,12 @@ export function EventCard({ event, index }: EventCardProps) {
 
   const dateLabel = new Date(event.occurredAt);
   const timeLabel =
-    dateLabel.toLocaleTimeString("en-US", {
+    `${dateLabel.toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
       hour12: false,
-    }) + `.${dateLabel.getMilliseconds()}`;
+    })  }.${dateLabel.getMilliseconds()}`;
 
   return (
     <div
@@ -357,12 +358,12 @@ export function EventCard({ event, index }: EventCardProps) {
         }}
       >
         <button
-          onClick={() => setIsExpanded(!isExpanded)}
+          onClick={() => { setIsExpanded(!isExpanded); }}
           style={{
             border: "none",
             background: "none",
             cursor: "pointer",
-            fontSize: typography.sizes["xs"],
+            fontSize: typography.sizes.xs,
             color: colors.gray400,
             fontWeight: typography.weights.medium,
             width: "100%",
@@ -374,7 +375,7 @@ export function EventCard({ event, index }: EventCardProps) {
         {isExpanded && (
           <pre
             style={{
-              fontSize: typography.sizes["xs"],
+              fontSize: typography.sizes.xs,
               color: colors.gray600,
               background: colors.gray50,
               padding: "0.5rem",
@@ -396,7 +397,6 @@ export function EventCard({ event, index }: EventCardProps) {
 
 function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
   const { type, payload } = event;
-  const step = readEventStep(payload);
   const fieldStyle: CSSProperties = {
     display: "flex",
     gap: "0.5rem",
@@ -425,7 +425,7 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
       return (
         <div style={fieldStyle}>
           <span style={labelStyle}>Workflow</span>
-          <span style={valueStyle}>{String(payload.workflowId ?? "—")}</span>
+          <span style={valueStyle}>{formatDisplayValue(payload.workflowId)}</span>
         </div>
       );
     }
@@ -467,22 +467,22 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
                 <div style={fieldStyle}>
                   <span style={labelStyle}>Browser</span>
                   <span style={valueStyle}>
-                    {String(device.browserName ?? "—")}{" "}
-                    {String(device.browserVersion ?? "")}
+                    {formatDisplayValue(device.browserName)}{" "}
+                    {formatDisplayValue(device.browserVersion, "")}
                   </span>
                 </div>
                 <div style={fieldStyle}>
                   <span style={labelStyle}>OS</span>
                   <span style={valueStyle}>
-                    {String(device.osName ?? "—")}{" "}
-                    {String(device.osVersion ?? "")}
+                    {formatDisplayValue(device.osName)}{" "}
+                    {formatDisplayValue(device.osVersion, "")}
                   </span>
                 </div>
                 <div style={fieldStyle}>
                   <span style={labelStyle}>Device</span>
                   <span style={valueStyle}>
-                    {String(device.deviceType ?? "—")}
-                    {device.model ? ` (${String(device.model)})` : ""}
+                    {formatDisplayValue(device.deviceType)}
+                    {device.model ? ` (${formatDisplayValue(device.model)})` : ""}
                   </span>
                 </div>
               </>
@@ -503,7 +503,7 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
             }}
           >
             <button
-              onClick={() => openVideo(sessionId, connectionId)}
+              onClick={() => { openVideo(sessionId, connectionId); }}
               style={videoButtonStyle}
             >
               <svg
@@ -523,7 +523,7 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
               Preview
             </button>
             <button
-              onClick={() => downloadVideo(sessionId, connectionId)}
+              onClick={() => { downloadVideo(sessionId, connectionId); }}
               style={videoButtonStyle}
             >
               <svg
@@ -549,8 +549,8 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
 
     case SessionEventType.FINISH_RENDER:
     case SessionEventType.STEP_RENDERED: {
-      const props = payload.props as Record<string, unknown> | undefined;
-      const preview = props ? JSON.stringify(props).slice(0, 120) : undefined;
+      const properties = payload.props as Record<string, unknown> | undefined;
+      const preview = properties ? JSON.stringify(properties).slice(0, 120) : undefined;
       return (
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           {event.type === SessionEventType.FINISH_RENDER && (
@@ -638,22 +638,22 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
               <div style={fieldStyle}>
                 <span style={labelStyle}>Browser</span>
                 <span style={valueStyle}>
-                  {String(device.browserName ?? "—")}{" "}
-                  {String(device.browserVersion ?? "")}
+                  {formatDisplayValue(device.browserName)}{" "}
+                  {formatDisplayValue(device.browserVersion, "")}
                 </span>
               </div>
               <div style={fieldStyle}>
                 <span style={labelStyle}>OS</span>
                 <span style={valueStyle}>
-                  {String(device.osName ?? "—")}{" "}
-                  {String(device.osVersion ?? "")}
+                  {formatDisplayValue(device.osName)}{" "}
+                  {formatDisplayValue(device.osVersion, "")}
                 </span>
               </div>
               <div style={fieldStyle}>
                 <span style={labelStyle}>Device</span>
                 <span style={valueStyle}>
-                  {String(device.deviceType ?? "—")}
-                  {device.model ? ` (${String(device.model)})` : ""}
+                  {formatDisplayValue(device.deviceType)}
+                  {device.model ? ` (${formatDisplayValue(device.model)})` : ""}
                 </span>
               </div>
             </>
@@ -671,14 +671,14 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           <div style={fieldStyle}>
             <span style={labelStyle}>Alert</span>
-            <span style={valueStyle}>{String(payload.alertType ?? "—")}</span>
+            <span style={valueStyle}>{formatDisplayValue(payload.alertType)}</span>
           </div>
         </div>
       );
     }
 
     case SessionEventType.ALERT_SUBMITTED: {
-      const result = String(payload.result ?? "—");
+      const result = formatDisplayValue(payload.result);
       const responded = payload.data as Record<string, unknown> | undefined;
       const preview = responded
         ? JSON.stringify(responded).slice(0, 120)
@@ -687,7 +687,7 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           <div style={fieldStyle}>
             <span style={labelStyle}>Alert</span>
-            <span style={valueStyle}>{String(payload.alertType ?? "—")}</span>
+            <span style={valueStyle}>{formatDisplayValue(payload.alertType)}</span>
           </div>
           <div style={fieldStyle}>
             <span style={labelStyle}>Result</span>
@@ -738,7 +738,7 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           <div style={fieldStyle}>
             <span style={labelStyle}>Status</span>
-            <span style={valueStyle}>{String(result?.status ?? "—")}</span>
+            <span style={valueStyle}>{formatDisplayValue(result?.status)}</span>
           </div>
           <div style={fieldStyle}>
             <span style={labelStyle}>Data</span>
@@ -756,11 +756,11 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           <div style={fieldStyle}>
             <span style={labelStyle}>Result</span>
-            <span style={valueStyle}>{String(payload.type ?? "—")}</span>
+            <span style={valueStyle}>{formatDisplayValue(payload.type)}</span>
           </div>
           <div style={fieldStyle}>
             <span style={labelStyle}>Reason</span>
-            <span style={valueStyle}>{String(payload.reason ?? "—")}</span>
+            <span style={valueStyle}>{formatDisplayValue(payload.reason)}</span>
           </div>
         </div>
       );
@@ -770,7 +770,7 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
       return (
         <div style={fieldStyle}>
           <span style={labelStyle}>Step</span>
-          <span style={valueStyle}>{String(payload.stepType ?? "—")}</span>
+          <span style={valueStyle}>{formatDisplayValue(payload.stepType)}</span>
         </div>
       );
     }
@@ -785,12 +785,12 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
 
     case SessionEventType.SESSION_CLOSED: {
       const wasClean = payload.wasClean === true;
-      const reason = payload.reason == null ? "" : String(payload.reason);
+      const reason = formatDisplayValue(payload.reason, "");
       return (
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           <div style={fieldStyle}>
             <span style={labelStyle}>Code</span>
-            <span style={valueStyle}>{String(payload.code ?? "—")}</span>
+            <span style={valueStyle}>{formatDisplayValue(payload.code)}</span>
           </div>
           {reason && (
             <div style={fieldStyle}>

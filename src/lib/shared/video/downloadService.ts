@@ -5,8 +5,8 @@ export function getVideoUrl(sessionId: string, connectionId: string): string {
 }
 
 export async function getControllerVideoUrl(sessionId: string, connectionId: string, download = false): Promise<string | null> {
-  const params = download ? '?download=1' : '';
-  const res = await fetch(`${getVideoUrl(sessionId, connectionId)}${params}`, {
+  const parameters = download ? '?download=1' : '';
+  const res = await fetch(`${getVideoUrl(sessionId, connectionId)}${parameters}`, {
     headers: getControllerAdminHeaders(),
   });
   if (!res.ok) return null;

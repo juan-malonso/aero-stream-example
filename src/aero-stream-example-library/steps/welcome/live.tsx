@@ -1,8 +1,9 @@
-import { StepCard } from '../../live/StepCard';
-import { Button, Column } from '@/components/ui';
-
 import { type AeroStreamComponent } from 'aero-stream-pilot';
 import React from 'react';
+
+import { Button, Column } from '@/components/ui';
+
+import { StepCard } from '../../live/StepCard';
 import type { LiveStepDefinition } from '../../types';
 
 export const WelcomeComponent: AeroStreamComponent<React.ReactNode> = ({
@@ -42,5 +43,5 @@ export const WelcomeComponent: AeroStreamComponent<React.ReactNode> = ({
 
 export const welcomeLiveStep: LiveStepDefinition = {
   executionType: 'WelcomeComponent',
-  render: (props) => <WelcomeComponent {...props} />,
+  render: (properties) => <WelcomeComponent {...properties} />,
 };

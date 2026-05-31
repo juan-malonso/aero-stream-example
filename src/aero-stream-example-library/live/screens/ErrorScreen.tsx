@@ -1,9 +1,10 @@
-import { StepCard } from '../StepCard';
-
 import { type AeroStreamErrorScreen } from 'aero-stream-pilot';
 import React from 'react';
+
 import { Column, Row } from '@/components/ui';
 import { colors, typography } from '@/styles/tokens';
+
+import { StepCard } from '../StepCard';
 
 export const ErrorScreen: AeroStreamErrorScreen<React.ReactNode> = ({
   data,

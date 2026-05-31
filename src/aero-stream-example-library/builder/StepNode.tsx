@@ -10,6 +10,7 @@ import { createPortal } from "react-dom";
 
 import { ExecutionBadge } from "@/components/shared/ExecutionBadge";
 import { Button, Card, Input, Label, Row, Select } from "@/components/ui";
+import { parseStepResultBinding } from "@/lib/builder/workflow/bindings";
 import { cardHeaderStyle, cardStyle, handleStyles } from "@/styles/theme";
 import { colors } from "@/styles/tokens";
 
@@ -60,12 +61,13 @@ function NodeField({
     <Row
       style={{
         position: "relative",
-        height: "18px",
+        minHeight: "22px",
         alignItems: "center",
-        backgroundColor: colors.gray100,
+        backgroundColor: colors.gray50,
         border: `1px solid ${color}`,
         borderRadius: "0.3rem",
-        padding: "1px 2px",
+        boxSizing: "border-box",
+        padding: "2px",
       }}
     >
       {leftHandle && (
@@ -137,7 +139,7 @@ function ConditionsSection({
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
       <div
         style={{
           display: "flex",
@@ -145,14 +147,14 @@ function ConditionsSection({
           alignItems: "center",
         }}
       >
-        <Label style={{ color: colors.gray400, fontSize: "11px", margin: 0 }}>
+        <Label style={{ color: colors.gray500, fontSize: "10px", margin: 0 }}>
           Conditions
         </Label>
         <Button
           onClick={addOutput}
           variant="primary"
-          size="sm"
-          style={{ padding: "2px 4px", fontSize: "10px", height: "auto" }}
+          size="xs"
+          style={{ borderRadius: "6px", fontWeight: 800 }}
           type="button"
         >
           + Add
@@ -183,14 +185,15 @@ function ConditionsSection({
               {formatConditionReference(out.field, references)}
             </button>
             <Select
-              value={out.operator}
+              controlSize="xs" value={out.operator}
               onChange={(event) => { updateOutput(index, "operator", event.target.value); }}
               style={{
                 boxSizing: "border-box",
-                height: "100%",
+                height: "20px",
                 fontSize: "10px",
-                padding: "0 4px",
-                width: "42px",
+                minHeight: 0,
+                padding: "0 3px",
+                width: "40px",
                 margin: 0,
               }}
             >
@@ -200,30 +203,33 @@ function ConditionsSection({
               <option value="lt">&lt;</option>
             </Select>
             <Input
-              type="text"
+              controlSize="xs" type="text"
               placeholder="Value"
               value={out.value}
               onChange={(event) => { updateOutput(index, "value", event.target.value); }}
               style={{
                 flex: 1,
                 boxSizing: "border-box",
-                height: "100%",
+                height: "20px",
                 fontSize: "10px",
                 minWidth: "46px",
+                minHeight: 0,
                 margin: 0,
-                padding: "0 6px",
+                padding: "0 5px",
               }}
             />
             <Button
               onClick={() => { removeOutput(index); }}
               variant="ghost"
-              size="sm"
+              size="xs"
               style={{
                 boxSizing: "border-box",
-                padding: "0 4px",
+                borderRadius: "5px",
                 color: colors.red500,
-                minWidth: "auto",
-                height: "100%",
+                minHeight: 0,
+                minWidth: "20px",
+                padding: 0,
+                height: "20px",
                 margin: 0,
               }}
               type="button"
@@ -274,7 +280,7 @@ function ConditionsSection({
               fontSize: "10px",
               fontWeight: 600,
               color: colors.gray600,
-              paddingRight: "4px",
+              paddingRight: "5px",
               boxSizing: "border-box",
             }}
           >
@@ -458,10 +464,10 @@ function parseReference(value: string | undefined): {
 } {
   if (!value) return { field: null, stepId: null };
 
-  const match = /^\{\{steps\.([^.{}]+)\.result\.([^{}]+)\}\}$/.exec(value);
-  if (!match) return { field: null, stepId: null };
+  const binding = parseStepResultBinding(value);
+  if (!binding) return { field: null, stepId: null };
 
-  return { field: match[2], stepId: match[1] };
+  return { field: binding.pathText || null, stepId: binding.stepId };
 }
 
 function formatConditionReference(
@@ -506,10 +512,10 @@ const conditionReferenceButtonStyle: React.CSSProperties = {
   flex: "1.2 1 0",
   fontSize: "10px",
   fontWeight: 700,
-  height: "100%",
+  height: "20px",
   minWidth: "74px",
   overflow: "hidden",
-  padding: "0 6px",
+  padding: "0 5px",
   textAlign: "left",
   textOverflow: "ellipsis",
   whiteSpace: "nowrap",
@@ -642,7 +648,8 @@ export function StepNode({
     <Card
       style={{
         ...cardStyle,
-        minWidth: "300px",
+        minWidth: "288px",
+        maxWidth: "328px",
         border: `1px solid ${hasConfigurationError ? colors.red500 : accentColor}`,
       }}
     >
@@ -658,9 +665,17 @@ export function StepNode({
         }}
       />
 
-      <div style={cardHeaderStyle(hasConfigurationError ? colors.red500 : accentColor)}>
+      <div
+        style={{
+          ...cardHeaderStyle(hasConfigurationError ? colors.red500 : accentColor),
+          borderBottomWidth: "2px",
+          gap: "6px",
+          padding: "6px 8px",
+        }}
+      >
         <Input
           aria-label="Node name"
+          controlSize="xs"
           onChange={handleNameChange}
           style={{
             background: colors.white,
@@ -668,7 +683,10 @@ export function StepNode({
             color: isNameDuplicated ? colors.red600 : colors.gray800,
             fontSize: "12px",
             fontWeight: 700,
+            height: "26px",
+            lineHeight: 1.15,
             minWidth: 0,
+            minHeight: 0,
             padding: "2px 6px",
           }}
           type="text"
@@ -689,7 +707,7 @@ export function StepNode({
             padding: "6px 8px",
             display: "flex",
             flexDirection: "column",
-            gap: "8px",
+            gap: "6px",
           }}
         >
           {children}

@@ -1,14 +1,16 @@
 "use client";
 
-import React from "react";
 import { type AeroStreamInfoScreen } from "aero-stream-pilot";
+import React from "react";
+
 import { Column } from "@/components/ui";
 import { colors, radii, typography } from "@/styles/tokens";
+
 import { StepCard } from "../StepCard";
 
 export const InfoScreen: AeroStreamInfoScreen<React.ReactNode> = ({
   infoType,
-  data = {},
+  data,
 }) => {
   switch (infoType) {
     case "TAILING":

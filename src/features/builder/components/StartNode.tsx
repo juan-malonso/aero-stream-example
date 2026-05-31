@@ -1,5 +1,6 @@
-import React from "react";
 import { Handle, Position } from "@xyflow/react";
+import React from "react";
+
 import { colors } from "@/styles/tokens";
 
 export const StartNode = () => {

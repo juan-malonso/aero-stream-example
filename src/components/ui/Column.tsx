@@ -1,31 +1,45 @@
-import React, { CSSProperties } from 'react';
+import type { CSSProperties, HTMLAttributes } from 'react';
+import React from 'react';
+
 import { spacing } from '@/styles/tokens';
 
-export interface ColumnProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface ColumnProperties extends HTMLAttributes<HTMLDivElement> {
   align?: CSSProperties['alignItems'];
-  justify?: CSSProperties['justifyContent'];
+  fullWidth?: boolean;
   gap?: string;
+  justify?: CSSProperties['justifyContent'];
 }
 
-export const Column = React.forwardRef<HTMLDivElement, ColumnProps>(
-  ({ align = 'flex-start', justify = 'flex-start', gap = spacing.md, style, className, children, ...props }, ref) => {
-    return (
-      <div
-        ref={ref}
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: align,
-          justifyContent: justify,
-          gap: gap,
-          ...style,
-        }}
-        className={className}
-        {...props}
-      >
-        {children}
-      </div>
-    );
-  }
+export const Column = React.forwardRef<HTMLDivElement, ColumnProperties>(
+  (
+    {
+      align = 'flex-start',
+      children,
+      className,
+      fullWidth = false,
+      gap = spacing.md,
+      justify = 'flex-start',
+      style,
+      ...properties
+    },
+    reference,
+  ) => (
+    <div
+      ref={reference}
+      className={className}
+      style={{
+        alignItems: align,
+        display: 'flex',
+        flexDirection: 'column',
+        gap,
+        justifyContent: justify,
+        width: fullWidth ? '100%' : undefined,
+        ...style,
+      }}
+      {...properties}
+    >
+      {children}
+    </div>
+  ),
 );
 Column.displayName = 'Column';

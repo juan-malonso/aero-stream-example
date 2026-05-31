@@ -1,19 +1,21 @@
 "use client";
 
-import React from "react";
 import { type AeroStreamAlertScreen } from "aero-stream-pilot";
+import React from "react";
+
 import { Button } from "@/components/ui";
+import { formatDisplayValue } from "@/lib/shared/display";
 import { colors, radii, typography } from "@/styles/tokens";
 
-export const AlertScreen: AeroStreamAlertScreen<React.ReactNode> = (params) => {
-  if (!params) return null;
+export const AlertScreen: AeroStreamAlertScreen<React.ReactNode> = (parameters) => {
+  if (!parameters) return null;
 
   const {
     alertType,
     data,
     submit,
     reject,
-  } = params;
+  } = parameters;
 
   if (alertType === "SESSION_SWITCH") {
     return <SessionSwitchAlert data={data} submit={submit} reject={reject} />;
@@ -29,20 +31,20 @@ export const AlertScreen: AeroStreamAlertScreen<React.ReactNode> = (params) => {
   );
 };
 
-interface AlertProps {
+interface AlertProperties {
   alertType?: string;
   data: Record<string, unknown>;
   submit: (data?: Record<string, unknown>) => void;
   reject: () => void;
 }
 
-function SessionSwitchAlert({ data, submit, reject }: AlertProps) {
-  const deviceType = String(data.deviceType ?? "—");
-  const brand = data.brand ? String(data.brand) : null;
-  const model = data.model ? String(data.model) : null;
-  const osName = data.osName ? String(data.osName) : null;
-  const browserName = data.browserName ? String(data.browserName) : null;
-  const connectionId = String(data.connectionId ?? "");
+function SessionSwitchAlert({ data, submit, reject }: AlertProperties) {
+  const deviceType = formatDisplayValue(data.deviceType);
+  const brand = data.brand ? formatDisplayValue(data.brand) : null;
+  const model = data.model ? formatDisplayValue(data.model) : null;
+  const osName = data.osName ? formatDisplayValue(data.osName) : null;
+  const browserName = data.browserName ? formatDisplayValue(data.browserName) : null;
+  const connectionId = formatDisplayValue(data.connectionId, "");
 
   const deviceLabel = [brand, model].filter(Boolean).join(" ") || deviceType;
   const platformLabel = [osName, browserName].filter(Boolean).join(" / ");
@@ -100,14 +102,14 @@ function SessionSwitchAlert({ data, submit, reject }: AlertProps) {
           {platformLabel && (
             <DeviceRow label="Plataforma" value={platformLabel} />
           )}
-          <DeviceRow label="ID" value={connectionId.slice(0, 8) + "…"} mono />
+          <DeviceRow label="ID" value={`${connectionId.slice(0, 8)  }…`} mono />
         </div>
 
         <div style={{ display: "flex", gap: "0.5rem" }}>
-          <Button onClick={() => submit({ connectionId })} style={{ flex: 1 }}>
+          <Button onClick={() => { submit({ connectionId }); }} style={{ flex: 1 }}>
             Autorizar
           </Button>
-          <Button onClick={() => reject()} variant="ghost" style={{ flex: 1 }}>
+          <Button onClick={() => { reject(); }} variant="ghost" style={{ flex: 1 }}>
             Rechazar
           </Button>
         </div>
@@ -116,7 +118,7 @@ function SessionSwitchAlert({ data, submit, reject }: AlertProps) {
   );
 }
 
-function GenericAlert({ alertType, data, submit, reject }: AlertProps) {
+function GenericAlert({ alertType, data, submit, reject }: AlertProperties) {
   return (
     <Overlay>
       <div
@@ -160,10 +162,10 @@ function GenericAlert({ alertType, data, submit, reject }: AlertProps) {
         </pre>
 
         <div style={{ display: "flex", gap: "0.5rem" }}>
-          <Button onClick={() => submit()} style={{ flex: 1 }}>
+          <Button onClick={() => { submit(); }} style={{ flex: 1 }}>
             Autorizar
           </Button>
-          <Button onClick={() => reject()} variant="ghost" style={{ flex: 1 }}>
+          <Button onClick={() => { reject(); }} variant="ghost" style={{ flex: 1 }}>
             Rechazar
           </Button>
         </div>

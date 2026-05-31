@@ -1,9 +1,10 @@
-import { StepCard } from '../../live/StepCard';
-import { Column, Button } from '@/components/ui';
-import { colors } from '@/styles/tokens';
-
 import { type AeroStreamComponent } from 'aero-stream-pilot';
 import React, { useEffect, useRef } from 'react';
+
+import { Button,Column } from '@/components/ui';
+import { colors } from '@/styles/tokens';
+
+import { StepCard } from '../../live/StepCard';
 import type { LiveStepDefinition } from '../../types';
 
 export const VideoComponent: AeroStreamComponent<React.ReactNode> = ({
@@ -13,8 +14,8 @@ export const VideoComponent: AeroStreamComponent<React.ReactNode> = ({
   stream,
   canvas,
 }) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const ghostContainerRef = useRef<HTMLDivElement>(null);
+  const videoReference = useRef<HTMLVideoElement>(null);
+  const ghostContainerReference = useRef<HTMLDivElement>(null);
 
   const config = data as {
     title?: string;
@@ -22,33 +23,33 @@ export const VideoComponent: AeroStreamComponent<React.ReactNode> = ({
   };
 
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.srcObject = stream();
+    if (videoReference.current) {
+      videoReference.current.srcObject = stream();
     }
 
-    const container = ghostContainerRef.current;
-    const canvasEl: HTMLCanvasElement = canvas();
+    const container = ghostContainerReference.current;
+    const canvasElement: HTMLCanvasElement = canvas();
 
     if (container) {
-      canvasEl.style.position = 'absolute';
-      canvasEl.style.top = '0';
-      canvasEl.style.left = '0';
-      canvasEl.style.width = '100%';
-      canvasEl.style.height = '100%';
-      canvasEl.style.objectFit = 'cover';
+      canvasElement.style.position = 'absolute';
+      canvasElement.style.top = '0';
+      canvasElement.style.left = '0';
+      canvasElement.style.width = '100%';
+      canvasElement.style.height = '100%';
+      canvasElement.style.objectFit = 'cover';
 
-      container.appendChild(canvasEl);
+      container.appendChild(canvasElement);
 
       return () => {
-        if (container.contains(canvasEl)) {
-          container.removeChild(canvasEl);
+        if (container.contains(canvasElement)) {
+          container.removeChild(canvasElement);
         }
       };
     }
   }, [stream, canvas]);
 
   return (
-    <StepCard title={config.title} subtitle={config.subtitle} onReject={() => reject({})}>
+    <StepCard title={config.title} subtitle={config.subtitle} onReject={() => { reject({}); }}>
       <Column style={{
         width: '100%',
         maxWidth: '100%',
@@ -69,14 +70,14 @@ export const VideoComponent: AeroStreamComponent<React.ReactNode> = ({
           boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3)',
         }}>
           <video
-            ref={videoRef}
+            ref={videoReference}
             autoPlay
             playsInline
             muted
             style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
           />
           <div
-            ref={ghostContainerRef}
+            ref={ghostContainerReference}
             style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10, display: 'flex' }}
           />
         </div>
@@ -85,7 +86,7 @@ export const VideoComponent: AeroStreamComponent<React.ReactNode> = ({
           type="button"
           variant="primary"
           style={{ padding: '0.75rem 1.5rem', fontSize: '1rem', width: '100%' }}
-          onClick={() => submit({ status: 'success' })}
+          onClick={() => { submit({ status: 'success' }); }}
         >
           Continue
         </Button>
@@ -96,5 +97,5 @@ export const VideoComponent: AeroStreamComponent<React.ReactNode> = ({
 
 export const videoLiveStep: LiveStepDefinition = {
   executionType: 'VideoComponent',
-  render: (props) => <VideoComponent {...props} />,
+  render: (properties) => <VideoComponent {...properties} />,
 };

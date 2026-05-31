@@ -2,20 +2,20 @@
 
 import { useState } from 'react';
 
+import { Button } from '@/components/ui';
 import { LiveViewer } from '@/features/live/components/developer/LiveViewer';
 import { downloadVideo } from '@/lib/shared/video/downloadService';
-import { Button } from '@/components/ui';
 import { colors, radii, shadows, typography } from '@/styles/tokens';
 
-interface SessionReplayProps {
+interface SessionReplayProperties {
   sessionId: string;
 }
 
-export function SessionReplay({ sessionId }: SessionReplayProps) {
+export function SessionReplay({ sessionId }: SessionReplayProperties) {
   const [isViewerOpen, setIsViewerOpen] = useState(false);
 
   const handleDownload = () => {
-    void downloadVideo(sessionId);
+    downloadVideo(sessionId);
   };
 
   return (
@@ -47,7 +47,7 @@ export function SessionReplay({ sessionId }: SessionReplayProps) {
           <Button
             variant="secondary"
             size="sm"
-            onClick={() => setIsViewerOpen(!isViewerOpen)}
+            onClick={() => { setIsViewerOpen(!isViewerOpen); }}
             style={{ fontSize: typography.sizes.xs, height: '26px', borderRadius: '6px' }}
           >
             {isViewerOpen ? 'Hide Replay' : 'View Replay'}
@@ -71,7 +71,7 @@ export function SessionReplay({ sessionId }: SessionReplayProps) {
         <div style={{ padding: '0.75rem' }}>
           <LiveViewer
             viewingId={sessionId}
-            onClose={() => setIsViewerOpen(false)}
+            onClose={() => { setIsViewerOpen(false); }}
           />
         </div>
       )}

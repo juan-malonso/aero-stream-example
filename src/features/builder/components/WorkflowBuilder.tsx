@@ -442,11 +442,19 @@ function WorkflowEditorToolbar({
               onClick={() => {
                 void onSave();
               }}
+              size="sm"
+              style={toolbarActionButtonStyle}
               type="button"
             >
               {isSaving ? 'Guardando...' : isCreating ? 'Crear' : 'Guardar'}
             </Button>
-            <Button onClick={onClose} type="button" variant="secondary">
+            <Button
+              onClick={onClose}
+              size="sm"
+              style={toolbarActionButtonStyle}
+              type="button"
+              variant="secondary"
+            >
               Cerrar
             </Button>
           </Row>
@@ -699,6 +707,12 @@ const toolbarLabelStyle: React.CSSProperties = {
   fontSize: typography.sizes.xs,
   fontWeight: typography.weights.bold,
   textTransform: 'uppercase',
+};
+
+const toolbarActionButtonStyle: React.CSSProperties = {
+  borderRadius: radii.md,
+  minHeight: '30px',
+  padding: '0 0.75rem',
 };
 
 interface WorkflowSecurity {

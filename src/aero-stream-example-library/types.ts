@@ -29,5 +29,5 @@ export interface ComponentMeta {
 
 export interface LiveStepDefinition {
   executionType: string;
-  render: (props: AeroStreamComponentParams) => ReactNode;
+  render: (properties: AeroStreamComponentParams) => ReactNode;
 }

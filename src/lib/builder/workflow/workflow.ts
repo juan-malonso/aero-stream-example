@@ -4,7 +4,7 @@ export interface WorkflowExecution {
 }
 
 export interface WorkflowTransition {
-  condition: boolean | { [x: string]: (string | { var: string; })[]; };
+  condition: Record<string, (string | { var: string; })[]> | boolean;
   next: string;
 }
 

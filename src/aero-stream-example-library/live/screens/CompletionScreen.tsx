@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
+
 import { colors, radii, shadows, typography } from '@/styles/tokens';
 
-interface CompletionScreenProps {
+interface CompletionScreenProperties {
   ok: boolean;
 }
 
-export function CompletionScreen({ ok }: CompletionScreenProps) {
+export function CompletionScreen({ ok }: CompletionScreenProperties) {
   const accent = ok ? colors.green700 : colors.amber600;
   const bg = ok ? colors.green100 : colors.amber50;
   const title = ok ? 'Proceso completado' : 'Proceso finalizado con error';

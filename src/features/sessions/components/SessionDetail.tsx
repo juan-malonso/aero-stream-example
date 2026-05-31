@@ -1,16 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+
 import type {
   ConnectionGroup,
   Session,
   SessionEventEnvelope,
 } from "@/lib/sessions/types";
 import { SessionEventType } from "@/lib/sessions/types";
+import { formatDisplayValue } from "@/lib/shared/display";
 import { colors, radii, shadows, typography } from "@/styles/tokens";
+
 import { EventCard } from "./EventCard";
 
-interface SessionDetailProps {
+interface SessionDetailProperties {
   session: Session | null;
   isLoading: boolean;
 }
@@ -25,10 +28,10 @@ function ConnectionHeader({
   const deviceParts = group.device
     ? [
         group.device.browserName
-          ? `${String(group.device.browserName)} ${String(group.device.browserVersion ?? "")}`.trim()
+          ? `${formatDisplayValue(group.device.browserName)} ${formatDisplayValue(group.device.browserVersion, "")}`.trim()
           : null,
-        group.device.osName ? String(group.device.osName) : null,
-        group.device.deviceType ? String(group.device.deviceType) : null,
+        group.device.osName ? formatDisplayValue(group.device.osName) : null,
+        group.device.deviceType ? formatDisplayValue(group.device.deviceType) : null,
       ].filter((x): x is string => x !== null)
     : [];
 
@@ -73,9 +76,9 @@ function ConnectionHeader({
         style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" as const }}
       >
         {deviceParts.length > 0 ? (
-          deviceParts.map((part, i) => (
+          deviceParts.map((part, index_) => (
             <span
-              key={i}
+              key={index_}
               style={{
                 fontSize: typography.sizes["2xs"],
                 color: colors.gray500,
@@ -99,7 +102,7 @@ function ConnectionHeader({
 const STRIP_W = 13;
 const STRIP_GAP = 2;
 
-interface ConnectionGridProps {
+interface ConnectionGridProperties {
   connections: ConnectionGroup[];
   transversalEvents: SessionEventEnvelope[];
   eventRowMap: Map<string, number>;
@@ -113,9 +116,9 @@ function ConnectionGrid({
   eventRowMap,
   connectionEventIndex,
   emptyCells,
-}: ConnectionGridProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const colRefs = useRef<(HTMLDivElement | null)[]>([]);
+}: ConnectionGridProperties) {
+  const scrollReference = useRef<HTMLDivElement>(null);
+  const colReferences = useRef<(HTMLDivElement | null)[]>([]);
   const [leftHidden, setLeftHidden] = useState<number[]>([]);
   const [rightHidden, setRightHidden] = useState<number[]>([]);
   const [isOverflowing, setIsOverflowing] = useState(false);
@@ -132,7 +135,7 @@ function ConnectionGrid({
   );
 
   useEffect(() => {
-    const scroll = scrollRef.current;
+    const scroll = scrollReference.current;
     if (!scroll) return;
 
     const update = () => {
@@ -142,12 +145,12 @@ function ConnectionGrid({
       const newLeft: number[] = [];
       const newRight: number[] = [];
 
-      colRefs.current.forEach((col, i) => {
+      colReferences.current.forEach((col, index) => {
         if (!col) return;
         const left = col.offsetLeft;
         const right = left + col.offsetWidth;
-        if (right <= scrollLeft) newLeft.push(i);
-        else if (left >= scrollLeft + clientWidth) newRight.push(i);
+        if (right <= scrollLeft) newLeft.push(index);
+        else if (left >= scrollLeft + clientWidth) newRight.push(index);
       });
 
       setLeftHidden(newLeft);
@@ -164,15 +167,15 @@ function ConnectionGrid({
     };
   }, [colCount]);
 
-  const scrollToCol = (i: number) => {
-    const col = colRefs.current[i];
-    const scroll = scrollRef.current;
+  const scrollToCol = (index: number) => {
+    const col = colReferences.current[index];
+    const scroll = scrollReference.current;
     if (!col || !scroll) return;
     scroll.scrollTo({ left: col.offsetLeft - 16, behavior: "smooth" });
   };
 
   const stripStyle = (
-    idx: number,
+    index: number,
     total: number,
     side: "left" | "right",
   ): React.CSSProperties => ({
@@ -180,7 +183,7 @@ function ConnectionGrid({
     border: "none",
     padding: 0,
     background: colors.blue700,
-    opacity: 0.45 + (idx / Math.max(1, total - 1)) * 0.5,
+    opacity: 0.45 + (index / Math.max(1, total - 1)) * 0.5,
     borderRadius:
       side === "left"
         ? `0 ${radii.sm} ${radii.sm} 0`
@@ -208,13 +211,13 @@ function ConnectionGrid({
             pointerEvents: "none",
           }}
         >
-          {leftHidden.map((colIdx, i) => (
+          {leftHidden.map((colIndex, index) => (
             <button
-              key={colIdx}
-              onClick={() => scrollToCol(colIdx)}
-              title={`Connection #${colIdx + 1}`}
+              key={colIndex}
+              onClick={() => { scrollToCol(colIndex); }}
+              title={`Connection #${colIndex + 1}`}
               style={{
-                ...stripStyle(i, leftHidden.length, "left"),
+                ...stripStyle(index, leftHidden.length, "left"),
                 pointerEvents: "all",
               }}
             >
@@ -228,7 +231,7 @@ function ConnectionGrid({
                   userSelect: "none",
                 }}
               >
-                #{colIdx + 1}
+                #{colIndex + 1}
               </span>
             </button>
           ))}
@@ -250,14 +253,14 @@ function ConnectionGrid({
             pointerEvents: "none",
           }}
         >
-          {rightHidden.map((colIdx, i) => (
+          {rightHidden.map((colIndex, index) => (
             <button
-              key={colIdx}
-              onClick={() => scrollToCol(colIdx)}
-              title={`Connection #${colIdx + 1}`}
+              key={colIndex}
+              onClick={() => { scrollToCol(colIndex); }}
+              title={`Connection #${colIndex + 1}`}
               style={{
                 ...stripStyle(
-                  rightHidden.length - 1 - i,
+                  rightHidden.length - 1 - index,
                   rightHidden.length,
                   "right",
                 ),
@@ -273,7 +276,7 @@ function ConnectionGrid({
                   userSelect: "none",
                 }}
               >
-                #{colIdx + 1}
+                #{colIndex + 1}
               </span>
             </button>
           ))}
@@ -282,7 +285,7 @@ function ConnectionGrid({
 
       {/* Scrollable grid — scrollbar hidden */}
       <div
-        ref={scrollRef}
+        ref={scrollReference}
         style={
           {
             position: "relative",
@@ -305,8 +308,8 @@ function ConnectionGrid({
           {connections.map((group, colIndex) => (
             <div
               key={group.connectionId}
-              ref={(el) => {
-                colRefs.current[colIndex] = el;
+              ref={(element) => {
+                colReferences.current[colIndex] = element;
               }}
               style={{
                 gridColumn: colIndex + 1,
@@ -466,7 +469,7 @@ function isBackendSessionEvent(event: SessionEventEnvelope): boolean {
     || event.type === SessionEventType.STEP_RESPONSE;
 }
 
-export function SessionDetail({ session, isLoading }: SessionDetailProps) {
+export function SessionDetail({ session, isLoading }: SessionDetailProperties) {
   if (isLoading) {
     return (
       <div
@@ -569,8 +572,8 @@ export function SessionDetail({ session, isLoading }: SessionDetailProps) {
 
   const connectionEventIndex = new Map<string, number>();
   session.connections.forEach((group) => {
-    group.events.forEach((event, i) => {
-      connectionEventIndex.set(event.eventId, i);
+    group.events.forEach((event, index) => {
+      connectionEventIndex.set(event.eventId, index);
     });
   });
 

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
-import { addEvent } from '../../../../lib/sessions/store';
 import { parseSessionEvent } from '../../../../lib/sessions/ingest';
+import { addEvent } from '../../../../lib/sessions/store';
 
 export async function POST(request: Request): Promise<NextResponse> {
   let body: unknown;

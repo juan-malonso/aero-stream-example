@@ -1,7 +1,7 @@
 import type {
   ConnectionGroup,
-  SessionEventEnvelope,
   Session,
+  SessionEventEnvelope,
   SessionResult,
   SessionStatus,
   SessionSummary,
@@ -32,11 +32,9 @@ interface GlobalWithStore {
 }
 
 function getStore(): Map<string, StoredSession> {
-  const globalRef = globalThis as unknown as GlobalWithStore;
-  if (!globalRef[STORE_KEY]) {
-    globalRef[STORE_KEY] = new Map<string, StoredSession>();
-  }
-  return globalRef[STORE_KEY];
+  const globalReference = globalThis as unknown as GlobalWithStore;
+  globalReference[STORE_KEY] ??= new Map<string, StoredSession>();
+  return globalReference[STORE_KEY];
 }
 
 function deriveConnectionGroups(events: SessionEventEnvelope[]): ConnectionGroup[] {

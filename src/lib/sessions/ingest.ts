@@ -1,4 +1,4 @@
-import { SessionEventType, type SessionEventEnvelope, SUPPORTED_EVENT_TYPES } from './types.ts';
+import { type SessionEventEnvelope, SessionEventType, SUPPORTED_EVENT_TYPES } from './types.ts';
 
 interface ParseResultOk {
   ok: true;
@@ -11,7 +11,7 @@ interface ParseResultError {
   status: 400 | 422;
 }
 
-export type ParseSessionEventResult = ParseResultOk | ParseResultError;
+export type ParseSessionEventResult = ParseResultError | ParseResultOk;
 
 function isValidEnvelope(body: unknown): body is SessionEventEnvelope {
   if (typeof body !== 'object' || body === null) return false;

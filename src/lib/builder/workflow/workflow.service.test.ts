@@ -35,7 +35,7 @@ test('routes workflow list requests to Controller', async () => {
 });
 
 test('routes workflow mutations to Controller and preserves generated ids', async () => {
-  const calls: Array<{ url: string; init?: RequestInit }> = [];
+  const calls: { url: string; init?: RequestInit }[] = [];
   const service = createWorkflowService({
     controllerAdminToken: 'local-test-admin-token',
     controllerApiUrl: 'http://controller.local/api',
@@ -56,4 +56,17 @@ test('routes workflow mutations to Controller and preserves generated ids', asyn
     'x-aero-admin-token': 'local-test-admin-token',
   });
   assert.equal(calls[0]?.init?.body, JSON.stringify({ ...sampleWorkflow, id: 'generated-id' }));
+});
+
+test('rejects invalid Controller response envelopes', async () => {
+  const service = createWorkflowService({
+    controllerAdminToken: 'local-test-admin-token',
+    controllerApiUrl: 'http://controller.local/api',
+    fetcher: async () => Response.json({ workflow: sampleWorkflow }),
+  });
+
+  await assert.rejects(
+    () => service.getWorkflowById('workflow-1'),
+    /invalid Controller response envelope/,
+  );
 });

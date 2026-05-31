@@ -1,21 +1,20 @@
 'use client';
 
-import { ConnectionStatus } from '@/constants';
-
-import { createLiveStepLibrary } from '@/aero-stream-example-library';
-import { AlertScreen, CompletionScreen, ErrorScreen, InfoScreen } from '@/aero-stream-example-library/live/screens';
-
 import {
   type AeroStreamAlertScreenParams,
   AeroStreamPilot,
   PilotLogMode,
 } from 'aero-stream-pilot';
-import { useCallback, useEffect, useImperativeHandle, useRef, useState, forwardRef } from 'react';
+import { forwardRef,useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
+
+import { createLiveStepLibrary } from '@/aero-stream-example-library';
+import { AlertScreen, CompletionScreen, ErrorScreen, InfoScreen } from '@/aero-stream-example-library/live/screens';
 import { Column } from '@/components/ui';
+import { ConnectionStatus } from '@/constants';
 import { getPilotLiveUrl } from '@/lib/live/tower/towerRuntime.service.ts';
 import { colors, typography } from '@/styles/tokens';
 
-interface PilotConnectionProps {
+interface PilotConnectionProperties {
   workflowId: string;
   sessionId: string;
   secret: string;
@@ -31,36 +30,36 @@ export interface PilotConnectionHandle {
   disconnect: () => void;
 }
 
-export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnectionProps>(
-  function PilotConnection({ workflowId, sessionId, secret, onSessionId, onStatusChange, onConnectionOpenChange, onTimeTick, onTimeReset }, ref) {
+export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnectionProperties>(
+  function PilotConnection({ workflowId, sessionId, secret, onSessionId, onStatusChange, onConnectionOpenChange, onTimeTick, onTimeReset }, reference) {
   const stepLibrary = createLiveStepLibrary();
 
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const connectionWatchRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const connectionAttemptRef = useRef(0);
+  const timerReference = useRef<ReturnType<typeof setInterval> | null>(null);
+  const connectionWatchReference = useRef<ReturnType<typeof setInterval> | null>(null);
+  const connectionAttemptReference = useRef(0);
 
   const [status, setStatus] = useState(ConnectionStatus.closed);
   const [currentStep, setCurrentStep] = useState<React.ReactNode | null>(null);
   const [currentAlert, setCurrentAlert] = useState<React.ReactNode | null>(null);
-  const [completionState, setCompletionState] = useState<'none' | 'success' | 'error'>('none');
+  const [completionState, setCompletionState] = useState<'error' | 'none' | 'success'>('none');
 
   useEffect(() => {
     onStatusChange(status);
   }, [status, onStatusChange]);
 
-  const pilotRef = useRef<AeroStreamPilot | null>(null);
+  const pilotReference = useRef<AeroStreamPilot | null>(null);
 
   const resetConnectionState = ({ clearScreen = true }: { clearScreen?: boolean } = {}) => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
+    if (timerReference.current) {
+      clearInterval(timerReference.current);
+      timerReference.current = null;
     }
-    if (connectionWatchRef.current) {
-      clearInterval(connectionWatchRef.current);
-      connectionWatchRef.current = null;
+    if (connectionWatchReference.current) {
+      clearInterval(connectionWatchReference.current);
+      connectionWatchReference.current = null;
     }
 
-    pilotRef.current = null;
+    pilotReference.current = null;
     onConnectionOpenChange(false);
     if (clearScreen) {
       setCurrentStep(null);
@@ -70,23 +69,23 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
   };
 
   const watchConnection = (pilot: AeroStreamPilot<React.ReactNode>) => {
-    if (connectionWatchRef.current) {
-      clearInterval(connectionWatchRef.current);
+    if (connectionWatchReference.current) {
+      clearInterval(connectionWatchReference.current);
     }
 
-    connectionWatchRef.current = setInterval(() => {
+    connectionWatchReference.current = setInterval(() => {
       if (!pilot.isConnected) {
         resetConnectionState({ clearScreen: false });
       }
     }, 250);
   };
 
-  const alertScreen = useCallback((params: AeroStreamAlertScreenParams | null): React.ReactNode => {
-    if (!params) {
+  const alertScreen = useCallback((parameters: AeroStreamAlertScreenParams | null): React.ReactNode => {
+    if (!parameters) {
       setCurrentAlert(null);
       return null;
     }
-    const node = AlertScreen(params);
+    const node = AlertScreen(parameters);
     setCurrentAlert(node);
     return node;
   }, []);
@@ -101,8 +100,8 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
         throw new Error('Workflow secret is required before connecting Pilot to Tower');
       }
 
-      const attemptId = connectionAttemptRef.current + 1;
-      connectionAttemptRef.current = attemptId;
+      const attemptId = connectionAttemptReference.current + 1;
+      connectionAttemptReference.current = attemptId;
       setStatus(ConnectionStatus.connecting);
       setCompletionState('none');
       onSessionId(sessionId);
@@ -116,12 +115,12 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
         audio: true,
       });
 
-      if (connectionAttemptRef.current !== attemptId) {
+      if (connectionAttemptReference.current !== attemptId) {
         stream.getTracks().forEach((track) => { track.stop(); });
         return;
       }
 
-      pilotRef.current?.disconnect();
+      void pilotReference.current?.disconnect();
       const pilot = new AeroStreamPilot<React.ReactNode>({
         url: getPilotLiveUrl(),
         secret,
@@ -151,22 +150,22 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
           resetConnectionState({ clearScreen: false });
         },
       });
-      pilotRef.current = pilot;
+      pilotReference.current = pilot;
 
       await pilot.connect();
 
-      if (connectionAttemptRef.current !== attemptId) {
-        pilot.disconnect();
+      if (connectionAttemptReference.current !== attemptId) {
+        void pilot.disconnect();
         return;
       }
 
-      if (pilotRef.current === pilot && pilot.isConnected) {
+      if (pilotReference.current === pilot && pilot.isConnected) {
         setStatus(ConnectionStatus.active);
         onConnectionOpenChange(true);
         watchConnection(pilot);
 
         onTimeReset();
-        timerRef.current = setInterval(() => { onTimeTick(); }, 1000);
+        timerReference.current = setInterval(() => { onTimeTick(); }, 1000);
       }
     } catch (error: unknown) {
       setStatus(ConnectionStatus.error);
@@ -175,30 +174,30 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
   };
 
   const handleDisconnect = () => {
-    connectionAttemptRef.current += 1;
+    connectionAttemptReference.current += 1;
     setCompletionState('none');
 
-    if (pilotRef.current) {
-      const pilot = pilotRef.current;
-      pilotRef.current = null;
-      pilot.disconnect();
+    if (pilotReference.current) {
+      const pilot = pilotReference.current;
+      pilotReference.current = null;
+      void pilot.disconnect();
     }
 
     resetConnectionState({ clearScreen: true });
   };
 
-  useImperativeHandle(ref, () => ({
+  useImperativeHandle(reference, () => ({
     connect: handleConnect,
     disconnect: handleDisconnect,
   }), [workflowId, status, sessionId, secret]);
 
   useEffect(() => {
     return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
+      if (timerReference.current) {
+        clearInterval(timerReference.current);
       }
-      if (connectionWatchRef.current) {
-        clearInterval(connectionWatchRef.current);
+      if (connectionWatchReference.current) {
+        clearInterval(connectionWatchReference.current);
       }
     };
   }, []);

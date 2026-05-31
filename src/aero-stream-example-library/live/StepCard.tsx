@@ -1,7 +1,8 @@
 import React from "react";
+
 import { colors, typography } from "@/styles/tokens";
 
-interface StepCardProps {
+interface StepCardProperties {
   children: React.ReactNode;
   title?: string;
   subtitle?: string;
@@ -17,7 +18,7 @@ export function StepCard({
   description,
   message,
   onReject,
-}: StepCardProps) {
+}: StepCardProperties) {
   return (
     <div
       style={{

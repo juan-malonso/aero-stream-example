@@ -2,16 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import React, { useState, type CSSProperties } from "react";
-import { colors, typography } from "@/styles/tokens";
+import React, { type CSSProperties,useState } from "react";
+
 import { Row } from "@/components/ui";
 import {
   getMicrofrontendTheme,
   MICROFRONTEND_THEMES,
   type MicrofrontendTheme,
 } from "@/styles/microfrontends";
+import { colors, typography } from "@/styles/tokens";
 
-interface NavItemProps {
+interface NavItemProperties {
   theme: MicrofrontendTheme;
   current: MicrofrontendTheme;
   isActive: boolean;
@@ -83,7 +84,7 @@ function SurfaceIcon({
   );
 }
 
-function NavItem({ theme, current, isActive }: NavItemProps) {
+function NavItem({ theme, current, isActive }: NavItemProperties) {
   const [isHovered, setIsHovered] = useState(false);
   const activeColor = current.primary700;
   const iconColor = isActive
@@ -126,8 +127,8 @@ function NavItem({ theme, current, isActive }: NavItemProps) {
     <Link
       href={theme.href}
       style={navItemStyle}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={() => { setIsHovered(true); }}
+      onMouseLeave={() => { setIsHovered(false); }}
     >
       <span
         style={{

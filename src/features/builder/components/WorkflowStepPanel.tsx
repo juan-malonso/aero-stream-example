@@ -7,6 +7,27 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { getLiveStepByExecutionType, type StepNodeData } from '@/aero-stream-example-library';
 import { Button, Column, Row } from '@/components/ui';
 import { useWorkflowGraph } from '@/contexts/shared/workflow/useWorkflow';
+import {
+  type BindingBrowserPane,
+  type BindingTextRange,
+  extractBindingRanges,
+  findBindingRange,
+  isCompleteBinding,
+  normalizeRanges,
+  parseBindingPath,
+  validateBindings,
+} from '@/lib/builder/workflow/bindings';
+import {
+  type PreviewActionResult,
+  resolveNextStepId,
+} from '@/lib/builder/workflow/conditionEvaluator';
+import {
+  executePreviewCode,
+  formatPreviewCodeError,
+  formatStepCodeSource,
+  normalizePreviewCodeResult,
+} from '@/lib/builder/workflow/previewRuntime';
+import { isRecord, toStringRecord } from '@/lib/builder/workflow/runtimeValues';
 import { colors, typography } from '@/styles/tokens';
 
 interface WorkflowStepPanelProperties {
@@ -23,20 +44,14 @@ interface EditorScrollPosition {
   top: number;
 }
 
-interface EditorSelectionRange {
-  end: number;
-  start: number;
-}
+type EditorSelectionRange = BindingTextRange;
 
 interface ImportBrowserPosition {
   left: number;
   top: number;
 }
 
-interface PreviewAction {
-  emitted: 'reject' | 'submit';
-  value: unknown;
-}
+type PreviewAction = PreviewActionResult;
 
 export function WorkflowStepPanel({
   onSelectStep,
@@ -697,7 +712,7 @@ function PanelSection({
   );
 }
 
-type ImportBrowserPane = 'envs' | 'root' | 'steps';
+type ImportBrowserPane = BindingBrowserPane;
 type ImportBrowserMode = 'copy' | 'replace';
 
 interface StepImportOption {
@@ -1232,19 +1247,6 @@ function parseJsonObject(value: string): {
   }
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-function toStringRecord(value: Record<string, unknown>): Record<string, string> {
-  return Object.fromEntries(
-    Object.entries(value).map(([key, item]) => [
-      key,
-      typeof item === 'string' ? item : JSON.stringify(item),
-    ]),
-  );
-}
-
 function extractMockHydrationReferences(value: string): string[] {
   const references = new Set<string>();
 
@@ -1300,159 +1302,6 @@ function hydrateString(value: string, mockValues: Record<string, string>): strin
     (nextValue, [reference, mockValue]) => nextValue.replaceAll(reference, mockValue),
     value,
   );
-}
-
-function isCompleteBinding(value: string): boolean {
-  return /^\{\{[^{}\s]+(?:\.[^{}\s]+)*\}\}$/.test(value);
-}
-
-function resolveNextStepId({
-  edges,
-  inputValue,
-  previewAction,
-  selectedNodeId,
-  stepData,
-}: {
-  edges: Edge[];
-  inputValue: Record<string, unknown>;
-  previewAction: PreviewAction;
-  selectedNodeId: string;
-  stepData: StepNodeData;
-}): string | null {
-  const matchedOutput = (stepData.outputs ?? []).find(output =>
-    evaluateConditionOutput({
-      inputValue,
-      output,
-      previewAction,
-      selectedNodeId,
-    }),
-  );
-
-  const matchedEdge = matchedOutput
-    ? edges.find(edge =>
-      edge.source === selectedNodeId && edge.sourceHandle === matchedOutput.id,
-    )
-    : undefined;
-
-  const defaultEdge = edges.find(edge =>
-    edge.source === selectedNodeId && edge.sourceHandle === 'default',
-  );
-
-  return matchedEdge?.target ?? defaultEdge?.target ?? null;
-}
-
-function evaluateConditionOutput({
-  inputValue,
-  output,
-  previewAction,
-  selectedNodeId,
-}: {
-  inputValue: Record<string, unknown>;
-  output: NonNullable<StepNodeData['outputs']>[number];
-  previewAction: PreviewAction;
-  selectedNodeId: string;
-}): boolean {
-  const actualValue = resolveConditionValue({
-    field: output.field,
-    inputValue,
-    previewAction,
-    selectedNodeId,
-  });
-  const expectedValue = normalizeExpectedValue(output.value, actualValue);
-
-  switch (output.operator) {
-    case 'neq':
-      return !areComparableValuesEqual(actualValue, expectedValue);
-    case 'gt':
-      return compareNumericValues(actualValue, expectedValue, 'gt');
-    case 'lt':
-      return compareNumericValues(actualValue, expectedValue, 'lt');
-    case 'eq':
-    default:
-      return areComparableValuesEqual(actualValue, expectedValue);
-  }
-}
-
-function resolveConditionValue({
-  field,
-  inputValue,
-  previewAction,
-  selectedNodeId,
-}: {
-  field: string;
-  inputValue: Record<string, unknown>;
-  previewAction: PreviewAction;
-  selectedNodeId: string;
-}): unknown {
-  const binding = parseStepResultBinding(field);
-  if (!binding) return readPath(inputValue, [field]);
-
-  if (binding.stepId === selectedNodeId) {
-    return readPath(previewAction.value, binding.path);
-  }
-
-  return readPath(inputValue, binding.path);
-}
-
-function parseStepResultBinding(value: string): {
-  path: string[];
-  stepId: string;
-} | null {
-  const match = /^\{\{steps\.([^.{}]+)\.result(?:\.([^{}]+))?\}\}$/.exec(value);
-  if (!match) return null;
-
-  return {
-    path: match[2]?.split('.').filter(Boolean) ?? [],
-    stepId: match[1],
-  };
-}
-
-function readPath(source: unknown, path: string[]): unknown {
-  if (path.length === 0) return source;
-
-  let currentValue = source;
-  for (const segment of path) {
-    if (!isRecord(currentValue)) return undefined;
-    currentValue = currentValue[segment];
-  }
-
-  return currentValue;
-}
-
-function normalizeExpectedValue(value: string, actualValue: unknown): unknown {
-  const trimmedValue = value.trim();
-
-  if (typeof actualValue === 'number') {
-    const numericValue = Number(trimmedValue);
-    return Number.isNaN(numericValue) ? value : numericValue;
-  }
-
-  if (typeof actualValue === 'boolean') {
-    if (trimmedValue === 'true') return true;
-    if (trimmedValue === 'false') return false;
-  }
-
-  if (trimmedValue === 'null') return null;
-  return value;
-}
-
-function areComparableValuesEqual(leftValue: unknown, rightValue: unknown): boolean {
-  if (typeof leftValue === typeof rightValue) return Object.is(leftValue, rightValue);
-  return String(leftValue) === String(rightValue);
-}
-
-function compareNumericValues(
-  leftValue: unknown,
-  rightValue: unknown,
-  operator: 'gt' | 'lt',
-): boolean {
-  const leftNumber = Number(leftValue);
-  const rightNumber = Number(rightValue);
-  if (Number.isNaN(leftNumber) || Number.isNaN(rightNumber)) return false;
-
-  return operator === 'gt'
-    ? leftNumber > rightNumber
-    : leftNumber < rightNumber;
 }
 
 function buildPreviousStepImports(
@@ -1611,156 +1460,6 @@ function clampImportBrowserPosition(position: ImportBrowserPosition): ImportBrow
   };
 }
 
-function validateBindings(value: string, previousSteps: StepImportOption[]): {
-  invalidRanges: EditorSelectionRange[];
-  message: string | null;
-} {
-  const invalidRanges = extractBindingRanges(value)
-    .filter(range => !isValidBinding(value.slice(range.start, range.end), previousSteps));
-
-  return {
-    invalidRanges,
-    message: invalidRanges.length > 0 ? 'Binding incompleto o inválido' : null,
-  };
-}
-
-function extractBindingRanges(value: string): EditorSelectionRange[] {
-  const ranges: EditorSelectionRange[] = [];
-  let cursor = 0;
-
-  while (cursor < value.length) {
-    const start = value.indexOf('{{', cursor);
-    if (start < 0) break;
-
-    const endIndex = value.indexOf('}}', start + 2);
-    const nextOpenIndex = value.indexOf('{{', start + 2);
-    const hasNestedOpen = nextOpenIndex >= 0 && (endIndex < 0 || nextOpenIndex < endIndex);
-
-    if (endIndex < 0 || hasNestedOpen) {
-      ranges.push({ end: findIncompleteBindingEnd(value, start), start });
-      cursor = hasNestedOpen ? nextOpenIndex : value.length;
-      continue;
-    }
-
-    ranges.push({ end: endIndex + 2, start });
-    cursor = endIndex + 2;
-  }
-
-  return ranges;
-}
-
-function findIncompleteBindingEnd(value: string, start: number): number {
-  const nextBoundaryCandidates = [
-    value.indexOf('\n', start),
-    value.indexOf('"', start + 2),
-    value.indexOf(',', start),
-    value.indexOf('}', start + 2),
-  ].filter(index => index >= 0);
-
-  return nextBoundaryCandidates.length > 0
-    ? Math.min(...nextBoundaryCandidates)
-    : value.length;
-}
-
-function isValidBinding(value: string, previousSteps: StepImportOption[]): boolean {
-  if (!/^\{\{[^{}\s]+(?:\.[^{}\s]+)*\}\}$/.test(value)) return false;
-
-  const path = value.slice(2, -2);
-  if (path === 'env.allowedOrigins' || path === 'env.secret') return true;
-
-  const parts = path.split('.');
-  if (parts.length < 3 || parts[0] !== 'steps' || parts[2] !== 'result') return false;
-
-  const step = previousSteps.find(item => item.id === parts[1]);
-  if (!step) return false;
-  if (parts.length === 3) return true;
-
-  const field = parts.slice(3).join('.');
-  return field.length > 0 && step.fields.includes(field);
-}
-
-function normalizeRanges(
-  ranges: EditorSelectionRange[],
-  length: number,
-): EditorSelectionRange[] {
-  const normalized: EditorSelectionRange[] = [];
-  const sortedRanges = [...ranges]
-    .map(range => ({
-      end: Math.min(length, Math.max(0, range.end)),
-      start: Math.min(length, Math.max(0, range.start)),
-    }))
-    .filter(range => range.end > range.start)
-    .sort((left, right) => left.start - right.start);
-
-  for (const range of sortedRanges) {
-    const previous = normalized.at(-1);
-    if (previous && range.start <= previous.end) {
-      previous.end = Math.max(previous.end, range.end);
-      continue;
-    }
-
-    normalized.push({ ...range });
-  }
-
-  return normalized;
-}
-
-function findBindingRange(
-  value: string,
-  selection: EditorSelectionRange,
-): EditorSelectionRange | null {
-  if (selection.start !== selection.end) {
-    const selectedText = value.slice(selection.start, selection.end);
-    if (/^\{\{[^{}]*\}\}$/.test(selectedText)) {
-      return selection;
-    }
-  }
-
-  const cursor = selection.end;
-  const openIndex = value.lastIndexOf('{{', cursor);
-  if (openIndex < 0) return null;
-
-  const closeIndex = value.indexOf('}}', openIndex + 2);
-  if (closeIndex < 0) return null;
-
-  const end = closeIndex + 2;
-  if (cursor < openIndex || cursor > end) return null;
-
-  const innerValue = value.slice(openIndex + 2, closeIndex);
-  if (innerValue.includes('{{') || innerValue.includes('\n')) return null;
-
-  return {
-    end,
-    start: openIndex,
-  };
-}
-
-function parseBindingPath(value: string): {
-  pane: ImportBrowserPane;
-  stepId: string | null;
-} {
-  const path = value.replace(/^\{\{/, '').replace(/\}\}$/, '').trim();
-
-  if (path.startsWith('steps.')) {
-    return {
-      pane: 'steps',
-      stepId: path.split('.')[1] ?? null,
-    };
-  }
-
-  if (path.startsWith('env.')) {
-    return {
-      pane: 'envs',
-      stepId: null,
-    };
-  }
-
-  return {
-    pane: 'root',
-    stepId: null,
-  };
-}
-
 function createPreviewCanvas(): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
   const context = canvas.getContext('2d');
@@ -1781,150 +1480,6 @@ function createPreviewCanvas(): HTMLCanvasElement {
 
 function createPreviewStream(): MediaStream {
   return new MediaStream();
-}
-
-function formatStepCodeSource(source: string): string {
-  const normalizedSource = source.replace(/\r\n?/g, '\n').trim();
-  if (normalizedSource.length === 0) return '';
-
-  let indentLevel = 0;
-  return normalizedSource
-    .split('\n')
-    .map((line) => {
-      const trimmedLine = line.trim();
-      if (trimmedLine.length === 0) return '';
-
-      if (/^[}\])]/.test(trimmedLine)) {
-        indentLevel = Math.max(0, indentLevel - 1);
-      }
-
-      const formattedLine = `${'  '.repeat(indentLevel)}${trimmedLine}`;
-      if (/[{[(]\s*(?:\/\/.*)?$/.test(trimmedLine)) indentLevel += 1;
-      return formattedLine;
-    })
-    .join('\n');
-}
-
-async function executePreviewCode({
-  inputValue,
-  source,
-  stepData,
-}: {
-  inputValue: Record<string, unknown>;
-  source: string;
-  stepData: StepNodeData;
-}): Promise<unknown> {
-  const entrypoint = stepData.code?.entrypoint ?? 'run';
-  const previewContext = {
-    data: inputValue,
-    props: inputValue,
-    step: stepData,
-    steps: isRecord(inputValue.steps) ? inputValue.steps : {},
-  };
-
-  const executableSource = source.replaceAll(/\bexport\s+/g, '');
-
-  // eslint-disable-next-line @typescript-eslint/no-implied-eval -- Builder preview.
-  const factory = new Function(
-    'ctx',
-    'helpers',
-    [
-      '"use strict";',
-      'const exports = {};',
-      'const module = { exports };',
-      executableSource,
-      `const entrypointFn = typeof ${entrypoint} === "function"`,
-      `  ? ${entrypoint}`,
-      `  : module.exports?.${entrypoint} ?? exports.${entrypoint};`,
-      'if (typeof entrypointFn !== "function") {',
-      `  throw new Error("Dynamic step entrypoint '${entrypoint}' was not found");`,
-      '}',
-      'return Promise.resolve(entrypointFn(ctx, helpers));',
-    ].join('\n'),
-  ) as (ctx: unknown, helpers: PreviewCodeHelpers) => unknown;
-
-  return factory(previewContext, createPreviewCodeHelpers(previewContext));
-}
-
-function createPreviewCodeHelpers(state: Record<string, unknown>): PreviewCodeHelpers {
-  return {
-    fetchJson: async (url, init) => {
-      const response = await fetch(url, init);
-      if (!response.ok) {
-        throw new Error(`fetchJson failed ${response.status} ${response.statusText}`);
-      }
-
-      return response.json() as Promise<unknown>;
-    },
-    get: (path, fallback) => readPath(state, path.split('.')) ?? fallback,
-    map: (source, mappings) => {
-      const output: Record<string, unknown> = {};
-      const input = isRecord(source) ? source : {};
-      for (const pair of parsePreviewMappings(mappings)) {
-        output[pair.output] = readPath(input, pair.input.split('.'));
-      }
-
-      return output;
-    },
-  };
-}
-
-interface PreviewCodeHelpers {
-  fetchJson: (url: string, init?: RequestInit) => Promise<unknown>;
-  get: (path: string, fallback?: unknown) => unknown;
-  map: (
-    source: unknown,
-    mappings: { input: string; output: string }[] | string,
-  ) => Record<string, unknown>;
-}
-
-function parsePreviewMappings(
-  value: { input: string; output: string }[] | string,
-): { input: string; output: string }[] {
-  if (typeof value !== 'string') return value;
-
-  return value.split(',')
-    .map(pair => pair.trim())
-    .filter(Boolean)
-    .map((pair) => {
-      const [input, output] = pair.split(':').map(part => part.trim());
-      return input && output ? { input, output } : null;
-    })
-    .filter((pair): pair is { input: string; output: string } => pair !== null);
-}
-
-function normalizePreviewCodeResult(value: unknown): Record<string, unknown> {
-  if (!isRecord(value)) {
-    return {
-      data: {},
-      status: value == null ? 'success' : String(value),
-    };
-  }
-
-  if ('result' in value) return normalizePreviewCodeResult(value.result);
-
-  const status = typeof value.status === 'string' ? value.status : 'success';
-  const data = isRecord(value.data) ? value.data : previewDataFromRecord(value);
-  return { status, data };
-}
-
-function previewDataFromRecord(value: Record<string, unknown>): Record<string, unknown> {
-  if ('data' in value && !isRecord(value.data)) return { value: value.data };
-
-  const data = { ...value };
-  delete data.status;
-  return data;
-}
-
-function formatPreviewCodeError(error: unknown): string {
-  if (error instanceof Error) return error.stack ?? error.message;
-  if (typeof error === 'string') return error;
-
-  try {
-    return JSON.stringify(error, null, 2);
-  } catch {
-    return 'Unknown preview code error';
-  }
 }
 
 function formatJson(value: unknown): string {

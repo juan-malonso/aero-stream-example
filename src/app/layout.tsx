@@ -1,9 +1,9 @@
+import '../styles/global.css';
+
 export const metadata = {
   title: 'AeroStream Pilot Frontend',
   description: 'Connecting to Aero-Stream Tower via WebSocket',
 };
-
-import '../styles/global.css';
 
 export default function RootLayout({
   children,

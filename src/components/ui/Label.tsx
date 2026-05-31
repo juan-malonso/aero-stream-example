@@ -1,21 +1,31 @@
-import React from 'react';
+import type { LabelHTMLAttributes } from 'react';
+
 import { colors, spacing, typography } from '@/styles/tokens';
 
-export function Label({ children, color = colors.gray600, style, ...props }: React.HTMLAttributes<HTMLDivElement> & { color?: string }) {
+export interface LabelProperties extends LabelHTMLAttributes<HTMLLabelElement> {
+  color?: string;
+}
+
+export function Label({
+  children,
+  color = colors.gray600,
+  style,
+  ...properties
+}: LabelProperties) {
   return (
-    <div
+    <label
       style={{
         color,
         fontSize: typography.sizes.xs,
         fontWeight: typography.weights.semibold,
+        letterSpacing: '0.05em',
         marginBottom: spacing.md,
         textTransform: 'uppercase',
-        letterSpacing: '0.05em',
         ...style,
       }}
-      {...props}
+      {...properties}
     >
       {children}
-    </div>
+    </label>
   );
 }
