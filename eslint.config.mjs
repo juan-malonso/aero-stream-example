@@ -29,6 +29,9 @@ const browserGlobals = {
 };
 
 export default tseslint.config(
+  {
+    ignores: ['next-env.d.ts'],
+  },
   ...createAeroStreamAppLintConfig({
     eslint,
     eslintCommentsPlugin,
@@ -53,7 +56,10 @@ export default tseslint.config(
       ...nextPlugin.configs.recommended.rules,
       ...nextPlugin.configs['core-web-vitals'].rules,
       '@typescript-eslint/no-explicit-any': 'off',
+      'id-length': 'off',
+      'max-lines-per-function': 'warn',
       'no-console': 'off',
+      'unicorn/prevent-abbreviations': 'off',
     },
   },
 );
