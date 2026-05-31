@@ -12,7 +12,7 @@ export const finishBuilderStep: BuilderStepDefinition = {
   executionType: 'FinishComponent',
   fields: ['status'],
   propKeys: ['title', 'message'],
-  accentColor: colors.amber500,
+  accentColor: colors.gray500,
   hideOutputs: true,
 };
 

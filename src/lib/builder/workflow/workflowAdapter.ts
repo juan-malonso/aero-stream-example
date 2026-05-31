@@ -1,27 +1,34 @@
+import { type Edge, type Node } from "@xyflow/react";
+
+import {
+  getBuilderStepByExecutionType,
+  type OutputConfig,
+  type StepNodeData,
+} from "@/aero-stream-example-library";
+import { colors } from "@/styles/tokens";
+
+import {
+  EXECUTION_TYPE_TO_NODE,
+  NODE_TYPE_TO_EXECUTION,
+} from "./componentRegistry";
 import {
   type TowerWorkflow,
   type WorkflowConfig,
   type WorkflowStep,
   type WorkflowTransition,
 } from "./workflow";
-import {
-  EXECUTION_TYPE_TO_NODE,
-  NODE_TYPE_TO_EXECUTION,
-} from "./componentRegistry";
-import {
-  getBuilderStepByExecutionType,
-  type OutputConfig,
-  type StepNodeData,
-} from "@/aero-stream-example-library";
 
-import { type Edge, type Node } from "@xyflow/react";
-import { colors } from "@/styles/tokens";
-
-const NODE_GAP_X = 400;
-const START_OFFSET_X = 100;
-const STEP_OFFSET_X = 250;
-const ROW_Y = 200;
-const NODE_GAP_Y = 400;
+const LAYOUT_MARGIN_X = 100;
+const LAYOUT_MARGIN_Y = 120;
+const LEVEL_GAP_X = 88;
+const NODE_GAP_Y = 34;
+const COLLISION_GAP_Y = 14;
+const START_NODE_WIDTH = 96;
+const START_NODE_HEIGHT = 56;
+const STEP_NODE_WIDTH = 320;
+const STEP_NODE_HEADER_HEIGHT = 44;
+const STEP_NODE_BASE_HEIGHT = 82;
+const STEP_OUTPUT_HEIGHT = 28;
 const REMOVED_SPEC_KEYS = new Set(["stop".concat("Workflow")]);
 
 export function parseTowerToReactFlow(towerWorkflow: TowerWorkflow): {
@@ -31,50 +38,12 @@ export function parseTowerToReactFlow(towerWorkflow: TowerWorkflow): {
   const nodes: Node[] = [];
   const edges: Edge[] = [];
 
-  const colCounts: Record<number, number> = {};
-  const nodePositions: Record<string, { x: number; y: number }> = {};
-  const visited = new Set<string>();
-
-  const placeNode = (id: string, col: number) => {
-    if (visited.has(id)) return;
-    visited.add(id);
-
-    colCounts[col] = colCounts[col] || 0;
-    const x =
-      id === "start_node"
-        ? START_OFFSET_X
-        : STEP_OFFSET_X + (col - 1) * NODE_GAP_X;
-    const y = ROW_Y + colCounts[col] * NODE_GAP_Y;
-    nodePositions[id] = { x, y };
-    colCounts[col]++;
-
-    if (id === "start_node" && towerWorkflow.start) {
-      placeNode(towerWorkflow.start, col + 1);
-    } else if (id !== "start_node" && towerWorkflow.steps[id]) {
-      const step = towerWorkflow.steps[id];
-      const stepDefinition = getBuilderStepByExecutionType(step.execution.type);
-      if (stepDefinition?.hideOutputs) return;
-
-      step.transitions.forEach((t) => {
-        placeNode(t.next, col + 1);
-      });
-    }
-  };
-
-  placeNode("start_node", 0);
-
-  // Unlinked nodes
-  const maxCol = Math.max(0, ...Object.keys(colCounts).map(Number));
-  for (const stepId of Object.keys(towerWorkflow.steps)) {
-    if (!visited.has(stepId)) {
-      placeNode(stepId, maxCol + 1);
-    }
-  }
+  const nodePositions = buildWorkflowNodePositions(towerWorkflow);
 
   nodes.push({
     id: "start_node",
     type: "startNode",
-    position: nodePositions["start_node"],
+    position: nodePositions.start_node,
     data: { label: "Start" },
   });
 
@@ -95,7 +64,7 @@ export function parseTowerToReactFlow(towerWorkflow: TowerWorkflow): {
     if (!step) return;
 
     const executionType = step.execution.type;
-    const nodeType = EXECUTION_TYPE_TO_NODE[executionType] || "welcomeStep";
+    const nodeType = EXECUTION_TYPE_TO_NODE[executionType] ?? "welcomeStep";
     const stepDefinition = getBuilderStepByExecutionType(executionType);
 
     const currentOutputs: OutputConfig[] = [];
@@ -109,7 +78,7 @@ export function parseTowerToReactFlow(towerWorkflow: TowerWorkflow): {
       props: { ...step.props },
       specs: cleanSpecs(step.specs),
       execution: { ...step.execution },
-      fields: stepDefinition?.fields || [],
+      fields: stepDefinition?.fields ?? [],
       hideOutputs,
       outputs: currentOutputs,
     };
@@ -117,7 +86,7 @@ export function parseTowerToReactFlow(towerWorkflow: TowerWorkflow): {
     nodes.push({
       id: stepId,
       type: nodeType,
-      position: nodePositions[stepId] || { x: 0, y: 0 },
+      position: nodePositions[stepId] ?? { x: 0, y: 0 },
       data: nodeData,
     });
 
@@ -133,28 +102,28 @@ export function parseTowerToReactFlow(towerWorkflow: TowerWorkflow): {
         const opKeys = Object.keys(transition.condition);
         if (opKeys.length > 0) {
           const operator = opKeys[0];
-          const args = (
+          const arguments_ = (
             transition.condition as unknown as Record<string, unknown>
           )[operator];
 
           if (
-            Array.isArray(args) &&
-            args.length === 2 &&
-            args[0] &&
-            (args[0] as Record<string, unknown>).var !== undefined
+            Array.isArray(arguments_) &&
+            arguments_.length === 2 &&
+            arguments_[0] &&
+            (arguments_[0] as Record<string, unknown>).var !== undefined
           ) {
-            let field = (args[0] as Record<string, string>).var;
+            let field = (arguments_[0] as Record<string, string>).var;
             if (typeof field === "string" && !field.startsWith("{{")) {
               field = `{{${field}}}`;
             }
-            const value = args[1];
+            const value = arguments_[1] as unknown;
             const opRevMap: Record<string, string> = {
               "==": "eq",
               "!=": "neq",
               ">": "gt",
               "<": "lt",
             };
-            const internalOp = opRevMap[operator] || "eq";
+            const internalOp = opRevMap[operator] ?? "eq";
 
             const outId = `out_${stepId}_${tIndex}`;
             currentOutputs.push({
@@ -181,7 +150,197 @@ export function parseTowerToReactFlow(towerWorkflow: TowerWorkflow): {
     });
   });
 
-  return { nodes, edges };
+  return { nodes: resolveWorkflowNodeOverlaps(nodes), edges };
+}
+
+export function resolveWorkflowNodeOverlaps(
+  nodes: Node[],
+  options: { fixedIds?: Set<string> } = {},
+): Node[] {
+  const fixedIds = options.fixedIds ?? new Set<string>();
+  const resolved = nodes.map(node => ({ ...node, position: { ...node.position } }));
+
+  for (const _pass of resolved) {
+    let changed = false;
+    const orderedIndexes = resolved
+      .map((node, index) => ({ index, node }))
+      .sort((left, right) =>
+        left.node.position.y - right.node.position.y
+        || left.node.position.x - right.node.position.x);
+
+    orderedIndexes.forEach((orderedLeft, leftIndex) => {
+      for (const orderedRight of orderedIndexes.slice(leftIndex + 1)) {
+        const firstIndex = orderedLeft.index;
+        const secondIndex = orderedRight.index;
+        const first = resolved[firstIndex];
+        const second = resolved[secondIndex];
+        if (!nodesOverlap(first, second)) continue;
+
+        const moveFirst = fixedIds.has(second.id) && !fixedIds.has(first.id);
+        const moverIndex = moveFirst ? firstIndex : secondIndex;
+        const blockerIndex = moveFirst ? secondIndex : firstIndex;
+        const blockerBox = nodeBox(resolved[blockerIndex]);
+        const mover = resolved[moverIndex];
+        const nextY = blockerBox.bottom + COLLISION_GAP_Y;
+
+        if (mover.position.y < nextY) {
+          resolved[moverIndex] = {
+            ...mover,
+            position: { ...mover.position, y: nextY },
+          };
+          changed = true;
+        }
+      }
+    });
+
+    if (!changed) break;
+  }
+
+  return resolved;
+}
+
+function buildWorkflowNodePositions(towerWorkflow: TowerWorkflow): Record<string, { x: number; y: number }> {
+  const levels = workflowNodeLevels(towerWorkflow);
+  const levelGroups = new Map<number, string[]>();
+
+  for (const [nodeId, level] of Object.entries(levels)) {
+    const group = levelGroups.get(level) ?? [];
+    group.push(nodeId);
+    levelGroups.set(level, group);
+  }
+
+  const sortedLevels = Array.from(levelGroups.keys()).sort((left, right) => left - right);
+  const levelWidths = new Map<number, number>();
+  for (const level of sortedLevels) {
+    levelWidths.set(level, Math.max(...(levelGroups.get(level) ?? []).map(nodeId =>
+      estimateNodeSize(nodeId, towerWorkflow).width,
+    )));
+  }
+
+  const levelX = new Map<number, number>();
+  let cursorX = LAYOUT_MARGIN_X;
+  for (const level of sortedLevels) {
+    levelX.set(level, cursorX);
+    cursorX += (levelWidths.get(level) ?? STEP_NODE_WIDTH) + LEVEL_GAP_X;
+  }
+
+  const levelHeights = new Map<number, number>();
+  for (const level of sortedLevels) {
+    const ids = levelGroups.get(level) ?? [];
+    const height = ids.reduce((total, nodeId, index) =>
+      total + estimateNodeSize(nodeId, towerWorkflow).height + (index > 0 ? NODE_GAP_Y : 0), 0);
+    levelHeights.set(level, height);
+  }
+
+  const maxHeight = Math.max(0, ...Array.from(levelHeights.values()));
+  const positions: Record<string, { x: number; y: number }> = {};
+
+  for (const level of sortedLevels) {
+    const ids = levelGroups.get(level) ?? [];
+    let cursorY = LAYOUT_MARGIN_Y + (maxHeight - (levelHeights.get(level) ?? 0)) / 2;
+
+    for (const nodeId of ids) {
+      positions[nodeId] = { x: levelX.get(level) ?? LAYOUT_MARGIN_X, y: cursorY };
+      cursorY += estimateNodeSize(nodeId, towerWorkflow).height + NODE_GAP_Y;
+    }
+  }
+
+  return positions;
+}
+
+function workflowNodeLevels(towerWorkflow: TowerWorkflow): Record<string, number> {
+  const levels: Record<string, number> = { start_node: 0 };
+  const stepIds = Object.keys(towerWorkflow.steps);
+  if (towerWorkflow.start && towerWorkflow.steps[towerWorkflow.start]) {
+    levels[towerWorkflow.start] = 1;
+  }
+
+  for (const _stepId of stepIds) {
+    let changed = false;
+
+    for (const stepId of stepIds) {
+      const currentLevel = levels[stepId];
+      if (currentLevel === undefined) continue;
+
+      const step = towerWorkflow.steps[stepId];
+      const stepDefinition = getBuilderStepByExecutionType(step.execution.type);
+      if (stepDefinition?.hideOutputs) continue;
+
+      for (const transition of step.transitions) {
+        if (!towerWorkflow.steps[transition.next]) continue;
+
+        const nextLevel = currentLevel + 1;
+        if ((levels[transition.next] ?? -1) < nextLevel) {
+          levels[transition.next] = nextLevel;
+          changed = true;
+        }
+      }
+    }
+
+    if (!changed) break;
+  }
+
+  const unlinkedLevel = Math.max(0, ...Object.values(levels)) + 1;
+  for (const stepId of stepIds) {
+    levels[stepId] ??= unlinkedLevel;
+  }
+
+  return levels;
+}
+
+function estimateNodeSize(nodeId: string, towerWorkflow?: TowerWorkflow): { height: number; width: number } {
+  if (nodeId === "start_node") {
+    return { height: START_NODE_HEIGHT, width: START_NODE_WIDTH };
+  }
+
+  const step = towerWorkflow?.steps[nodeId];
+  const stepDefinition = step ? getBuilderStepByExecutionType(step.execution.type) : null;
+  if (stepDefinition?.hideOutputs) {
+    return { height: STEP_NODE_HEADER_HEIGHT, width: STEP_NODE_WIDTH };
+  }
+
+  const outputCount = Math.max(1, step?.transitions.length ?? 1);
+
+  return {
+    height: STEP_NODE_BASE_HEIGHT + outputCount * STEP_OUTPUT_HEIGHT,
+    width: STEP_NODE_WIDTH,
+  };
+}
+
+function estimateReactFlowNodeSize(node: Node): { height: number; width: number } {
+  if (node.type === "startNode") return { height: START_NODE_HEIGHT, width: START_NODE_WIDTH };
+
+  const data = node.data as unknown as Partial<StepNodeData>;
+  if (data.hideOutputs) {
+    return { height: STEP_NODE_HEADER_HEIGHT, width: STEP_NODE_WIDTH };
+  }
+
+  const outputCount = Math.max(1, data.outputs?.length ?? 1);
+
+  return {
+    height: STEP_NODE_BASE_HEIGHT + outputCount * STEP_OUTPUT_HEIGHT,
+    width: STEP_NODE_WIDTH,
+  };
+}
+
+function nodeBox(node: Node): { bottom: number; left: number; right: number; top: number } {
+  const size = estimateReactFlowNodeSize(node);
+  return {
+    bottom: node.position.y + size.height,
+    left: node.position.x,
+    right: node.position.x + size.width,
+    top: node.position.y,
+  };
+}
+
+function nodesOverlap(first: Node, second: Node): boolean {
+  const firstBox = nodeBox(first);
+  const secondBox = nodeBox(second);
+
+  return firstBox.left < secondBox.right
+    && firstBox.right > secondBox.left
+    && firstBox.top < secondBox.bottom
+    && firstBox.bottom > secondBox.top;
 }
 
 export function parseReactFlowToTower(
@@ -192,8 +351,8 @@ export function parseReactFlowToTower(
 ): TowerWorkflow {
   const steps: Record<string, WorkflowStep> = {};
 
-  const startEdge = edges.find((e) => e.source === "start_node");
-  const startStepId = startEdge?.target || "";
+  const startEdge = edges.find((edge) => edge.source === "start_node");
+  const startStepId = startEdge?.target ?? "";
 
   const opMap: Record<string, string> = {
     eq: "==",
@@ -206,36 +365,36 @@ export function parseReactFlowToTower(
     if (node.type === "startNode") return;
 
     const nodeData = node.data as unknown as StepNodeData;
-    const outEdges = edges.filter((e) => e.source === node.id);
+    const outEdges = edges.filter((edge) => edge.source === node.id);
     const executionType =
-      NODE_TYPE_TO_EXECUTION[node.type || ""] || node.type || "";
+      NODE_TYPE_TO_EXECUTION[node.type ?? ""] ?? node.type ?? "";
 
     const sortedTransitions: WorkflowTransition[] = [];
 
     if (!nodeData.hideOutputs) {
-      (nodeData.outputs || []).forEach((output) => {
-        const edge = outEdges.find((e) => e.sourceHandle === output.id);
+      (nodeData.outputs ?? []).forEach((output) => {
+        const edge = outEdges.find((sourceEdge) => sourceEdge.sourceHandle === output.id);
         if (edge) {
-          const sym = opMap[output.operator] || "==";
-          let varField = output.field || "";
+          const sym = opMap[output.operator] ?? "==";
+          let variableField = output.field ?? "";
           if (
-            typeof varField === "string" &&
-            varField !== "" &&
-            !varField.startsWith("{{")
+            typeof variableField === "string" &&
+            variableField !== "" &&
+            !variableField.startsWith("{{")
           ) {
-            varField = `{{${varField}}}`;
+            variableField = `{{${variableField}}}`;
           }
 
           sortedTransitions.push({
             condition: {
-              [sym]: [{ var: varField }, output.value],
+              [sym]: [{ var: variableField }, output.value],
             },
             next: edge.target,
           });
         }
       });
 
-      const defaultEdge = outEdges.find((e) => e.sourceHandle === "default");
+      const defaultEdge = outEdges.find((edge) => edge.sourceHandle === "default");
       if (defaultEdge) {
         sortedTransitions.push({
           condition: true,
@@ -246,9 +405,9 @@ export function parseReactFlowToTower(
 
     steps[node.id] = {
       code: nodeData.code,
-      execution: nodeData.execution || { mode: "CLIENT", type: executionType },
-      name: nodeData.stepName || nodeData.label || "",
-      props: nodeData.props || {},
+      execution: nodeData.execution ?? { mode: "CLIENT", type: executionType },
+      name: nodeData.stepName ?? nodeData.label ?? "",
+      props: nodeData.props ?? {},
       specs: cleanSpecs(nodeData.specs),
       transitions: sortedTransitions,
     };

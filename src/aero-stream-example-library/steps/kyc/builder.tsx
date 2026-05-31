@@ -11,7 +11,7 @@ export const kycBuilderStep: BuilderStepDefinition = {
   executionType: 'KYCComponent',
   fields: ['name', 'email', 'phone'],
   propKeys: ['title', 'description'],
-  accentColor: colors.emerald500,
+  accentColor: colors.violet500,
 };
 
 export function KYCNode({ id, data }: { id: string; data: StepNodeData }) {

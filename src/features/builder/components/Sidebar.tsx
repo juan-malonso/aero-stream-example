@@ -1,13 +1,20 @@
 import React from 'react';
-import { ComponentToolbox } from './ComponentToolbox';
-import { WorkflowList } from './WorkflowList';
+
 import { sidebarContainerStyle } from '@/styles/theme';
+
+import { ComponentToolbox } from './ComponentToolbox';
 
 export const Sidebar = () => {
   return (
-    <aside style={{ ...sidebarContainerStyle, overflowY: 'auto' }}>
+    <aside
+      style={{
+        ...sidebarContainerStyle,
+        gridTemplateRows: '1fr',
+        overflowY: 'auto',
+        width: '290px',
+      }}
+    >
       <ComponentToolbox />
-      <WorkflowList />
     </aside>
   );
 };

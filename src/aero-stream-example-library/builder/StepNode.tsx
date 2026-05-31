@@ -1,23 +1,29 @@
-import { Handle, Position, useReactFlow } from "@xyflow/react";
+import {
+  type Edge,
+  Handle,
+  type Node,
+  Position,
+  useReactFlow,
+} from "@xyflow/react";
 import React from "react";
+import { createPortal } from "react-dom";
 
 import { ExecutionBadge } from "@/components/shared/ExecutionBadge";
+import { Button, Card, Input, Label, Row, Select } from "@/components/ui";
+import { cardHeaderStyle, cardStyle, handleStyles } from "@/styles/theme";
+import { colors } from "@/styles/tokens";
+
 import {
   type OutputConfig,
   type StepNodeData,
-  type StepNodeProps,
+  type StepNodeProperties,
 } from "./types";
-import { colors } from "@/styles/tokens";
-import { cardStyle, cardHeaderStyle, handleStyles } from "@/styles/theme";
-import { Card, Input, Label, Select, Button, Row } from "@/components/ui";
 
 export type { OutputConfig, StepNodeData };
 
-const REMOVED_SPEC_KEYS = new Set(["stop".concat("Workflow")]);
-
 // --- Private Components (Not Exported) --- //
 
-interface NodeFieldProps {
+interface NodeFieldProperties {
   id?: string;
   color?: string;
   bgColor?: string;
@@ -28,12 +34,18 @@ interface NodeFieldProps {
   children: React.ReactNode;
 }
 
-interface NodeSectionProps {
-  label?: string;
-  color?: string;
-  headerRight?: React.ReactNode;
-  children: React.ReactNode | React.ReactNode[];
+interface ConditionReferenceOption {
+  fields: string[];
+  id: string;
+  name: string;
 }
+
+interface ReferenceMenuPosition {
+  left: number;
+  top: number;
+}
+
+type ConditionMenuPane = "root" | "steps";
 
 function NodeField({
   id,
@@ -43,24 +55,24 @@ function NodeField({
   leftId,
   rightId,
   children,
-}: NodeFieldProps) {
+}: NodeFieldProperties) {
   return (
     <Row
       style={{
         position: "relative",
-        height: "20px",
+        height: "18px",
         alignItems: "center",
         backgroundColor: colors.gray100,
         border: `1px solid ${color}`,
         borderRadius: "0.3rem",
-        padding: "2px",
+        padding: "1px 2px",
       }}
     >
       {leftHandle && (
         <Handle
           type={leftHandle.includes("Target") ? "target" : "source"}
           position={Position.Left}
-          id={leftId || `in-${id}`}
+          id={leftId ?? `in-${id}`}
           style={{ ...handleStyles[leftHandle](10), zIndex: 10 }}
         />
       )}
@@ -69,257 +81,11 @@ function NodeField({
         <Handle
           type={rightHandle.includes("Target") ? "target" : "source"}
           position={Position.Right}
-          id={rightId || `out-${id}`}
+          id={rightId ?? `out-${id}`}
           style={{ ...handleStyles[rightHandle](10), zIndex: 10 }}
         />
       )}
     </Row>
-  );
-}
-
-function NodeSection({
-  label,
-  color,
-  headerRight,
-  children,
-}: NodeSectionProps) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-      {(label || headerRight) && (
-        <Row
-          style={{
-            justifyContent: "space-between",
-            alignItems: "center",
-            width: "100%",
-          }}
-        >
-          {label ? (
-            <Label style={{ color, fontSize: "11px", margin: 0 }}>
-              {label}
-            </Label>
-          ) : (
-            <div />
-          )}
-          {headerRight}
-        </Row>
-      )}
-      {children}
-    </div>
-  );
-}
-
-function ConfigurationSection({
-  stepName,
-  handleNameChange,
-}: {
-  stepName: string;
-  handleNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-}) {
-  return (
-    <NodeSection label="Configuration">
-      <NodeField id="config_name" color={colors.gray400}>
-        <Row style={{ width: "100%", height: "100%", alignItems: "stretch" }}>
-          <span
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "flex-end",
-              fontSize: "10px",
-              color: colors.gray600,
-              width: "60px",
-              textAlign: "right",
-              paddingRight: "6px",
-              boxSizing: "border-box",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
-            name
-          </span>
-          <Input
-            type="text"
-            placeholder="Step name..."
-            value={stepName}
-            onChange={handleNameChange}
-            style={{
-              flex: 1,
-              boxSizing: "border-box",
-              height: "100%",
-              fontSize: "11px",
-              margin: 0,
-              padding: "0 6px",
-            }}
-          />
-        </Row>
-      </NodeField>
-    </NodeSection>
-  );
-}
-
-function PropsSection({
-  propEntries,
-  handlePropChange,
-}: {
-  propEntries: [string, string][];
-  handlePropChange: (k: string, v: string) => void;
-}) {
-  if (propEntries.length === 0) return null;
-  return (
-    <NodeSection label="Props" color={colors.violet400}>
-      {propEntries.map(([key, value]) => (
-        <NodeField key={key} id={`prop-${key}`} color={colors.violet400}>
-          <Row style={{ width: "100%", height: "100%", alignItems: "stretch" }}>
-            <span
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "flex-end",
-                fontSize: "10px",
-                color: colors.gray600,
-                width: "60px",
-                textAlign: "right",
-                paddingRight: "6px",
-                boxSizing: "border-box",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-              }}
-            >
-              {key}
-            </span>
-            <Input
-              type="text"
-              placeholder={`${key}...`}
-              value={value}
-              onChange={(e) => handlePropChange(key, e.target.value)}
-              style={{
-                flex: 1,
-                boxSizing: "border-box",
-                height: "100%",
-                fontSize: "10px",
-                margin: 0,
-                padding: "0 6px",
-              }}
-            />
-          </Row>
-        </NodeField>
-      ))}
-    </NodeSection>
-  );
-}
-
-function SpecsSection({
-  specs,
-  handleSpecChange,
-}: {
-  specs: Record<string, unknown>;
-  handleSpecChange: (k: string, v: unknown) => void;
-}) {
-  if (Object.entries(specs).length === 0) return null;
-  return (
-    <NodeSection label="Specs" color={colors.cyan400}>
-      {Object.entries(specs).map(([key, value]) => (
-        <NodeField key={key} id={`spec-${key}`} color={colors.cyan400}>
-          <Row
-            style={{
-              width: "100%",
-              height: "100%",
-              alignItems: "stretch",
-              padding: "0px 5px",
-              justifyContent: "space-between",
-            }}
-          >
-            <span
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "flex-end",
-                fontSize: "10px",
-                color: colors.gray600,
-                textAlign: "right",
-                paddingRight: "6px",
-                boxSizing: "border-box",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-              }}
-            >
-              {key}
-            </span>
-            {typeof value === "boolean" ? (
-              <input
-                type="checkbox"
-                checked={value}
-                onChange={() => handleSpecChange(key, !value)}
-                className="nodrag"
-                style={{
-                  boxSizing: "border-box",
-                  height: "100%",
-                  accentColor: colors.cyan600,
-                  cursor: "pointer",
-                  margin: 0,
-                }}
-              />
-            ) : (
-              <Input
-                type="text"
-                value={String(value)}
-                onChange={(e) => handleSpecChange(key, e.target.value)}
-                style={{
-                  width: "60%",
-                  boxSizing: "border-box",
-                  height: "100%",
-                  fontSize: "10px",
-                  margin: 0,
-                  padding: "0 6px",
-                }}
-              />
-            )}
-          </Row>
-        </NodeField>
-      ))}
-    </NodeSection>
-  );
-}
-
-function FieldsSection({ fields }: { fields: string[] }) {
-  if (fields.length === 0) return null;
-  return (
-    <NodeSection label="Data Fields" color={colors.amber400}>
-      {fields.map((field) => (
-        <NodeField
-          key={field}
-          color={colors.amber400}
-          leftHandle="fieldSource"
-          rightHandle="fieldSource"
-          leftId={`l-field-${field}`}
-          rightId={`r-field-${field}`}
-        >
-          <Row
-            style={{
-              width: "100%",
-              height: "100%",
-              alignItems: "stretch",
-              padding: "1px",
-            }}
-          >
-            <div
-              style={{
-                width: "100%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                textAlign: "center",
-                fontSize: "11px",
-                color: colors.gray800,
-                fontWeight: 500,
-                boxSizing: "border-box",
-              }}
-            >
-              {field}
-            </div>
-          </Row>
-        </NodeField>
-      ))}
-    </NodeSection>
   );
 }
 
@@ -329,14 +95,47 @@ function ConditionsSection({
   addOutput,
   updateOutput,
   removeOutput,
+  references,
 }: {
   outputs: OutputConfig[];
   hideOutputs?: boolean;
   addOutput: () => void;
-  updateOutput: (idx: number, k: keyof OutputConfig, v: string) => void;
-  removeOutput: (idx: number) => void;
+  updateOutput: (index: number, key: keyof OutputConfig, value: string) => void;
+  removeOutput: (index: number) => void;
+  references: ConditionReferenceOption[];
 }) {
+  const [activeMenu, setActiveMenu] = React.useState<{
+    index: number;
+    pane: ConditionMenuPane;
+    position: ReferenceMenuPosition;
+    selectedStepId: string | null;
+  } | null>(null);
+
   if (hideOutputs) return null;
+
+  const openReferenceMenu = (
+    index: number,
+    event: React.MouseEvent<HTMLButtonElement>,
+  ) => {
+    const selectedStepId = parseReference(outputs[index]?.field).stepId;
+    setActiveMenu({
+      index,
+      pane: "steps",
+      position: {
+        left: event.clientX + 8,
+        top: event.clientY + 8,
+      },
+      selectedStepId,
+    });
+  };
+
+  const selectReference = (stepId: string, field: string) => {
+    if (!activeMenu) return;
+
+    updateOutput(activeMenu.index, "field", `{{steps.${stepId}.result.${field}}}`);
+    setActiveMenu(null);
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
       <div
@@ -364,9 +163,7 @@ function ConditionsSection({
         <NodeField
           key={out.id}
           color={colors.gray400}
-          leftHandle="fieldTarget"
           rightHandle="flowSource"
-          leftId={`target-${out.id}`}
           rightId={out.id}
         >
           <Row
@@ -374,19 +171,26 @@ function ConditionsSection({
               width: "100%",
               height: "100%",
               alignItems: "stretch",
-              padding: "0px 10px",
+              padding: 0,
               gap: "4px",
             }}
           >
+            <button
+              onClick={(event) => { openReferenceMenu(index, event); }}
+              style={conditionReferenceButtonStyle}
+              type="button"
+            >
+              {formatConditionReference(out.field, references)}
+            </button>
             <Select
               value={out.operator}
-              onChange={(e) => updateOutput(index, "operator", e.target.value)}
+              onChange={(event) => { updateOutput(index, "operator", event.target.value); }}
               style={{
                 boxSizing: "border-box",
                 height: "100%",
                 fontSize: "10px",
                 padding: "0 4px",
-                width: "45px",
+                width: "42px",
                 margin: 0,
               }}
             >
@@ -399,19 +203,19 @@ function ConditionsSection({
               type="text"
               placeholder="Value"
               value={out.value}
-              onChange={(e) => updateOutput(index, "value", e.target.value)}
+              onChange={(event) => { updateOutput(index, "value", event.target.value); }}
               style={{
                 flex: 1,
                 boxSizing: "border-box",
                 height: "100%",
                 fontSize: "10px",
-                minWidth: "50px",
+                minWidth: "46px",
                 margin: 0,
                 padding: "0 6px",
               }}
             />
             <Button
-              onClick={() => removeOutput(index)}
+              onClick={() => { removeOutput(index); }}
               variant="ghost"
               size="sm"
               style={{
@@ -430,6 +234,23 @@ function ConditionsSection({
         </NodeField>
       ))}
 
+      {activeMenu ? (
+        <ConditionReferenceMenu
+          onClose={() => { setActiveMenu(null); }}
+          onSelect={selectReference}
+          position={activeMenu.position}
+          references={references}
+          pane={activeMenu.pane}
+          selectedStepId={activeMenu.selectedStepId}
+          setPane={(pane) => {
+            setActiveMenu(current => current ? { ...current, pane } : null);
+          }}
+          setSelectedStepId={(stepId) => {
+            setActiveMenu(current => current ? { ...current, selectedStepId: stepId } : null);
+          }}
+        />
+      ) : null}
+
       <NodeField
         rightHandle="flowSource"
         rightId="default"
@@ -440,7 +261,7 @@ function ConditionsSection({
             width: "100%",
             height: "100%",
             alignItems: "stretch",
-            padding: "0px 10px",
+            padding: 0,
           }}
         >
           <div
@@ -465,6 +286,310 @@ function ConditionsSection({
   );
 }
 
+function ConditionReferenceMenu({
+  onClose,
+  onSelect,
+  pane,
+  position,
+  references,
+  selectedStepId,
+  setPane,
+  setSelectedStepId,
+}: {
+  onClose: () => void;
+  onSelect: (stepId: string, field: string) => void;
+  pane: ConditionMenuPane;
+  position: ReferenceMenuPosition;
+  references: ConditionReferenceOption[];
+  selectedStepId: string | null;
+  setPane: (pane: ConditionMenuPane) => void;
+  setSelectedStepId: (stepId: string) => void;
+}) {
+  const selectedStep = references.find(reference => reference.id === selectedStepId);
+
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
+    <div onMouseDown={onClose} style={conditionMenuOverlayStyle}>
+      <div
+        onMouseDown={(event) => { event.stopPropagation(); }}
+        style={{
+          ...conditionMenuStyle,
+          left: clampMenuPosition(position).left,
+          top: clampMenuPosition(position).top,
+        }}
+      >
+        <div style={conditionMenuColumnStyle}>
+          <button
+            disabled={references.length === 0}
+            onClick={() => {
+              if (references.length === 0) return;
+
+              setPane("steps");
+              setSelectedStepId(selectedStepId ?? references[0].id);
+            }}
+            style={{
+              ...conditionMenuButtonStyle,
+              ...(pane === "steps" ? conditionMenuSelectedButtonStyle : {}),
+              ...(references.length === 0 ? conditionMenuDisabledButtonStyle : {}),
+            }}
+            type="button"
+          >
+            <span style={conditionMenuButtonTextStyle}>steps</span>
+            {references.length > 0 ? <span>›</span> : null}
+          </button>
+        </div>
+
+        {pane === "steps" ? (
+          <div style={conditionMenuColumnStyle}>
+            {references.length === 0 ? (
+              <div style={conditionMenuEmptyStyle}>No fields available</div>
+            ) : references.map(reference => (
+              <button
+                key={reference.id}
+                disabled={reference.fields.length === 0}
+                onClick={() => { setSelectedStepId(reference.id); }}
+                style={{
+                  ...conditionMenuButtonStyle,
+                  ...(reference.id === selectedStepId ? conditionMenuSelectedButtonStyle : {}),
+                  ...(reference.fields.length === 0 ? conditionMenuDisabledButtonStyle : {}),
+                }}
+                type="button"
+              >
+                <span style={conditionMenuButtonTextStyle}>{reference.name}</span>
+                {reference.fields.length > 0 ? <span>›</span> : null}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
+        {pane === "steps" && selectedStep ? (
+          <div style={conditionMenuColumnStyle}>
+            {selectedStep.fields.map(field => (
+              <button
+                key={field}
+                onClick={() => { onSelect(selectedStep.id, field); }}
+                style={conditionMenuButtonStyle}
+                type="button"
+              >
+                <span style={conditionMenuButtonTextStyle}>{field}</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+function NodeErrorMessage({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        color: colors.red600,
+        fontSize: "10px",
+        fontWeight: 700,
+        padding: "6px 10px 0",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function buildConditionReferences(
+  currentNodeId: string,
+  currentNodeData: StepNodeData,
+  nodes: Node[],
+  edges: Edge[],
+): ConditionReferenceOption[] {
+  const ancestorIds = collectAncestorStepIds(currentNodeId, edges);
+  const nodeMap = new Map(nodes.map(node => [node.id, node]));
+  const orderedIds = [
+    currentNodeId,
+    ...nodes
+      .map(node => node.id)
+      .filter(nodeId => ancestorIds.has(nodeId) && nodeId !== currentNodeId),
+  ];
+
+  return orderedIds
+    .map((nodeId) => {
+      const node = nodeMap.get(nodeId);
+      const nodeData = nodeId === currentNodeId
+        ? currentNodeData
+        : node?.data as unknown as Partial<StepNodeData> | undefined;
+
+      if (!nodeData?.execution) return null;
+
+      return {
+        fields: nodeData.fields ?? [],
+        id: nodeId,
+        name: nodeData.stepName ?? nodeData.label ?? nodeData.execution.type,
+      };
+    })
+    .filter((reference): reference is ConditionReferenceOption => reference !== null);
+}
+
+function collectAncestorStepIds(currentNodeId: string, edges: Edge[]): Set<string> {
+  const ancestors = new Set<string>();
+  const pending = edges
+    .filter(edge => edge.target === currentNodeId)
+    .map(edge => edge.source);
+
+  while (pending.length > 0) {
+    const sourceId = pending.pop();
+    if (!sourceId || sourceId === "start_node" || ancestors.has(sourceId)) continue;
+
+    ancestors.add(sourceId);
+    edges
+      .filter(edge => edge.target === sourceId)
+      .forEach(edge => {
+        if (!ancestors.has(edge.source)) pending.push(edge.source);
+      });
+  }
+
+  return ancestors;
+}
+
+function parseReference(value: string | undefined): {
+  field: string | null;
+  stepId: string | null;
+} {
+  if (!value) return { field: null, stepId: null };
+
+  const match = /^\{\{steps\.([^.{}]+)\.result\.([^{}]+)\}\}$/.exec(value);
+  if (!match) return { field: null, stepId: null };
+
+  return { field: match[2], stepId: match[1] };
+}
+
+function formatConditionReference(
+  value: string | undefined,
+  references: ConditionReferenceOption[],
+): string {
+  const reference = parseReference(value);
+  if (!reference.stepId || !reference.field) return "Choose field";
+
+  const step = references.find(item => item.id === reference.stepId);
+  return `${step?.name ?? "Step"}.${reference.field}`;
+}
+
+function clampMenuPosition(position: ReferenceMenuPosition): ReferenceMenuPosition {
+  if (typeof window === "undefined") return position;
+
+  const margin = 8;
+  const estimatedMenuWidth = 420;
+  const estimatedMenuHeight = 260;
+
+  return {
+    left: Math.min(
+      Math.max(position.left, margin),
+      Math.max(margin, window.innerWidth - estimatedMenuWidth),
+    ),
+    top: Math.min(
+      Math.max(position.top, margin),
+      Math.max(margin, window.innerHeight - estimatedMenuHeight),
+    ),
+  };
+}
+
+const conditionReferenceButtonStyle: React.CSSProperties = {
+  alignItems: "center",
+  background: colors.blue50,
+  border: `1px solid ${colors.blue200}`,
+  borderRadius: "0.25rem",
+  boxSizing: "border-box",
+  color: colors.blue800,
+  cursor: "pointer",
+  display: "inline-flex",
+  flex: "1.2 1 0",
+  fontSize: "10px",
+  fontWeight: 700,
+  height: "100%",
+  minWidth: "74px",
+  overflow: "hidden",
+  padding: "0 6px",
+  textAlign: "left",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+};
+
+const conditionMenuOverlayStyle: React.CSSProperties = {
+  background: "transparent",
+  inset: 0,
+  position: "fixed",
+  zIndex: 80,
+};
+
+const conditionMenuStyle: React.CSSProperties = {
+  background: colors.white,
+  border: `1px solid ${colors.gray300}`,
+  borderRadius: "0.375rem",
+  boxShadow: "0 14px 32px rgba(15, 23, 42, 0.18)",
+  display: "flex",
+  maxHeight: "18rem",
+  overflow: "hidden",
+  position: "absolute",
+  width: "max-content",
+};
+
+const conditionMenuColumnStyle: React.CSSProperties = {
+  borderRight: `1px solid ${colors.gray200}`,
+  display: "flex",
+  flexDirection: "column",
+  gap: "0.25rem",
+  maxWidth: "14rem",
+  minWidth: "7rem",
+  overflowX: "hidden",
+  overflowY: "auto",
+  padding: "0.25rem",
+};
+
+const conditionMenuButtonStyle: React.CSSProperties = {
+  alignItems: "center",
+  background: "transparent",
+  border: "none",
+  borderRadius: "0.25rem",
+  color: colors.gray800,
+  cursor: "pointer",
+  display: "flex",
+  fontSize: "11px",
+  fontWeight: 700,
+  gap: "0.5rem",
+  justifyContent: "space-between",
+  minHeight: "1.5rem",
+  padding: "0.25rem 0.375rem",
+  textAlign: "left",
+  whiteSpace: "nowrap",
+  width: "100%",
+};
+
+const conditionMenuSelectedButtonStyle: React.CSSProperties = {
+  background: colors.blue50,
+  boxShadow: `inset 0 0 0 1px ${colors.blue200}`,
+  color: colors.blue800,
+};
+
+const conditionMenuDisabledButtonStyle: React.CSSProperties = {
+  color: colors.gray400,
+  cursor: "default",
+  opacity: 0.68,
+};
+
+const conditionMenuButtonTextStyle: React.CSSProperties = {
+  minWidth: 0,
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+};
+
+const conditionMenuEmptyStyle: React.CSSProperties = {
+  color: colors.gray500,
+  fontSize: "11px",
+  padding: "0.75rem",
+  textAlign: "center",
+};
+
 // --- Main Node Export --- //
 
 export function StepNode({
@@ -472,23 +597,22 @@ export function StepNode({
   data,
   accentColor = colors.gray500,
   children,
-}: StepNodeProps) {
-  const { updateNodeData } = useReactFlow();
+}: StepNodeProperties) {
+  const { getEdges, getNodes, updateNodeData } = useReactFlow();
 
-  const stepName = data.stepName || "";
-  const outputs = data.outputs || [];
-  const fields = data.fields || [];
-  const props = data.props || {};
-  const specs = cleanSpecs(data.specs || {});
-  const propEntries = Object.entries(props) as [string, string][];
+  const outputs = data.outputs ?? [];
+  const nodeName = data.stepName ?? data.label ?? data.execution.type;
+  const isNameDuplicated = data.isNameDuplicated === true;
+  const isOutputDisconnected = data.isOutputDisconnected === true;
+  const hasConfigurationError = isNameDuplicated || isOutputDisconnected;
+  const references = buildConditionReferences(id, data, getNodes(), getEdges());
+  const hasContentBody = Boolean(children) || data.hideOutputs !== true;
 
-  const handleSpecChange = (key: string, value: unknown) => {
-    const updatedSpecs = { ...specs, [key]: value };
-    updateNodeData(id, { specs: updatedSpecs });
-  };
-
-  const handlePropChange = (key: string, value: string) => {
-    updateNodeData(id, { props: { ...props, [key]: value } });
+  const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    updateNodeData(id, {
+      label: event.target.value,
+      stepName: event.target.value,
+    });
   };
 
   const addOutput = () => {
@@ -503,27 +627,23 @@ export function StepNode({
   const updateOutput = (
     index: number,
     key: keyof OutputConfig,
-    val: string,
+    value: string,
   ) => {
     const updated = [...outputs];
-    updated[index] = { ...updated[index], [key]: val };
+    updated[index] = { ...updated[index], [key]: value };
     updateNodeData(id, { outputs: updated });
   };
 
   const removeOutput = (index: number) => {
-    updateNodeData(id, { outputs: outputs.filter((_, i) => i !== index) });
-  };
-
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    updateNodeData(id, { stepName: e.target.value });
+    updateNodeData(id, { outputs: outputs.filter((_, index_) => index_ !== index) });
   };
 
   return (
     <Card
       style={{
         ...cardStyle,
-        minWidth: "320px",
-        border: `1px solid ${accentColor}`,
+        minWidth: "300px",
+        border: `1px solid ${hasConfigurationError ? colors.red500 : accentColor}`,
       }}
     >
       <Handle
@@ -538,44 +658,51 @@ export function StepNode({
         }}
       />
 
-      <div style={cardHeaderStyle(accentColor)}>
-        <div>{data.execution.type}</div>
+      <div style={cardHeaderStyle(hasConfigurationError ? colors.red500 : accentColor)}>
+        <Input
+          aria-label="Node name"
+          onChange={handleNameChange}
+          style={{
+            background: colors.white,
+            border: `1px solid ${isNameDuplicated ? colors.red500 : colors.gray300}`,
+            color: isNameDuplicated ? colors.red600 : colors.gray800,
+            fontSize: "12px",
+            fontWeight: 700,
+            minWidth: 0,
+            padding: "2px 6px",
+          }}
+          type="text"
+          value={nodeName}
+        />
         <ExecutionBadge mode={data.execution.mode} />
       </div>
+      {isNameDuplicated ? (
+        <NodeErrorMessage>Nombre duplicado</NodeErrorMessage>
+      ) : null}
+      {isOutputDisconnected ? (
+        <NodeErrorMessage>Output sin conectar</NodeErrorMessage>
+      ) : null}
 
-      <div
-        style={{
-          padding: "8px 10px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "15px",
-        }}
-      >
-        <ConfigurationSection
-          stepName={stepName}
-          handleNameChange={handleNameChange}
-        />
-        <PropsSection
-          propEntries={propEntries}
-          handlePropChange={handlePropChange}
-        />
-        <SpecsSection specs={specs} handleSpecChange={handleSpecChange} />
-        <FieldsSection fields={fields} />
-        {children}
-        <ConditionsSection
-          outputs={outputs}
-          hideOutputs={data.hideOutputs}
-          addOutput={addOutput}
-          updateOutput={updateOutput}
-          removeOutput={removeOutput}
-        />
-      </div>
+      {hasContentBody ? (
+        <div
+          style={{
+            padding: "6px 8px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px",
+          }}
+        >
+          {children}
+          <ConditionsSection
+            outputs={outputs}
+            hideOutputs={data.hideOutputs}
+            addOutput={addOutput}
+            updateOutput={updateOutput}
+            removeOutput={removeOutput}
+            references={references}
+          />
+        </div>
+      ) : null}
     </Card>
-  );
-}
-
-function cleanSpecs(specs: Record<string, unknown>): Record<string, unknown> {
-  return Object.fromEntries(
-    Object.entries(specs).filter(([key]) => !REMOVED_SPEC_KEYS.has(key)),
   );
 }

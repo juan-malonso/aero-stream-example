@@ -20,6 +20,12 @@ interface EventTheme {
   messageType: "in" | "out" | null;
 }
 
+interface EventStepSummary {
+  id: string;
+  name: string;
+  type: string;
+}
+
 const EVENT_THEMES: Record<SessionEventType, EventTheme> = {
   [SessionEventType.SESSION_CREATE]: {
     accent: colors.gray800,
@@ -60,6 +66,20 @@ const EVENT_THEMES: Record<SessionEventType, EventTheme> = {
     accent: colors.violet800,
     background: colors.violet100,
     label: "Step Rendered",
+    icon: ">",
+    messageType: "out",
+  },
+  [SessionEventType.STEP_CONDITION]: {
+    accent: colors.gray800,
+    background: colors.gray100,
+    label: "Step Condition",
+    icon: "?",
+    messageType: "out",
+  },
+  [SessionEventType.STEP_START]: {
+    accent: colors.violet800,
+    background: colors.violet100,
+    label: "Step Start",
     icon: ">",
     messageType: "out",
   },
@@ -153,10 +173,81 @@ function DirectionIcon({ type, color }: { type: "in" | "out"; color: string }) {
   );
 }
 
+function readEventStep(payload: Record<string, unknown>): EventStepSummary | null {
+  const step = payload.step;
+  if (typeof step !== "object" || step === null) return null;
+
+  const candidate = step as Record<string, unknown>;
+  if (
+    typeof candidate.id !== "string"
+    || typeof candidate.type !== "string"
+    || typeof candidate.name !== "string"
+  ) {
+    return null;
+  }
+
+  return {
+    id: candidate.id,
+    name: candidate.name,
+    type: candidate.type,
+  };
+}
+
+function previewValue(value: unknown): string {
+  if (typeof value === "string") return `"${value}"`;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (value === null) return "null";
+  if (value === undefined) return "undefined";
+  return JSON.stringify(value);
+}
+
+function previewConditionOperand(value: unknown): string {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return previewValue(value);
+  }
+
+  const record = value as Record<string, unknown>;
+  if (typeof record.var === "string") return `"${record.var}"`;
+
+  return previewValue(value);
+}
+
+function formatCondition(condition: unknown): { left?: string; operator?: string; right?: string; text: string } {
+  if (condition === true) return { text: "Default transition" };
+  if (condition === false) return { text: "Condition did not match" };
+  if (typeof condition !== "object" || condition === null || Array.isArray(condition)) {
+    return { text: previewValue(condition) };
+  }
+
+  const record = condition as Record<string, unknown>;
+  const operator = Object.keys(record)[0];
+  const operands = Array.isArray(record[operator]) ? record[operator] as unknown[] : [];
+  const labels: Record<string, string> = {
+    "==": "equals",
+    "!=": "does not equal",
+    ">": "is greater than",
+    ">=": "is greater than or equal to",
+    "<": "is less than",
+    "<=": "is less than or equal to",
+  };
+
+  if (operator && operands.length >= 2) {
+    return {
+      left: previewConditionOperand(operands[0]),
+      operator: labels[operator] ?? operator,
+      right: previewConditionOperand(operands[1]),
+      text: `${previewConditionOperand(operands[0])} ${labels[operator] ?? operator} ${previewConditionOperand(operands[1])}`,
+    };
+  }
+
+  return { text: JSON.stringify(condition) };
+}
+
 export function EventCard({ event, index }: EventCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const theme =
     EVENT_THEMES[event.type] ?? EVENT_THEMES[SessionEventType.SESSION_CREATE];
+  const step = readEventStep(event.payload);
 
   const dateLabel = new Date(event.occurredAt);
   const timeLabel =
@@ -184,7 +275,7 @@ export function EventCard({ event, index }: EventCardProps) {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          padding: "0.75rem 1rem",
+          padding: "0.5rem 1rem",
           background: theme.background,
           borderBottom: `1px solid ${colors.gray100}`,
         }}
@@ -203,17 +294,42 @@ export function EventCard({ event, index }: EventCardProps) {
           {theme.messageType && (
             <DirectionIcon type={theme.messageType} color={theme.accent} />
           )}
-          <span
+          <div
             style={{
-              fontSize: typography.sizes.sm,
-              fontWeight: typography.weights.bold,
-              color: theme.accent,
-              textTransform: "uppercase",
-              letterSpacing: "0.03em",
+              display: "flex",
+              flexDirection: "column",
+              gap: "0.125rem",
             }}
           >
-            {theme.label}
-          </span>
+            <span
+              style={{
+                fontSize: typography.sizes.sm,
+                fontWeight: typography.weights.bold,
+                color: theme.accent,
+                textTransform: "uppercase",
+                letterSpacing: "0.03em",
+              }}
+            >
+              {theme.label}
+            </span>
+            {step && (
+              <span
+                style={{
+                  color: colors.gray600,
+                  display: "flex",
+                  gap: "0.5rem",
+                  alignItems: "center",
+                  fontSize: typography.sizes.xs,
+                  fontWeight: typography.weights.medium,
+                  letterSpacing: 0,
+                  textTransform: "none",
+                }}
+              >
+                <span>{step.type} - {step.name}</span>
+                <span style={{ color: colors.gray400 }}>{step.id}</span>
+              </span>
+            )}
+          </div>
         </div>
         <span
           style={{
@@ -280,6 +396,7 @@ export function EventCard({ event, index }: EventCardProps) {
 
 function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
   const { type, payload } = event;
+  const step = readEventStep(payload);
   const fieldStyle: CSSProperties = {
     display: "flex",
     gap: "0.5rem",
@@ -432,21 +549,24 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
 
     case SessionEventType.FINISH_RENDER:
     case SessionEventType.STEP_RENDERED: {
+      const props = payload.props as Record<string, unknown> | undefined;
+      const preview = props ? JSON.stringify(props).slice(0, 120) : undefined;
       return (
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-          <div style={fieldStyle}>
-            <span style={labelStyle}>Step</span>
-            <span style={valueStyle}>{String(payload.stepId ?? "—")}</span>
-          </div>
-          <div style={fieldStyle}>
-            <span style={labelStyle}>Type</span>
-            <span style={valueStyle}>{String(payload.stepType ?? "—")}</span>
-          </div>
           {event.type === SessionEventType.FINISH_RENDER && (
             <div style={fieldStyle}>
               <span style={labelStyle}>Final</span>
               <span style={{ ...valueStyle, color: colors.amber600 }}>
                 Last step
+              </span>
+            </div>
+          )}
+          {preview && (
+            <div style={fieldStyle}>
+              <span style={labelStyle}>Props</span>
+              <span style={valueStyle}>
+                {preview}
+                {preview.length >= 120 ? "..." : ""}
               </span>
             </div>
           )}
@@ -461,17 +581,48 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
         : "—";
       return (
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-          {payload.stepId != null && (
-            <div style={fieldStyle}>
-              <span style={labelStyle}>Step</span>
-              <span style={valueStyle}>{String(payload.stepId)}</span>
-            </div>
-          )}
           <div style={fieldStyle}>
             <span style={labelStyle}>Data</span>
             <span style={valueStyle}>
               {preview}
               {preview.length >= 120 ? "..." : ""}
+            </span>
+          </div>
+        </div>
+      );
+    }
+
+    case SessionEventType.STEP_CONDITION: {
+      const condition = formatCondition(payload.condition ?? true);
+      const nextStep = readEventStep({
+        step: payload.nextStep,
+      });
+      return (
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+          <div style={fieldStyle}>
+            <span style={labelStyle}>Rule</span>
+            {condition.operator ? (
+              <span
+                style={{
+                  ...valueStyle,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.375rem",
+                  flexWrap: "wrap",
+                }}
+              >
+                <span>{condition.left}</span>
+                <span style={{ color: colors.gray400 }}>{condition.operator}</span>
+                <span>{condition.right}</span>
+              </span>
+            ) : (
+              <span style={valueStyle}>{condition.text}</span>
+            )}
+          </div>
+          <div style={fieldStyle}>
+            <span style={labelStyle}>Next</span>
+            <span style={valueStyle}>
+              {nextStep ? `${nextStep.type} - ${nextStep.name}` : "—"}
             </span>
           </div>
         </div>
@@ -563,17 +714,34 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
       );
     }
 
-    case SessionEventType.STEP_RESPONSE: {
-      const result = payload.result as Record<string, unknown> | undefined;
-      const preview = result ? JSON.stringify(result).slice(0, 120) : "—";
+    case SessionEventType.STEP_START: {
+      const input = payload.input as Record<string, unknown> | undefined;
+      const preview = input ? JSON.stringify(input).slice(0, 120) : "—";
       return (
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           <div style={fieldStyle}>
-            <span style={labelStyle}>Step</span>
-            <span style={valueStyle}>{String(payload.stepId ?? "—")}</span>
+            <span style={labelStyle}>Input</span>
+            <span style={valueStyle}>
+              {preview}
+              {preview.length >= 120 ? "..." : ""}
+            </span>
+          </div>
+        </div>
+      );
+    }
+
+    case SessionEventType.STEP_RESPONSE: {
+      const result = payload.result as Record<string, unknown> | undefined;
+      const data = result?.data as Record<string, unknown> | undefined;
+      const preview = data ? JSON.stringify(data).slice(0, 120) : "—";
+      return (
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+          <div style={fieldStyle}>
+            <span style={labelStyle}>Status</span>
+            <span style={valueStyle}>{String(result?.status ?? "—")}</span>
           </div>
           <div style={fieldStyle}>
-            <span style={labelStyle}>Result</span>
+            <span style={labelStyle}>Data</span>
             <span style={valueStyle}>
               {preview}
               {preview.length >= 120 ? "..." : ""}

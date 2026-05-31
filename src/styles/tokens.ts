@@ -45,6 +45,18 @@ export const colors = {
   blue800: 'var(--color-blue800)',
   blue900: 'var(--color-blue900)',
 
+  // Sky
+  sky50: 'var(--color-sky50)',
+  sky100: 'var(--color-sky100)',
+  sky200: 'var(--color-sky200)',
+  sky300: 'var(--color-sky300)',
+  sky400: 'var(--color-sky400)',
+  sky500: 'var(--color-sky500)',
+  sky600: 'var(--color-sky600)',
+  sky700: 'var(--color-sky700)',
+  sky800: 'var(--color-sky800)',
+  sky900: 'var(--color-sky900)',
+
   // Cyan
   cyan50: 'var(--color-cyan50)',
   cyan100: 'var(--color-cyan100)',
@@ -180,6 +192,19 @@ export const colors = {
   // Semantic
   stepFlow: 'var(--color-stepFlow)',
   fieldData: 'var(--color-fieldData)',
+  editorBg: 'var(--color-editorBg)',
+  editorGutterBg: 'var(--color-editorGutterBg)',
+  editorGutterBorder: 'var(--color-editorGutterBorder)',
+  editorText: 'var(--color-editorText)',
+  editorMuted: 'var(--color-editorMuted)',
+  editorCaret: 'var(--color-editorCaret)',
+  editorJsonKey: 'var(--color-editorJsonKey)',
+  editorKeyword: 'var(--color-editorKeyword)',
+  editorLiteral: 'var(--color-editorLiteral)',
+  editorNumber: 'var(--color-editorNumber)',
+  editorPunctuation: 'var(--color-editorPunctuation)',
+  editorString: 'var(--color-editorString)',
+  editorType: 'var(--color-editorType)',
 } as const;
 
 export const spacing = {

@@ -1,15 +1,14 @@
 import type { ReactNode } from 'react';
 
 import type { StepNodeData } from './builder/types.ts';
-
-import { CodeNode, codeBuilderStep } from './steps/code/builder';
-import { FinishNode, finishBuilderStep } from './steps/finish/builder';
-import { KYCNode, kycBuilderStep } from './steps/kyc/builder';
-import { VideoNode, videoBuilderStep } from './steps/video/builder';
-import { WelcomeNode, welcomeBuilderStep } from './steps/welcome/builder';
+import { backendBuilderStep, BackendNode } from './steps/code/builder';
+import { finishBuilderStep, FinishNode } from './steps/finish/builder';
+import { kycBuilderStep, KYCNode } from './steps/kyc/builder';
+import { videoBuilderStep, VideoNode } from './steps/video/builder';
+import { welcomeBuilderStep, WelcomeNode } from './steps/welcome/builder';
 import type { BuilderStepDefinition, ComponentMeta } from './types.ts';
 
-export type BuilderNodeComponent = (props: { id: string; data: StepNodeData }) => ReactNode;
+export type BuilderNodeComponent = (properties: { id: string; data: StepNodeData }) => ReactNode;
 
 export interface BuilderNodeDefinition {
   nodeType: string;
@@ -18,7 +17,7 @@ export interface BuilderNodeDefinition {
 
 export const BUILDER_STEP_DEFINITIONS = [
   welcomeBuilderStep,
-  codeBuilderStep,
+  backendBuilderStep,
   kycBuilderStep,
   videoBuilderStep,
   finishBuilderStep,
@@ -34,7 +33,7 @@ export const BUILDER_STEPS_BY_NODE_TYPE: Record<string, BuilderStepDefinition> =
 
 export const BUILDER_NODE_DEFINITIONS = [
   { nodeType: welcomeBuilderStep.nodeType, component: WelcomeNode },
-  { nodeType: codeBuilderStep.nodeType, component: CodeNode },
+  { nodeType: backendBuilderStep.nodeType, component: BackendNode },
   { nodeType: kycBuilderStep.nodeType, component: KYCNode },
   { nodeType: videoBuilderStep.nodeType, component: VideoNode },
   { nodeType: finishBuilderStep.nodeType, component: FinishNode },

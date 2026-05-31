@@ -1,514 +1,228 @@
-import React, { useEffect, useState } from "react";
-import { useWorkflowMetadata } from "@/contexts/shared/workflow/useWorkflow";
-import { colors, radii, shadows, typography } from "@/styles/tokens";
-import { sectionHeaderStyle } from "@/styles/theme";
-import { Button, Input, Row, Column } from "@/components/ui";
+'use client';
 
-type EditorTarget = string | "new" | null;
+import React, { useState } from 'react';
 
-function WorkflowEditor({
-  activeWorkflowName,
-  setActiveWorkflowName,
-  allowedOrigins,
-  secret,
-  setAllowedOrigins,
-  setSecret,
-  isSaving,
-  onSave,
-  isNew,
-}: {
-  activeWorkflowName: string;
-  setActiveWorkflowName: (name: string) => void;
-  allowedOrigins: string[];
-  secret: string;
-  setAllowedOrigins: (origins: string[]) => void;
-  setSecret: (secret: string) => void;
-  isSaving: boolean;
-  onSave: () => Promise<void>;
-  isNew: boolean;
-}) {
-  const origins = allowedOrigins.length > 0 ? allowedOrigins : [""];
+import { Button, Column, Row } from '@/components/ui';
+import { useWorkflowMetadata } from '@/contexts/shared/workflow/useWorkflow';
+import { colors, radii, typography } from '@/styles/tokens';
 
-  return (
-    <Column
-      gap="0.75rem"
-      align="stretch"
-      style={{
-        paddingTop: "0.75rem",
-        borderTop: `1px solid ${colors.gray200}`,
-      }}
-    >
-      <Column gap="0.375rem" align="stretch">
-        <div
-          style={{
-            fontSize: typography.sizes.md,
-            fontWeight: typography.weights.bold,
-            color: colors.gray400,
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
-          }}
-        >
-          Name
-        </div>
-        <Input
-          type="text"
-          value={activeWorkflowName}
-          onChange={(event) => setActiveWorkflowName(event.target.value)}
-          placeholder="Workflow name"
-          style={{ fontSize: typography.sizes.md, fontWeight: 600 }}
-        />
-      </Column>
-
-      <Column gap="0.5rem" align="stretch">
-        <Row justify="space-between" align="center">
-          <div
-            style={{
-              fontSize: typography.sizes.md,
-              fontWeight: typography.weights.bold,
-              color: colors.gray400,
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
-            }}
-          >
-            Allowed Origins
-          </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="md"
-            onClick={() => setAllowedOrigins([...allowedOrigins, ""])}
-            style={{ padding: "0.25rem 0.5rem" }}
-          >
-            + Add origin
-          </Button>
-        </Row>
-
-        <Column gap="0.5rem" align="stretch">
-          {origins.map((origin, index) => (
-            <Row key={index.toString()} gap="0.5rem" align="center">
-              <Input
-                type="text"
-                value={origin}
-                onChange={(event) => {
-                  const nextOrigins = [...origins];
-                  nextOrigins[index] = event.target.value;
-                  setAllowedOrigins(nextOrigins);
-                }}
-                placeholder="http://localhost:3000"
-                style={{ fontSize: typography.sizes.md, fontWeight: 600 }}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() =>
-                  setAllowedOrigins(
-                    origins.filter((_, itemIndex) => itemIndex !== index),
-                  )
-                }
-                disabled={origins.length === 1 && !origin}
-                style={{
-                  color: colors.red600,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-                title="Remove origin"
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </Button>
-            </Row>
-          ))}
-        </Column>
-      </Column>
-
-      <Column gap="0.375rem" align="stretch">
-        <div
-          style={{
-            fontSize: typography.sizes.md,
-            fontWeight: typography.weights.bold,
-            color: colors.gray400,
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
-          }}
-        >
-          Secret Token
-        </div>
-        <Input
-          type="text"
-          value={secret}
-          onChange={(event) => setSecret(event.target.value)}
-          placeholder="my-super-secret-token"
-          style={{ fontSize: typography.sizes.md, fontWeight: 600 }}
-        />
-      </Column>
-
-      <Button
-        type="button"
-        onClick={() => {
-          void onSave();
-        }}
-        disabled={isSaving || !activeWorkflowName.trim()}
-        variant="primary"
-        size="lg"
-        style={{ width: "100%" }}
-      >
-        {isSaving ? "Saving..." : isNew ? "Create Workflow" : "Save Changes"}
-      </Button>
-    </Column>
-  );
+interface WorkflowListProperties {
+  onCreate: () => void;
+  onEdit: (workflowId: string) => void;
+  onInspect: (workflowId: string) => void;
 }
 
-export function WorkflowList() {
+export function WorkflowList({
+  onCreate,
+  onEdit,
+  onInspect,
+}: WorkflowListProperties) {
   const {
-    workflows,
     activeWorkflowId,
-    activeWorkflowName,
-    security,
-    setSecurity,
-    setActiveWorkflowName,
-    selectWorkflow,
-    saveWorkflow,
     deleteWorkflow,
-    createNewWorkflow,
-    isSaving,
+    isLoading,
+    workflows,
   } = useWorkflowMetadata();
-  const [editorTarget, setEditorTarget] = useState<EditorTarget>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (editorTarget === "new" && activeWorkflowId) {
-      setEditorTarget(activeWorkflowId);
-    }
-  }, [editorTarget, activeWorkflowId]);
-
-  useEffect(() => {
-    if (
-      !activeWorkflowId ||
-      editorTarget === "new" ||
-      editorTarget === activeWorkflowId
-    ) {
-      return;
-    }
-
-    setEditorTarget(activeWorkflowId);
-  }, [activeWorkflowId, editorTarget]);
-
-  useEffect(() => {
-    if (!editorTarget || editorTarget === "new") {
-      return;
-    }
-
-    if (!workflows.some((workflow) => workflow.id === editorTarget)) {
-      setEditorTarget(null);
-    }
-  }, [editorTarget, workflows]);
-
-  const setAllowedOrigins = (origins: string[]) => {
-    setSecurity({
-      ...security,
-      allowedOrigins: origins,
-    });
-  };
-
-  const setSecret = (secret: string) => {
-    setSecurity({
-      ...security,
-      secret,
-    });
-  };
-
-  const handleCreateClick = () => {
-    setConfirmDeleteId(null);
-
-    if (editorTarget === "new") {
-      setEditorTarget(null);
-      return;
-    }
-
-    createNewWorkflow();
-    setEditorTarget("new");
-  };
-
-  const handleSelectWorkflow = async (workflowId: string) => {
-    setConfirmDeleteId(null);
-    setEditorTarget(workflowId);
-    await selectWorkflow(workflowId);
-  };
-
-  const renderEditor = (isNew: boolean) => (
-    <WorkflowEditor
-      activeWorkflowName={activeWorkflowName}
-      setActiveWorkflowName={setActiveWorkflowName}
-      allowedOrigins={security.allowedOrigins}
-      secret={security.secret}
-      setAllowedOrigins={setAllowedOrigins}
-      setSecret={setSecret}
-      isSaving={isSaving}
-      onSave={saveWorkflow}
-      isNew={isNew}
-    />
-  );
 
   return (
     <Column
-      style={{
-        borderTop: `1px solid ${colors.gray200}`,
-        flex: 1,
-        background: colors.white,
-      }}
-      gap="0"
       align="stretch"
+      gap="0"
+      style={{
+        background: colors.white,
+        border: `1px solid ${colors.gray200}`,
+        borderRadius: radii.lg,
+        boxSizing: 'border-box',
+        flex: 1,
+        height: '100%',
+        minHeight: 0,
+        minWidth: 0,
+        overflow: 'hidden',
+        width: '100%',
+      }}
     >
       <Row
-        justify="space-between"
         align="center"
+        justify="space-between"
         style={{
-          padding: "1rem 1.25rem",
-          borderBottom: `1px solid ${colors.gray200}`,
           background: colors.gray50,
+          borderBottom: `1px solid ${colors.gray200}`,
+          padding: '0.875rem 1rem',
         }}
       >
-        <div style={sectionHeaderStyle}>Saved Workflows</div>
-        <Button
-          onClick={handleCreateClick}
-          variant={editorTarget === "new" ? "danger" : "primary"}
-          size="sm"
-          style={{ borderRadius: radii.full, fontSize: typography.sizes.sm }}
+        <div
+          style={{
+            color: colors.gray800,
+            fontSize: typography.sizes.base,
+            fontWeight: typography.weights.bold,
+          }}
         >
-          {editorTarget === "new" ? "Cancel" : "+ New"}
+          Flujos
+        </div>
+        <Button
+          onClick={onCreate}
+          size="md"
+          style={{ fontSize: tableFontSize }}
+          type="button"
+        >
+          Crear flujo
         </Button>
       </Row>
 
-      <Column gap="0.75rem" align="stretch" style={{ padding: "0.75rem" }}>
-        {editorTarget === "new" && (
-          <Column
-            gap="0.75rem"
-            align="stretch"
-            style={{
-              padding: "1rem",
-              background: colors.white,
-              border: `1px solid ${colors.blue200}`,
-              borderRadius: radii.xl,
-              boxShadow: shadows.sm,
-            }}
-          >
-            <Row justify="space-between" align="center">
-              <div
-                style={{
-                  fontSize: typography.sizes.base,
-                  fontWeight: 700,
-                  color: colors.gray900,
-                }}
-              >
-                New workflow
-              </div>
-              <div
-                style={{
-                  fontSize: typography.sizes.xs,
-                  color: colors.blue600,
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
-                }}
-              >
-                Draft
-              </div>
-            </Row>
-            {renderEditor(true)}
-          </Column>
-        )}
+      <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+        <table
+          style={{
+            borderCollapse: 'collapse',
+            fontSize: typography.sizes.md,
+            tableLayout: 'fixed',
+            width: '100%',
+          }}
+        >
+          <thead>
+            <tr style={{ background: colors.white }}>
+              <th style={{ ...headerCellStyle, width: '40%' }}>Nombre</th>
+              <th style={{ ...headerCellStyle, width: '25%' }}>ID</th>
+              <th style={{ ...headerCellStyle, textAlign: 'right' }}>
+                Acciones
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {workflows.map((workflow, index) => {
+              const isSelected = activeWorkflowId === workflow.id;
+              const isConfirming = confirmDeleteId === workflow.id;
+              const isLast = index === workflows.length - 1;
 
-        {workflows.map((workflow) => {
-          const isConfirming = confirmDeleteId === workflow.id;
-          const isEditing = editorTarget === workflow.id;
-          const isActiveWorkflow = activeWorkflowId === workflow.id;
-
-          return (
-            <Column
-              key={workflow.id}
-              gap="0.75rem"
-              align="stretch"
-              style={{
-                padding: "0.75rem 1rem",
-                background: colors.white,
-                border: `1px solid ${isEditing ? colors.blue200 : colors.gray200}`,
-                borderRadius: radii.xl,
-                boxShadow: shadows.sm,
-                position: "relative",
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "4px",
-                  height: "100%",
-                  background: isConfirming
-                    ? colors.red500
-                    : isEditing
-                      ? colors.blue500
-                      : colors.primary500,
-                  transition: "background-color 0.2s",
-                }}
-              />
-
-              <Row justify="space-between" align="center">
-                <div
+              return (
+                <tr
+                  key={workflow.id}
+                  onClick={() => { onInspect(workflow.id); }}
                   style={{
-                    fontSize: typography.sizes.lg,
-                    fontWeight: 600,
-                    color: colors.gray900,
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    flex: 1,
-                    letterSpacing: "-0.01em",
-                    paddingLeft: "4px",
-                    opacity: isConfirming ? 0.6 : 1,
-                    transition: "opacity 0.2s",
+                    background: isSelected ? colors.blue50 : colors.white,
+                    borderBottom: isLast ? `1px solid ${colors.gray200}` : undefined,
+                    borderTop: `1px solid ${colors.gray200}`,
+                    cursor: 'pointer',
                   }}
                 >
-                  {workflow.name}
-                </div>
-
-                <Row gap="0.375rem" style={{ paddingLeft: "0.5rem" }}>
-                  <Button
-                    onClick={() => {
-                      void handleSelectWorkflow(workflow.id!);
-                    }}
-                    variant="ghost"
-                    isActive={isEditing}
-                    disabled={isEditing}
-                    style={{
-                      padding: "0.375rem",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                    title={
-                      isEditing ? "Workflow already being edited" : "Edit Flow"
-                    }
-                  >
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M12 20h9"></path>
-                      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-                    </svg>
-                  </Button>
-
-                  {isConfirming ? (
-                    <Button
-                      onClick={() => setConfirmDeleteId(null)}
-                      variant="ghost"
+                  <td style={bodyCellStyle}>
+                    <div
                       style={{
-                        padding: "0.375rem",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
+                        color: colors.gray900,
+                        fontWeight: typography.weights.semibold,
+                        maxWidth: '100%',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
                       }}
-                      title="Cancel Delete"
+                      title={workflow.name}
                     >
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
+                      {workflow.name}
+                    </div>
+                  </td>
+                  <td style={bodyCellStyle}>
+                    <code
+                      style={{
+                        color: colors.gray500,
+                        display: 'block',
+                        fontSize: tableFontSize,
+                        maxWidth: '100%',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                      title={workflow.id}
+                    >
+                      {workflow.id}
+                    </code>
+                  </td>
+                  <td style={{ ...bodyCellStyle, textAlign: 'right' }}>
+                    <Row gap="0.375rem" justify="flex-end" wrap>
+                      <Button
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onEdit(workflow.id);
+                        }}
+                        size="md"
+                        style={{ fontSize: tableFontSize }}
+                        type="button"
+                        variant="secondary"
                       >
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                      </svg>
-                    </Button>
-                  ) : null}
+                        Editar
+                      </Button>
+                      {isConfirming ? (
+                        <Button
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setConfirmDeleteId(null);
+                          }}
+                          size="md"
+                          style={{ fontSize: tableFontSize }}
+                          type="button"
+                          variant="ghost"
+                        >
+                          Cancelar
+                        </Button>
+                      ) : null}
+                      <Button
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          if (!isConfirming) {
+                            setConfirmDeleteId(workflow.id);
+                            return;
+                          }
 
-                  <Button
-                    onClick={() => {
-                      if (isConfirming) {
-                        void deleteWorkflow(workflow.id!);
-                        if (editorTarget === workflow.id) {
-                          setEditorTarget(null);
-                        }
-                        setConfirmDeleteId(null);
-                        return;
-                      }
+                          setConfirmDeleteId(null);
+                          void deleteWorkflow(workflow.id);
+                        }}
+                        size="md"
+                        type="button"
+                        variant={isConfirming ? 'danger' : 'ghost'}
+                        style={{
+                          color: isConfirming ? colors.white : colors.red600,
+                          fontSize: tableFontSize,
+                        }}
+                      >
+                        {isConfirming ? 'Confirmar' : 'Borrar'}
+                      </Button>
+                    </Row>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
 
-                      setConfirmDeleteId(workflow.id!);
-                    }}
-                    style={{
-                      padding: "0.375rem",
-                      background: isConfirming ? colors.red500 : colors.red50,
-                      color: isConfirming ? colors.white : colors.red600,
-                      border: "none",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                    title={isConfirming ? "Confirm Delete" : "Delete Workflow"}
-                  >
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <polyline points="3 6 5 6 21 6"></polyline>
-                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                      <line x1="10" y1="11" x2="10" y2="17"></line>
-                      <line x1="14" y1="11" x2="14" y2="17"></line>
-                    </svg>
-                  </Button>
-                </Row>
-              </Row>
-
-              {isEditing && isActiveWorkflow ? renderEditor(false) : null}
-            </Column>
-          );
-        })}
-
-        {workflows.length === 0 && editorTarget !== "new" && (
+        {workflows.length === 0 ? (
           <div
             style={{
+              color: colors.gray500,
               fontSize: typography.sizes.base,
-              color: colors.gray400,
-              textAlign: "center",
-              marginTop: "1rem",
-              fontStyle: "italic",
+              padding: '2rem 1rem',
+              textAlign: 'center',
             }}
           >
-            No saved workflows yet.
+            {isLoading ? 'Cargando flujos...' : 'No hay flujos disponibles.'}
           </div>
-        )}
-      </Column>
+        ) : null}
+      </div>
     </Column>
   );
 }
+
+const tableFontSize = typography.sizes.base;
+
+const headerCellStyle: React.CSSProperties = {
+  color: colors.gray500,
+  fontSize: tableFontSize,
+  fontWeight: typography.weights.bold,
+  padding: '0.75rem 1rem',
+  textAlign: 'left',
+  textTransform: 'uppercase',
+};
+
+const bodyCellStyle: React.CSSProperties = {
+  fontSize: tableFontSize,
+  padding: '0.75rem 1rem',
+  verticalAlign: 'middle',
+};

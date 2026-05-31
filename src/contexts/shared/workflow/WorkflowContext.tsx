@@ -5,9 +5,13 @@ import React, { createContext, type ReactNode, useCallback, useContext, useEffec
 
 import { type WorkflowConfig, type WorkflowMetadata } from '@/lib/builder/workflow/workflow';
 import { workflowService } from '@/lib/builder/workflow/workflow.service';
-import { parseReactFlowToTower, parseTowerToReactFlow } from '@/lib/builder/workflow/workflowAdapter';
+import {
+  parseReactFlowToTower,
+  parseTowerToReactFlow,
+  resolveWorkflowNodeOverlaps,
+} from '@/lib/builder/workflow/workflowAdapter';
 
-interface WorkflowMetadataContextProps {
+interface WorkflowMetadataContextProperties {
   workflows: WorkflowMetadata[];
   activeWorkflowId: string | null;
   activeWorkflowName: string;
@@ -23,7 +27,7 @@ interface WorkflowMetadataContextProps {
   createNewWorkflow: () => void;
 }
 
-interface WorkflowGraphContextProps {
+interface WorkflowGraphContextProperties {
   nodes: Node[];
   edges: Edge[];
   onNodesChange: OnNodesChange;
@@ -32,8 +36,8 @@ interface WorkflowGraphContextProps {
   setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
 }
 
-export const WorkflowMetadataContext = createContext<WorkflowMetadataContextProps | undefined>(undefined);
-export const WorkflowGraphContext = createContext<WorkflowGraphContextProps | undefined>(undefined);
+export const WorkflowMetadataContext = createContext<WorkflowMetadataContextProperties | undefined>(undefined);
+export const WorkflowGraphContext = createContext<WorkflowGraphContextProperties | undefined>(undefined);
 
 export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
   const [workflows, setWorkflows] = useState<WorkflowMetadata[]>([]);
@@ -41,15 +45,24 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
   const [activeWorkflowName, setActiveWorkflowName] = useState('New Workflow');
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
-  const [security, setSecurity] = useState<WorkflowConfig>({
+  const [security, setSecurity] = useState({
     allowedOrigins: ['http://localhost:3000'],
     secret: 'my-super-secret-token',
   });
+  const [isDraftWorkflow, setIsDraftWorkflow] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   const onNodesChange: OnNodesChange = useCallback(
-    (changes) => { setNodes((nds) => applyNodeChanges(changes, nds)); },
+    (changes) => {
+      setNodes((nds) => {
+        const fixedIds = new Set(changes
+          .filter(change => change.type === 'position')
+          .map(change => change.id));
+
+        return resolveWorkflowNodeOverlaps(applyNodeChanges(changes, nds), { fixedIds });
+      });
+    },
     []
   );
 
@@ -77,8 +90,9 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
       const { nodes: newNodes, edges: newEdges } = parseTowerToReactFlow(towerWorkflow);
       setNodes(newNodes);
       setEdges(newEdges);
-      setActiveWorkflowId(towerWorkflow.id || id);
+      setActiveWorkflowId(towerWorkflow.id ?? id);
       setActiveWorkflowName(towerWorkflow.name);
+      setIsDraftWorkflow(false);
       setSecurity({
         allowedOrigins: towerWorkflow.config?.allowedOrigins ?? ['http://localhost:3000'],
         secret: towerWorkflow.config?.secret ?? 'my-super-secret-token',
@@ -98,6 +112,7 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
 
       const saved = await workflowService.upsertWorkflow(payload);
       setActiveWorkflowId(saved.id ?? null);
+      setIsDraftWorkflow(false);
       await loadWorkflows();
     } catch (error) {
       console.error('Error saving workflow:', error);
@@ -109,6 +124,7 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
   const createNewWorkflow = useCallback(() => {
     setActiveWorkflowId(null);
     setActiveWorkflowName('New Workflow');
+    setIsDraftWorkflow(true);
     setSecurity({ allowedOrigins: ['http://localhost:3000'], secret: 'my-super-secret-token' });
     setNodes([]);
     setEdges([]);
@@ -128,14 +144,14 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
   }, [activeWorkflowId, loadWorkflows, createNewWorkflow]);
 
   useEffect(() => {
-    loadWorkflows();
+    void loadWorkflows();
   }, [loadWorkflows]);
 
   useEffect(() => {
-    if (!activeWorkflowId && workflows.length > 0) {
+    if (!activeWorkflowId && !isDraftWorkflow && workflows.length > 0) {
       void selectWorkflow(workflows[0].id);
     }
-  }, [activeWorkflowId, selectWorkflow, workflows]);
+  }, [activeWorkflowId, isDraftWorkflow, selectWorkflow, workflows]);
 
   return (
     <WorkflowGraphContext.Provider value={{

@@ -1,5 +1,5 @@
 export type SessionStatus = 'ACTIVE' | 'FINISHED';
-export type SessionResultType = 'COMPLETED' | 'TERMINATED' | 'ERROR';
+export type SessionResultType = 'COMPLETED' | 'ERROR' | 'TERMINATED';
 
 export interface SessionResult {
   type: SessionResultType;
@@ -12,6 +12,8 @@ export const SessionEventType = {
   SESSION_REQUESTED: 'SESSION_REQUESTED',
   FINISH_RENDER: 'FINISH_RENDER',
   STEP_RENDERED: 'STEP_RENDERED',
+  STEP_CONDITION: 'STEP_CONDITION',
+  STEP_START: 'STEP_START',
   STEP_RESPONSE: 'STEP_RESPONSE',
   STEP_SUBMITTED: 'STEP_SUBMITTED',
   ALERT_RENDERED: 'ALERT_RENDERED',

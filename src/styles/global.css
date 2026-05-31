@@ -47,6 +47,17 @@
   --color-blue800: #1e40af;
   --color-blue900: #1e3a8a;
 
+  --color-sky50: #f0f9ff;
+  --color-sky100: #e0f2fe;
+  --color-sky200: #bae6fd;
+  --color-sky300: #7dd3fc;
+  --color-sky400: #38bdf8;
+  --color-sky500: #0ea5e9;
+  --color-sky600: #0284c7;
+  --color-sky700: #0369a1;
+  --color-sky800: #075985;
+  --color-sky900: #0c4a6e;
+
   --color-cyan50: #ecfeff;
   --color-cyan100: #cffafe;
   --color-cyan200: #a5f3fc;
@@ -185,6 +196,19 @@
   ========================================= */
   --color-stepFlow: var(--color-pink500);
   --color-fieldData: var(--color-amber500);
+  --color-editorBg: #0f172a;
+  --color-editorGutterBg: #020617;
+  --color-editorGutterBorder: #1e293b;
+  --color-editorText: #e2e8f0;
+  --color-editorMuted: #64748b;
+  --color-editorCaret: #f8fafc;
+  --color-editorJsonKey: #67e8f9;
+  --color-editorKeyword: #c084fc;
+  --color-editorLiteral: #fbbf24;
+  --color-editorNumber: #86efac;
+  --color-editorPunctuation: #94a3b8;
+  --color-editorString: #6ee7b7;
+  --color-editorType: #5eead4;
 }
 
 body.dark {
@@ -225,6 +249,17 @@ body.dark {
   --color-blue700: #bfdbfe;
   --color-blue800: #dbeafe;
   --color-blue900: #eff6ff;
+
+  --color-sky50: #0c4a6e;
+  --color-sky100: #075985;
+  --color-sky200: #0369a1;
+  --color-sky300: #0284c7;
+  --color-sky400: #0ea5e9;
+  --color-sky500: #38bdf8;
+  --color-sky600: #7dd3fc;
+  --color-sky700: #bae6fd;
+  --color-sky800: #e0f2fe;
+  --color-sky900: #f0f9ff;
 
   --color-cyan50: #164e63;
   --color-cyan100: #155e75;
@@ -368,4 +403,31 @@ button,
 select,
 textarea {
   font-family: inherit;
+}
+
+.react-flow__node.selected {
+  z-index: 20 !important;
+}
+
+.react-flow__node.selected > * {
+  outline: 3px solid var(--color-pink500);
+  outline-offset: 6px;
+  box-shadow:
+    0 0 0 10px color-mix(in srgb, var(--color-pink500) 18%, transparent),
+    0 18px 42px rgba(15, 23, 42, 0.2);
+}
+
+body.dark .react-flow__controls-button {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  color: #111827;
+}
+
+body.dark .react-flow__controls-button:hover {
+  background: #f3f4f6;
+}
+
+body.dark .react-flow__controls-button svg {
+  color: #111827;
+  fill: currentColor;
 }

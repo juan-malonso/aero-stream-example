@@ -34,11 +34,17 @@ test('normalizes legacy session-created event names', () => {
 test('accepts frontend render events', () => {
   const stepResult = parseSessionEvent(event({
     type: 'STEP_RENDERED',
-    payload: { stepId: 'front-data', stepType: 'form', props: {} },
+    payload: {
+      step: { id: 'front-data', name: 'Front Data', type: 'form' },
+      props: {},
+    },
   }));
   const finishResult = parseSessionEvent(event({
     type: 'FINISH_RENDER',
-    payload: { stepId: 'finish-data', stepType: 'FinishComponent', props: {} },
+    payload: {
+      step: { id: 'finish-data', name: 'Finish Node', type: 'FinishComponent' },
+      props: {},
+    },
   }));
 
   assert.equal(stepResult.ok, true);
@@ -48,16 +54,35 @@ test('accepts frontend render events', () => {
 });
 
 test('accepts normalized step response events', () => {
+  const conditionResult = parseSessionEvent(event({
+    type: 'STEP_CONDITION',
+    payload: {
+      condition: { '==': [{ var: 'steps.backend.result.status' }, 'PHONE_GRATER'] },
+      nextStep: { id: 'finish-ok', name: 'OK', type: 'FinishComponent' },
+      step: { id: 'backend', name: 'Backend Node', type: 'BackendComponent' },
+    },
+  }));
+  const startResult = parseSessionEvent(event({
+    type: 'STEP_START',
+    payload: {
+      input: { firstName: 'Ada' },
+      mode: 'SERVER',
+      step: { id: 'request-data', name: 'Request Data', type: 'BackendComponent' },
+    },
+  }));
   const responseResult = parseSessionEvent(event({
     type: 'STEP_RESPONSE',
     payload: {
       mode: 'SERVER',
-      result: { firstName: 'Ada' },
-      stepId: 'request-data',
-      stepType: 'code',
+      result: { status: 'success', data: { firstName: 'Ada' } },
+      step: { id: 'request-data', name: 'Request Data', type: 'BackendComponent' },
     },
   }));
 
+  assert.equal(conditionResult.ok, true);
+  assert.equal(conditionResult.ok && conditionResult.event.type, SessionEventType.STEP_CONDITION);
+  assert.equal(startResult.ok, true);
+  assert.equal(startResult.ok && startResult.event.type, SessionEventType.STEP_START);
   assert.equal(responseResult.ok, true);
   assert.equal(responseResult.ok && responseResult.event.type, SessionEventType.STEP_RESPONSE);
 });

@@ -11,7 +11,7 @@ export const welcomeBuilderStep: BuilderStepDefinition = {
   executionType: 'WelcomeComponent',
   fields: ['status'],
   propKeys: ['title', 'description'],
-  accentColor: colors.blue500,
+  accentColor: colors.sky500,
 };
 
 export function WelcomeNode({ id, data }: { id: string; data: StepNodeData }) {

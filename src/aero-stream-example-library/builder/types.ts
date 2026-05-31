@@ -16,12 +16,14 @@ export interface StepNodeData {
   fields?: string[];
   outputs?: OutputConfig[];
   hideOutputs?: boolean;
+  isNameDuplicated?: boolean;
+  isOutputDisconnected?: boolean;
   props?: Record<string, string>;
   specs?: Record<string, unknown>;
   execution: { mode: string; type: string };
 }
 
-export interface StepNodeProps {
+export interface StepNodeProperties {
   id: string;
   data: StepNodeData;
   accentColor?: string;

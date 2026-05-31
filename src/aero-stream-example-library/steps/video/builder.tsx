@@ -11,7 +11,7 @@ export const videoBuilderStep: BuilderStepDefinition = {
   executionType: 'VideoComponent',
   fields: ['status'],
   propKeys: ['title', 'subtitle'],
-  accentColor: colors.cyan500,
+  accentColor: colors.yellow500,
 };
 
 export function VideoNode({ id, data }: { id: string; data: StepNodeData }) {

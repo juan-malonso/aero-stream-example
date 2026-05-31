@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-const libraryDir = dirname(fileURLToPath(import.meta.url));
+const libraryDirectory = dirname(fileURLToPath(import.meta.url));
 
 const expectedSteps = [
   {
@@ -48,37 +48,37 @@ const expectedSteps = [
 const expectedBackendSteps = [
   {
     dir: 'code',
-    builderExport: 'codeBuilderStep',
-    nodeExport: 'CodeNode',
-    executionType: 'code',
-    nodeType: 'codeStep',
+    builderExport: 'backendBuilderStep',
+    nodeExport: 'BackendNode',
+    executionType: 'BackendComponent',
+    nodeType: 'backendStep',
   },
 ];
 
 function readLibraryFile(relativePath: string): string {
-  return readFileSync(join(libraryDir, relativePath), 'utf8');
+  return readFileSync(join(libraryDirectory, relativePath), 'utf8');
 }
 
 test('keeps each step grouped into Builder and Live files', () => {
   for (const step of expectedSteps) {
-    const stepDir = join(libraryDir, 'steps', step.dir);
-    assert.ok(existsSync(join(stepDir, 'builder.tsx')), `${step.dir} builder.tsx exists`);
-    assert.ok(existsSync(join(stepDir, 'live.tsx')), `${step.dir} live.tsx exists`);
-    assert.ok(existsSync(join(stepDir, 'index.ts')), `${step.dir} index.ts exists`);
+    const stepDirectory = join(libraryDirectory, 'steps', step.dir);
+    assert.ok(existsSync(join(stepDirectory, 'builder.tsx')), `${step.dir} builder.tsx exists`);
+    assert.ok(existsSync(join(stepDirectory, 'live.tsx')), `${step.dir} live.tsx exists`);
+    assert.ok(existsSync(join(stepDirectory, 'index.ts')), `${step.dir} index.ts exists`);
 
-    assert.equal(existsSync(join(stepDir, 'node.tsx')), false, `${step.dir} has no separate node file`);
+    assert.equal(existsSync(join(stepDirectory, 'node.tsx')), false, `${step.dir} has no separate node file`);
     assert.equal(
-      existsSync(join(stepDir, `${step.componentExport}.tsx`)),
+      existsSync(join(stepDirectory, `${step.componentExport}.tsx`)),
       false,
       `${step.dir} has no separate component file`,
     );
   }
 
   for (const step of expectedBackendSteps) {
-    const stepDir = join(libraryDir, 'steps', step.dir);
-    assert.ok(existsSync(join(stepDir, 'builder.tsx')), `${step.dir} builder.tsx exists`);
-    assert.equal(existsSync(join(stepDir, 'live.tsx')), false, `${step.dir} has no live.tsx`);
-    assert.ok(existsSync(join(stepDir, 'index.ts')), `${step.dir} index.ts exists`);
+    const stepDirectory = join(libraryDirectory, 'steps', step.dir);
+    assert.ok(existsSync(join(stepDirectory, 'builder.tsx')), `${step.dir} builder.tsx exists`);
+    assert.equal(existsSync(join(stepDirectory, 'live.tsx')), false, `${step.dir} has no live.tsx`);
+    assert.ok(existsSync(join(stepDirectory, 'index.ts')), `${step.dir} index.ts exists`);
   }
 });
 
@@ -96,12 +96,17 @@ test('keeps Builder metadata and node rendering in one file per step', () => {
 test('keeps Finish mode as the terminal Builder step', () => {
   const finishBuilder = readLibraryFile('steps/finish/builder.tsx');
   const builderRegistry = readLibraryFile('builder.ts');
-  const definitions = builderRegistry.match(
-    /export const BUILDER_STEP_DEFINITIONS = \[([\S\s]*?)] as const/,
-  );
+  const definitions = /export const BUILDER_STEP_DEFINITIONS = \[([\S\s]*?)] as const/.exec(builderRegistry);
 
   assert.ok(definitions);
-  const entries = [...definitions[1].matchAll(/(\w+BuilderStep),/g)].map((match) => match[1]);
+  const entries: string[] = [];
+  const stepPattern = /(\w+BuilderStep),/g;
+  let stepMatch = stepPattern.exec(definitions[1]);
+
+  while (stepMatch) {
+    entries.push(stepMatch[1]);
+    stepMatch = stepPattern.exec(definitions[1]);
+  }
 
   assert.equal(entries.at(-1), 'finishBuilderStep');
   assert.match(finishBuilder, /executionMode: 'FINISH'/);
@@ -131,7 +136,7 @@ test('keeps aggregate Builder and node registries wired to step Builder files', 
   assert.match(builderRegistry, /export const BUILDER_NODE_DEFINITIONS/);
   assert.match(builderRegistry, /export const BUILDER_NODE_TYPES/);
   assert.match(builderRegistry, /export function getBuilderNodeByNodeType/);
-  assert.equal(existsSync(join(libraryDir, 'builderNodes.tsx')), false);
+  assert.equal(existsSync(join(libraryDirectory, 'builderNodes.tsx')), false);
 });
 
 test('keeps aggregate Live step and component registries wired to step Live files', () => {
@@ -149,6 +154,6 @@ test('keeps aggregate Live step and component registries wired to step Live file
 });
 
 test('does not keep old split step component files', () => {
-  const legacyStepDir = join(libraryDir, '..', 'components', 'steps');
-  assert.equal(existsSync(legacyStepDir), false);
+  const legacyStepDirectory = join(libraryDirectory, '..', 'components', 'steps');
+  assert.equal(existsSync(legacyStepDirectory), false);
 });
