@@ -1,4 +1,4 @@
-import { getControllerAdminHeaders, getControllerApiUrl } from '../config/workerEndpoints.ts';
+import { getControllerApiUrl } from '../config/workerEndpoints.ts';
 
 export function getVideoUrl(sessionId: string, connectionId: string): string {
   return `${getControllerApiUrl()}/videos/${encodeURIComponent(sessionId)}/${encodeURIComponent(connectionId)}/url`;
@@ -7,7 +7,7 @@ export function getVideoUrl(sessionId: string, connectionId: string): string {
 export async function getControllerVideoUrl(sessionId: string, connectionId: string, download = false): Promise<string | null> {
   const parameters = download ? '?download=1' : '';
   const res = await fetch(`${getVideoUrl(sessionId, connectionId)}${parameters}`, {
-    headers: getControllerAdminHeaders(),
+    credentials: 'include',
   });
   if (!res.ok) return null;
   const data = await res.json() as { url?: string };
@@ -16,7 +16,7 @@ export async function getControllerVideoUrl(sessionId: string, connectionId: str
 
 export async function fetchControllerResourceUrl(resourcePath: string): Promise<string | null> {
   const res = await fetch(`${getControllerApiUrl()}/resources/${resourcePath}`, {
-    headers: getControllerAdminHeaders(),
+    credentials: 'include',
   });
   if (!res.ok) return null;
   const data = await res.json() as { url?: string };
@@ -33,7 +33,7 @@ export async function fetchControllerResourceJson<T>(resourcePath: string): Prom
 
 export async function fetchControllerVideoSegmentBuffer(viewingId: string, segment: string): Promise<ArrayBuffer | null> {
   const presignedRes = await fetch(`${getControllerApiUrl()}/resources/${viewingId}/video/${segment}`, {
-    headers: getControllerAdminHeaders(),
+    credentials: 'include',
   });
   if (!presignedRes.ok) return null;
   const json = await presignedRes.json() as { url: string };

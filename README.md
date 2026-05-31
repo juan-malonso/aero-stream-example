@@ -18,12 +18,12 @@ The local defaults are enough for the standard Controller/Tower dev ports:
 - Controller API: `http://localhost:8788/api`
 - Tower init: `http://localhost:8787/squawk/init`
 - Tower live: `ws://localhost:8787/squawk/live`
-- Controller admin token: `local-test-admin-token`
+- Access token: `admin`
 
 Create a `.env.local` file at the repo root only when you need to override those values:
 
 ```env
-NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN=local-test-admin-token
+AEROSTREAM_ACCESS_TOKEN=admin
 NEXT_PUBLIC_CONTROLLER_API_URL=http://localhost:8788/api
 NEXT_PUBLIC_TOWER_INIT_URL=http://localhost:8787/squawk/init
 NEXT_PUBLIC_TOWER_LIVE_URL=ws://localhost:8787/squawk/live
@@ -31,7 +31,7 @@ NEXT_PUBLIC_TOWER_LIVE_URL=ws://localhost:8787/squawk/live
 
 | Variable                             | Description                                                                                                                                                                                                         |
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN` | Local/test Controller token sent as `x-aero-admin-token`. Do not use this public variable for production administrator secrets; production deployments should use a server-side proxy or approved auth integration. |
+| `AEROSTREAM_ACCESS_TOKEN`            | Token accepted by the Example login route and Controller cookie middleware. Local default is `admin`; the checked-in `dev` Wrangler environment uses `aero-stream-demo`.                                             |
 | `NEXT_PUBLIC_CONTROLLER_API_URL`     | HTTP API base URL for Controller-owned workflow builder and video management operations. Include the API prefix when Controller serves management routes below `/api`.                                              |
 | `NEXT_PUBLIC_TOWER_INIT_URL`         | Full Tower HTTP URL for runtime session creation. Local default is `http://localhost:8787/squawk/init`.                                                                                                             |
 | `NEXT_PUBLIC_TOWER_LIVE_URL`         | Full Tower WebSocket URL for Pilot live sync. Local default is `ws://localhost:8787/squawk/live`.                                                                                                                   |
@@ -60,33 +60,36 @@ yarn build
 yarn start
 ```
 
-## Building for Cloudflare Workers
+## Deploying to Cloudflare Workers
 
-The example is organized as route-owned microfrontends and can be converted into a Worker with OpenNext:
+The example is organized as route-owned microfrontends and deploys to Cloudflare Workers with OpenNext.
 
-```bash
-yarn build:worker
-yarn preview:worker
-yarn deploy
-```
+The repository provides a dev Cloudflare environment for:
 
-The Worker config lives in `wrangler.jsonc`. The application surfaces are:
+- Worker name: `aero-stream-example-dev`
+- Custom domain: `example.aerostream.deploy.men`
+- Controller API: `https://controller.aerostream.deploy.men/api`
+- Tower init: `https://tower.aerostream.deploy.men/squawk/init`
+- Tower live: `wss://tower.aerostream.deploy.men/squawk/live`
+- Destination events bucket binding: `DESTINATION_EVENTS_BUCKET`
+- Destination events dev bucket name: `aero-stream-dev-destination-events`
+- Access token env: `AEROSTREAM_ACCESS_TOKEN=aero-stream-demo`
 
-- `/builder`
-- `/live`
-- `/sessions`
+Prepare the destination events buckets, lifecycle rules, DNS/custom domain, access token, and any required Cloudflare account settings manually before deployment. The repository intentionally does not include scripts that create buckets, mutate R2 lifecycle configuration, or create secrets.
 
-Sessions destination events are persisted in the required R2 binding `DESTINATION_EVENTS_BUCKET`, bucket name `aero-stream-destination-events`.
-
-Prepare the destination events buckets and lifecycle rules manually in Cloudflare before deployment. The repository intentionally does not include scripts that create buckets or mutate R2 lifecycle configuration.
-
-Validate without publishing:
+Deploy the dev Worker:
 
 ```bash
-yarn build
-yarn build:worker
-yarn wrangler deploy --dry-run
+yarn deploy:dev
 ```
+
+The same command is available through Task:
+
+```bash
+task deploy-dev
+```
+
+The Worker config lives in `wrangler.jsonc`. `build:worker:dev` injects the deployed Controller/Tower URLs before OpenNext builds the client bundle. The application surfaces are `/builder`, `/live`, and `/sessions`. Sessions destination events are persisted in the required R2 binding `DESTINATION_EVENTS_BUCKET`; `wrangler.jsonc` maps that binding to the environment-specific bucket.
 
 ## Project Structure
 

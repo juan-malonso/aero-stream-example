@@ -1,29 +1,24 @@
-import { getControllerAdminHeaders, getControllerApiUrl } from '../../shared/config/workerEndpoints.ts';
+import { getControllerApiUrl } from '../../shared/config/workerEndpoints.ts';
 
 import { isRecord } from './runtimeValues.ts';
 import { type TowerWorkflow, type WorkflowMetadata } from './workflow.ts';
 
 interface WorkflowServiceOptions {
-  controllerAdminToken?: string;
   controllerApiUrl?: string;
   fetcher?: typeof fetch;
   idFactory?: () => string;
 }
 
 export function createWorkflowService({
-  controllerAdminToken,
   controllerApiUrl,
   fetcher = fetch,
   idFactory = () => crypto.randomUUID(),
 }: WorkflowServiceOptions = {}) {
   const getBaseUrl = () => controllerApiUrl ?? getControllerApiUrl();
-  const headers = () => controllerAdminToken
-    ? { 'x-aero-admin-token': controllerAdminToken }
-    : getControllerAdminHeaders();
 
   return {
     async getWorkflows(): Promise<WorkflowMetadata[]> {
-      const response = await fetcher(`${getBaseUrl()}/workflows`, { headers: headers() });
+      const response = await fetcher(`${getBaseUrl()}/workflows`, { credentials: 'include' });
       return readControllerData<WorkflowMetadata[]>(
         response,
         'Failed to fetch workflows from Controller',
@@ -31,7 +26,7 @@ export function createWorkflowService({
     },
 
     async getWorkflowById(id: string): Promise<TowerWorkflow> {
-      const response = await fetcher(`${getBaseUrl()}/workflows/${encodeURIComponent(id)}`, { headers: headers() });
+      const response = await fetcher(`${getBaseUrl()}/workflows/${encodeURIComponent(id)}`, { credentials: 'include' });
       return readControllerData<TowerWorkflow>(
         response,
         `Failed to fetch workflow ${id} from Controller`,
@@ -42,7 +37,8 @@ export function createWorkflowService({
       const id = workflow.id ?? idFactory();
       const response = await fetcher(`${getBaseUrl()}/workflows/${encodeURIComponent(id)}`, {
         method: 'PUT',
-        headers: { ...headers(), 'Content-Type': 'application/json' },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...workflow, id }),
       });
       return readControllerData<TowerWorkflow>(
@@ -54,7 +50,7 @@ export function createWorkflowService({
     async deleteWorkflow(id: string): Promise<void> {
       const response = await fetcher(`${getBaseUrl()}/workflows/${encodeURIComponent(id)}`, {
         method: 'DELETE',
-        headers: headers(),
+        credentials: 'include',
       });
       if (!response.ok) throw new Error(`Failed to delete workflow ${id} through Controller`);
     },

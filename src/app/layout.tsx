@@ -1,3 +1,5 @@
+import { AuthRefresh } from '@/components/AuthRefresh';
+
 import '../styles/global.css';
 
 export const metadata = {
@@ -12,7 +14,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body style={{ height: '100vh', width: '100vw', padding: 0, margin: 0 }}>{children}</body>
+      <body style={{ height: '100vh', width: '100vw', padding: 0, margin: 0 }}>
+        <AuthRefresh />
+        {children}
+      </body>
     </html>
   );
 }

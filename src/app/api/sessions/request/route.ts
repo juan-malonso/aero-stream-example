@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+import { requireAccessApi } from '@/lib/auth/access-token';
+
 const firstNames = ['Ada', 'Grace', 'Linus', 'Margaret', 'Alan', 'Katherine', 'Barbara', 'Ken'];
 const lastNames = ['Lovelace', 'Hopper', 'Torvalds', 'Hamilton', 'Turing', 'Johnson', 'Liskov', 'Thompson'];
 const streets = ['Orbit Avenue', 'Vector Street', 'Signal Road', 'Latency Lane', 'Harbor Drive'];
@@ -16,6 +18,9 @@ function wait(ms: number): Promise<void> {
 }
 
 export async function GET(): Promise<NextResponse> {
+  const unauthorized = await requireAccessApi();
+  if (unauthorized) return unauthorized;
+
   const delayMs = 1000 + Math.floor(Math.random() * 4001);
   await wait(delayMs);
 

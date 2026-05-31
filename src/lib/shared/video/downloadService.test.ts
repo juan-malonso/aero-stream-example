@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 process.env.NEXT_PUBLIC_CONTROLLER_API_URL = 'http://controller.local/api';
-process.env.NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN = 'local-test-admin-token';
 process.env.NEXT_PUBLIC_TOWER_INIT_URL = 'http://tower.local/squawk/init';
 process.env.NEXT_PUBLIC_TOWER_LIVE_URL = 'ws://tower.local/squawk/live';
 

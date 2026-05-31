@@ -1,13 +1,11 @@
 export interface WorkerEndpointEnv {
   NODE_ENV?: string;
-  NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN?: string;
   NEXT_PUBLIC_CONTROLLER_API_URL?: string;
   NEXT_PUBLIC_TOWER_INIT_URL?: string;
   NEXT_PUBLIC_TOWER_LIVE_URL?: string;
 }
 
 export interface WorkerEndpoints {
-  controllerAdminToken: string;
   controllerApiUrl: string;
   towerInitUrl: string;
   towerLiveUrl: string;
@@ -22,14 +20,11 @@ export class WorkerEndpointConfigError extends Error {
 
 const publicWorkerEnv: WorkerEndpointEnv = {
   NODE_ENV: process.env.NODE_ENV,
-  NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN:
-    process.env.NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN,
   NEXT_PUBLIC_CONTROLLER_API_URL: process.env.NEXT_PUBLIC_CONTROLLER_API_URL,
   NEXT_PUBLIC_TOWER_INIT_URL: process.env.NEXT_PUBLIC_TOWER_INIT_URL,
   NEXT_PUBLIC_TOWER_LIVE_URL: process.env.NEXT_PUBLIC_TOWER_LIVE_URL,
 };
 
-const LOCAL_TEST_CONTROLLER_ADMIN_TOKEN = "local-test-admin-token";
 const LOCAL_CONTROLLER_API_URL = "http://localhost:8788/api";
 const LOCAL_TOWER_INIT_URL = "http://localhost:8787/squawk/init";
 const LOCAL_TOWER_LIVE_URL = "ws://localhost:8787/squawk/live";
@@ -65,19 +60,6 @@ function normalizeUrl(
   return url.toString().replace(/\/$/, "");
 }
 
-function requireValue(
-  name: keyof WorkerEndpointEnv,
-  value: string | undefined,
-): string {
-  const raw = value?.trim();
-  if (!raw) {
-    throw new WorkerEndpointConfigError(
-      `Missing ${name}. Configure ${name} for the example worker integration.`,
-    );
-  }
-  return raw;
-}
-
 function valueOrLocalDefault(
   env: WorkerEndpointEnv,
   value: string | undefined,
@@ -94,27 +76,6 @@ function isLocalBrowserHost(): boolean {
   return LOCAL_HOSTNAMES.has(window.location.hostname);
 }
 
-function resolveControllerAdminToken(
-  env: WorkerEndpointEnv,
-  controllerApiUrl: string,
-): string {
-  const raw = env.NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN?.trim();
-  if (raw) return raw;
-
-  const { hostname } = new URL(controllerApiUrl);
-  if (
-    (env.NODE_ENV !== "production" || isLocalBrowserHost()) &&
-    LOCAL_HOSTNAMES.has(hostname)
-  ) {
-    return LOCAL_TEST_CONTROLLER_ADMIN_TOKEN;
-  }
-
-  return requireValue(
-    "NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN",
-    env.NEXT_PUBLIC_CONTROLLER_ADMIN_TOKEN,
-  );
-}
-
 export function resolveWorkerEndpoints(
   env: WorkerEndpointEnv = publicWorkerEnv,
 ): WorkerEndpoints {
@@ -126,10 +87,6 @@ export function resolveWorkerEndpoints(
       LOCAL_CONTROLLER_API_URL,
     ),
     ["http:", "https:"],
-  );
-  const controllerAdminToken = resolveControllerAdminToken(
-    env,
-    controllerApiUrl,
   );
   const towerInitUrl = normalizeUrl(
     "NEXT_PUBLIC_TOWER_INIT_URL",
@@ -151,7 +108,6 @@ export function resolveWorkerEndpoints(
   );
 
   return {
-    controllerAdminToken,
     controllerApiUrl,
     towerInitUrl,
     towerLiveUrl,
@@ -160,14 +116,6 @@ export function resolveWorkerEndpoints(
 
 export function getControllerApiUrl(env?: WorkerEndpointEnv): string {
   return resolveWorkerEndpoints(env).controllerApiUrl;
-}
-
-export function getControllerAdminHeaders(
-  env?: WorkerEndpointEnv,
-): Record<string, string> {
-  return {
-    "x-aero-admin-token": resolveWorkerEndpoints(env).controllerAdminToken,
-  };
 }
 
 export function getTowerInitUrl(env?: WorkerEndpointEnv): string {

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+import { requireAccessApi } from '@/lib/auth/access-token';
 import { getDestinationEventsBucket } from '@/lib/sessions/cloudflare';
 import { getSessionDetailFromR2 } from '@/lib/sessions/r2-store';
 
@@ -7,6 +8,9 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ sessionId: string }> },
 ): Promise<NextResponse> {
+  const unauthorized = await requireAccessApi();
+  if (unauthorized) return unauthorized;
+
   const { sessionId } = await params;
   const bucket = getDestinationEventsBucket();
   const session = await getSessionDetailFromR2(bucket, sessionId);

@@ -75,6 +75,27 @@ tasks:
           NAME: build
       - cmd: yarn build
 
+  build-worker-dev:
+    silent: true
+    desc: "Build the OpenNext Cloudflare Worker for the dev deployment"
+    cmds:
+      - task: name
+      - task: pilot
+      - task: install
+      - task: utils:section
+        vars:
+          NAME: build worker dev
+      - cmd: yarn build:worker:dev
+
+  deploy-dev:
+    silent: true
+    desc: "Deploy the Example app to the Cloudflare dev environment"
+    cmds:
+      - task: utils:section
+        vars:
+          NAME: deploy dev
+      - cmd: yarn deploy:dev
+
   dev:
     silent: true
     desc: "Build pilot dependency and start dev server"
