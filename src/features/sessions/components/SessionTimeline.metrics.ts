@@ -25,6 +25,7 @@ export interface MetricSeries {
   eventCountBars?: MetricBar[];
   id: string;
   label: string;
+  lineStyle?: "dashed" | "solid";
   points: MetricPoint[];
 }
 
@@ -114,11 +115,12 @@ export function createTrafficBucketMetrics(
     const previousSecondBytes = visibleSamples
       .filter(([timestampMs]) => timestampMs >= windowStartMs && timestampMs < bucket.bucketStartMs)
       .reduce((total, [, bytes]) => total + bytes, 0);
+    const secondsPerBucket = Math.max(1, layout.bucketMs / 1000);
 
     return {
       offsetPercent: metricOffsetPercent(bucket.bucketStartMs, layout),
       timestampMs: bucket.bucketStartMs,
-      value: (previousSecondBytes + bucket.totalBytes) / BYTES_PER_MEBIBYTE,
+      value: ((previousSecondBytes + bucket.totalBytes) / BYTES_PER_MEBIBYTE) / secondsPerBucket,
     };
   });
 

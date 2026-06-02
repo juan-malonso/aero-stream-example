@@ -58,6 +58,7 @@ function SessionListItem({ session, isSelected, onSelect }: SessionListItemPrope
   const [isHovered, setIsHovered] = useState(false);
   const shortId = session.sessionId.slice(0, 8);
   const timeLabel = formatRelativeTime(session.lastActivityAt);
+  const durationLabel = formatDuration(session.createdAt, session.lastActivityAt);
 
   return (
     <button
@@ -66,20 +67,21 @@ function SessionListItem({ session, isSelected, onSelect }: SessionListItemPrope
       onMouseLeave={() => { setIsHovered(false); }}
       style={{
         display: 'flex',
-        flexDirection: 'column',
-        gap: '4px',
-        padding: '0.75rem 1rem',
+        gap: '0.75rem',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '0.55rem 0.85rem',
         border: 'none',
-        borderLeft: isSelected ? `3px solid ${colors.blue500}` : '3px solid transparent',
+        borderLeft: isSelected ? `3px solid ${colors.yellow500}` : '3px solid transparent',
         borderBottom: `1px solid ${colors.gray100}`,
-        background: isSelected ? colors.blue50 : (isHovered ? colors.gray50 : 'transparent'),
+        background: isSelected ? colors.yellow50 : (isHovered ? colors.yellow50 : 'transparent'),
         cursor: 'pointer',
         textAlign: 'left',
         width: '100%',
         transition: 'background 0.15s ease',
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem', minWidth: 0 }}>
         <span style={{
           fontSize: typography.sizes.sm,
           fontWeight: typography.weights.bold,
@@ -90,20 +92,35 @@ function SessionListItem({ session, isSelected, onSelect }: SessionListItemPrope
         </span>
         <span style={{
           fontSize: typography.sizes['2xs'],
+          color: colors.gray400,
+          whiteSpace: 'nowrap',
+        }}>
+          {timeLabel}
+        </span>
+      </div>
+      <span style={{ alignItems: 'flex-end', display: 'flex', flexDirection: 'column', gap: '0.35rem', flexShrink: 0 }}>
+        <span style={{
+          fontSize: typography.sizes['2xs'],
           fontWeight: typography.weights.semibold,
-          color: colors.blue600,
-          background: colors.blue50,
+          color: colors.gray700,
+          background: colors.gray50,
+          border: `1px solid ${colors.gray200}`,
           padding: '1px 6px',
           borderRadius: radii.full,
         }}>
           {session.eventCount} events
         </span>
-      </div>
-      <span style={{
-        fontSize: typography.sizes['2xs'],
-        color: colors.gray400,
-      }}>
-        {timeLabel}
+        <span style={{
+          background: colors.yellow100,
+          border: `1px solid ${colors.yellow300}`,
+          borderRadius: radii.full,
+          color: colors.yellow700,
+          fontSize: typography.sizes['2xs'],
+          fontWeight: typography.weights.bold,
+          padding: '1px 6px',
+        }}>
+          {durationLabel}
+        </span>
       </span>
     </button>
   );
@@ -119,4 +136,24 @@ function formatRelativeTime(isoDate: string): string {
     second: '2-digit',
     hour12: false,
   });
+}
+
+function formatDuration(startIsoDate: string, endIsoDate: string): string {
+  const startMs = new Date(startIsoDate).getTime();
+  const endMs = new Date(endIsoDate).getTime();
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) return '0ms';
+
+  const totalMs = Math.max(0, endMs - startMs);
+  if (totalMs < 1000) return `${totalMs}ms`;
+
+  const totalSeconds = Math.round(totalMs / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  if (minutes === 0) return `${seconds}s`;
+
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  if (hours === 0) return `${minutes}m ${seconds}s`;
+
+  return `${hours}h ${remainingMinutes}m`;
 }

@@ -42,6 +42,8 @@ export interface SessionEventEnvelope {
 }
 
 export type PipeMetricKey =
+  | 'browser.inbound_latency_ms'
+  | 'browser.interaction_count'
   | 'browser.memory_used_bytes'
   | 'pipe.encrypted_bytes'
   | 'pipe.latency_ms'

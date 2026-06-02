@@ -16,6 +16,7 @@ import {
   type MetricPoint,
   type MetricSeries,
 } from "./SessionTimeline.metrics";
+import { createStepTimelineSegments, type StepTimelineSegment } from "./SessionTimeline.steps";
 
 const MIN_CANVAS_WIDTH = 1180;
 const MAX_CANVAS_WIDTH = 80000;
@@ -37,6 +38,7 @@ const EVENT_CARD_STRIP_TOP_PADDING_PX = 12;
 const EVENT_CARD_STRIP_BOTTOM_PADDING_PX = 24;
 const TIMELINE_LANE_GAP = "0.5rem";
 const TIMELINE_LANE_HEIGHT = "2.1rem";
+const STEP_TIMELINE_HEIGHT = "1.35rem";
 const FLOATING_BODY_CONTROL_TOP = "0.5rem";
 const FLOATING_CONTROL_PADDING = "0.2rem";
 const FLOATING_ICON_BUTTON_SIZE = "1.65rem";
@@ -172,9 +174,9 @@ const panelColors = {
   text: colors.gray900,
 };
 
-type ChartMode = "latency" | "memory" | "traffic";
+type ChartMode = "activity" | "latency" | "memory" | "traffic";
 
-const CHART_MODES: ChartMode[] = ["traffic", "latency", "memory"];
+const CHART_MODES: ChartMode[] = ["traffic", "latency", "activity", "memory"];
 
 interface ChartHoverState {
   leftPercent: number;
@@ -306,24 +308,87 @@ function createLatencySeries(session: Session, layout: SessionTimelineLayout): M
     .filter((lane) => lane.kind === "connection")
     .flatMap((lane, connectionIndex) => {
       const connection = session.connections.find((item) => item.connectionId === lane.connectionId);
-      const samples = connection?.metrics["pipe.latency_ms"] ?? [];
-      if (samples.length === 0) return [];
-      const points = samples
-        .slice()
-        .sort(([left], [right]) => left - right)
-        .map(([timestampMs, value]) => ({
-          offsetPercent: metricOffsetPercent(timestampMs, layout),
-          timestampMs,
-          value,
-        }));
+      const serverPoints = metricSamplesToPoints(connection?.metrics["pipe.latency_ms"] ?? [], layout);
+      const clientPoints = metricSamplesToPoints(connection?.metrics["browser.inbound_latency_ms"] ?? [], layout);
+      const baseLabel = connectionMetricLabel(connectionIndex);
+      const series: MetricSeries[] = [];
 
-      return [{
-        color: lane.color,
-        id: lane.id,
-        label: connectionMetricLabel(connectionIndex),
-        points,
-      }];
+      if (serverPoints.length > 0) {
+        series.push({
+          color: lane.color,
+          id: `${lane.id}-server-latency`,
+          label: `${baseLabel} · server latency`,
+          lineStyle: "solid",
+          points: serverPoints,
+        });
+      }
+
+      if (clientPoints.length > 0) {
+        series.push({
+          color: colorWithAlpha(lane.color, 0.72),
+          id: `${lane.id}-client-latency`,
+          label: `${baseLabel} · client latency`,
+          lineStyle: "dashed",
+          points: clientPoints,
+        });
+      }
+
+      return series;
     });
+}
+
+function createActivitySeries(session: Session, layout: SessionTimelineLayout): MetricSeries[] {
+  return layout.lanes
+    .filter((lane) => lane.kind === "connection")
+    .flatMap((lane, connectionIndex) => {
+      const connection = session.connections.find((item) => item.connectionId === lane.connectionId);
+      const baseLabel = connectionMetricLabel(connectionIndex);
+      const activityPoints = aggregateCountSamples(connection?.metrics["browser.interaction_count"] ?? [], layout);
+      const series: MetricSeries[] = [];
+
+      if (activityPoints.length > 0) {
+        series.push({
+          color: lane.color,
+          id: `${lane.id}-activity`,
+          label: `${baseLabel} · activity`,
+          lineStyle: "solid",
+          points: activityPoints,
+        });
+      }
+
+      return series;
+    });
+}
+
+function metricSamplesToPoints(samples: [number, number][], layout: SessionTimelineLayout): MetricPoint[] {
+  return samples
+    .slice()
+    .filter(([timestampMs]) => timestampMs >= layout.startMs && timestampMs <= layout.endMs)
+    .sort(([left], [right]) => left - right)
+    .map(([timestampMs, value]) => ({
+      offsetPercent: metricOffsetPercent(timestampMs, layout),
+      timestampMs,
+      value,
+    }));
+}
+
+function aggregateCountSamples(samples: [number, number][], layout: SessionTimelineLayout): MetricPoint[] {
+  const buckets = new Map<number, number>();
+
+  for (const [timestampMs, value] of samples) {
+    if (timestampMs < layout.startMs || timestampMs > layout.endMs) continue;
+    const elapsedMs = Math.max(0, timestampMs - layout.startMs);
+    const bucketStartMs = layout.startMs + Math.floor(elapsedMs / layout.bucketMs) * layout.bucketMs;
+    buckets.set(bucketStartMs, (buckets.get(bucketStartMs) ?? 0) + value);
+  }
+
+  return Array.from(buckets.entries())
+    .sort(([left], [right]) => left - right)
+    .map(([timestampMs, value]) => ({
+      offsetPercent: metricOffsetPercent(timestampMs, layout),
+      timestampMs,
+      value,
+    }));
 }
 
 function metricPath(
@@ -363,6 +428,7 @@ function metricAreaPath(
 
 function chartValueMax(mode: ChartMode, observedMax: number): number {
   const padded = observedMax * 1.2;
+  if (mode === "activity") return Math.max(1, Math.ceil(padded));
   if (mode === "latency") return Math.max(8, padded);
   if (mode === "memory") return Math.max(16, padded);
   return Math.max(0.5, padded);
@@ -379,12 +445,14 @@ function chartAxisLabels(mode: ChartMode, height: number, valueMax: number) {
 }
 
 function chartModeLabel(mode: ChartMode): string {
+  if (mode === "activity") return "User Activity";
   if (mode === "latency") return "Pipe Latency";
   if (mode === "memory") return "Browser Memory";
   return "Pipe Traffic";
 }
 
 function formatMetricValue(mode: ChartMode, value: number): string {
+  if (mode === "activity") return formatEventCountValue(value);
   if (mode === "latency") return value <= 0 ? "0" : `${value < 10 ? value.toFixed(1) : Math.round(value)} ms`;
   if (mode === "memory") return value <= 0 ? "0" : `${value < 100 ? value.toFixed(1) : Math.round(value)} MiB`;
   if (value <= 0) return "0";
@@ -423,7 +491,7 @@ function nearestChartHover(
     return {
       color: metricSeries.color,
       label: metricSeries.label,
-      style: mode === "traffic" ? "bar" as const : "solid" as const,
+      style: mode === "traffic" ? "bar" as const : (metricSeries.lineStyle ?? "solid"),
       value: point ? formatMetricValue(mode, point.value) : "No data",
     };
   }).flatMap((row, index) => {
@@ -466,9 +534,7 @@ function nearestPointAtTime(
 ): MetricPoint | undefined {
   if (points.length === 0) return undefined;
   if (timestampMs !== undefined) {
-    return points.reduce((best, point) =>
-      Math.abs((point.timestampMs ?? 0) - timestampMs) < Math.abs((best.timestampMs ?? 0) - timestampMs) ? point : best,
-    );
+    return points.find((point) => point.timestampMs === timestampMs);
   }
 
   return points.reduce((best, point) =>
@@ -1113,13 +1179,13 @@ function MetricChart({
                   />
                 );
               }))}
-              {series.map((trafficSeries) => (
+              {series.flatMap((trafficSeries) => trafficSeries.points.length < 2 ? [] : [
                 <path
                   d={metricAreaPath(trafficSeries.points, width, height - 18, activeEndPercent, valueMax)}
                   fill={`url(#trafficFill-${trafficSeries.id})`}
                   key={`traffic-area-${trafficSeries.id}`}
                 />
-              ))}
+              ])}
               {series.flatMap((trafficSeries) => (trafficSeries.dashedPoints ?? []).length === 0 ? [] : [
                 <path
                   d={metricPath(trafficSeries.dashedPoints ?? [], width, height - 18, activeEndPercent, valueMax)}
@@ -1132,12 +1198,13 @@ function MetricChart({
                   vectorEffect="non-scaling-stroke"
                 />,
               ])}
-              {series.map((trafficSeries) => (
+              {series.filter((trafficSeries) => trafficSeries.points.length > 1).map((trafficSeries) => (
                 <path
                   d={metricPath(trafficSeries.points, width, height - 18, activeEndPercent, valueMax)}
                   fill="none"
                   key={`traffic-line-${trafficSeries.id}`}
                   stroke={trafficSeries.color}
+                  strokeDasharray={trafficSeries.lineStyle === "dashed" ? "5 6" : undefined}
                   strokeWidth="2.4"
                   vectorEffect="non-scaling-stroke"
                 />
@@ -1508,6 +1575,100 @@ function TimelineMarkerGuide({
   );
 }
 
+function StepTimelineStrip({
+  segments,
+  timelineStartMs,
+  timelineWidth,
+  visualDurationMs,
+}: {
+  segments: StepTimelineSegment[];
+  timelineStartMs: number;
+  timelineWidth: number;
+  visualDurationMs: number;
+}) {
+  return (
+    <div
+      style={{
+        display: "grid",
+        gap: "0.75rem",
+        gridTemplateColumns: `${LABEL_COLUMN_WIDTH} minmax(0, 1fr)`,
+        height: STEP_TIMELINE_HEIGHT,
+        overflow: "hidden",
+        width: `${timelineWidth}px`,
+      }}
+    >
+      <div
+        style={{
+          alignItems: "center",
+          background: `linear-gradient(90deg, ${panelColors.card} 0%, ${colorWithAlpha(colors.white, 0.92)} 82%, transparent)`,
+          color: panelColors.muted,
+          display: "flex",
+          fontSize: typography.sizes["2xs"],
+          fontWeight: typography.weights.bold,
+          justifyContent: "flex-end",
+          left: 0,
+          paddingRight: "0.75rem",
+          position: "sticky",
+          textTransform: "uppercase",
+          zIndex: 20,
+        }}
+      >
+        Step
+      </div>
+      <div style={{ overflow: "hidden", position: "relative" }}>
+        <div
+          aria-hidden="true"
+          style={{
+            background: colorWithAlpha(colors.gray400, 0.24),
+            height: "1px",
+            left: 0,
+            position: "absolute",
+            right: 0,
+            top: "50%",
+          }}
+        />
+        {segments.map((segment) => {
+          const startOffsetPercent = tickOffsetPercent(segment.startTimeMs - timelineStartMs, visualDurationMs);
+          const endOffsetPercent = tickOffsetPercent(segment.endTimeMs - timelineStartMs, visualDurationMs);
+          const rightOffsetPercent = Math.max(0, 100 - endOffsetPercent);
+
+          return (
+            <span
+              key={`${segment.stepId}-${segment.startOffsetPercent}`}
+              style={{
+                alignItems: "center",
+                background: colorWithAlpha(colors.yellow500, 0.17),
+                border: `1px solid ${colorWithAlpha(colors.yellow500, 0.52)}`,
+                borderRadius: radii.sm,
+                boxShadow: `0 0 12px ${colorWithAlpha(colors.yellow500, 0.18)}`,
+                boxSizing: "border-box",
+                color: colors.gray900,
+                display: "flex",
+                fontSize: typography.sizes["2xs"],
+                fontWeight: typography.weights.bold,
+                height: "1rem",
+                left: `${startOffsetPercent}%`,
+                minWidth: 0,
+                overflow: "hidden",
+                padding: "0 0.45rem",
+                position: "absolute",
+                right: `${rightOffsetPercent}%`,
+                textOverflow: "ellipsis",
+                top: "50%",
+                transform: "translateY(-50%)",
+                whiteSpace: "nowrap",
+              }}
+              title={segment.title}
+            >
+              {segment.label}
+            </span>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function hasConnectionVideo(lane: SessionTimelineLayout["lanes"][number]): boolean {
   return lane.kind === "connection" && lane.markers.some((marker) =>
     marker.events.some((event) => event.type === SessionEventType.SESSION_CONNECTED),
@@ -1838,16 +1999,11 @@ function EventCardStrip({
   sessionEvents: SessionEventEnvelope[];
   timelineWidth: number;
 }) {
-  const connectionColors = new Map(
-    layout.lanes
-      .filter((lane) => lane.kind === "connection" && lane.connectionId)
-      .map((lane) => [lane.connectionId!, lane.color]),
-  );
   const entries = assignEventCardRows(layout.lanes
     .flatMap((lane) =>
       lane.markers.flatMap((marker) =>
         marker.events.map((event) => ({
-          accentColor: event.connectionId ? connectionColors.get(event.connectionId) : undefined,
+          accentColor: lane.color,
           event,
           offsetPercent: scaleOffsetPercent(marker.offsetPercent, activeEndPercent),
         })),
@@ -1991,8 +2147,10 @@ export function SessionTimeline({ session }: { session: Session }) {
   const layout = useMemo(() => createSessionTimelineLayout(session, zoomLevel.bucketMs), [session, zoomLevel.bucketMs]);
   const traffic = useMemo(() => createTrafficSeries(session, layout), [layout, session]);
   const latency = useMemo(() => createLatencySeries(session, layout), [layout, session]);
+  const activity = useMemo(() => createActivitySeries(session, layout), [layout, session]);
   const memory = useMemo(() => createMemorySeries(session, layout), [layout, session]);
-  const chartSeries = chartMode === "latency" ? latency : chartMode === "memory" ? memory : traffic;
+  const stepSegments = useMemo(() => createStepTimelineSegments(session.events, layout), [layout, session.events]);
+  const chartSeries = chartMode === "latency" ? latency : chartMode === "activity" ? activity : chartMode === "memory" ? memory : traffic;
   const activeWidth = canvasWidth(layout, session.events.length, zoomLevel);
   const visualWidth = activeWidth + POST_SESSION_VISUAL_SPACE_PX;
   const activeEndPercent = (activeWidth / visualWidth) * 100;
@@ -2156,6 +2314,12 @@ export function SessionTimeline({ session }: { session: Session }) {
                   timelineWidth={visualWidth}
                   visualDurationMs={visualDurationMs}
                   zoomLevel={zoomLevel}
+                />
+                <StepTimelineStrip
+                  segments={stepSegments}
+                  timelineStartMs={layout.startMs}
+                  timelineWidth={visualWidth}
+                  visualDurationMs={visualDurationMs}
                 />
                 <TimelineRails
                   activeEndPercent={activeEndPercent}

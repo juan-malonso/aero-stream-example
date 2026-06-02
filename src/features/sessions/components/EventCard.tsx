@@ -299,15 +299,30 @@ function EventIndexBadge({ color, index }: { color: string; index: number }) {
         color: colors.white,
         display: "flex",
         flexShrink: 0,
-        fontSize: typography.sizes.md,
-        fontWeight: typography.weights.extrabold,
         height: "1.35rem",
         justifyContent: "center",
         lineHeight: 1,
+        overflow: "visible",
+        position: "relative",
         width: "1.35rem",
       }}
     >
-      {index + 1}
+      <span
+        style={{
+          fontSize: typography.sizes.lg,
+          fontWeight: typography.weights.extrabold,
+          left: "50%",
+          lineHeight: 1,
+          pointerEvents: "none",
+          position: "absolute",
+          textShadow: `0 1px 3px color-mix(in srgb, ${colors.black} 26%, transparent)`,
+          top: "50%",
+          transform: "translate(-50%, -50%)",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {index + 1}
+      </span>
     </span>
   );
 }
@@ -327,7 +342,7 @@ export function EventCard({
   const step = readEventStep(event.payload);
   const subtitle = eventSubtitle(event, step);
   const isBodyExpanded = bodyExpanded ?? internalBodyExpanded;
-  const connectionAccent = accentColor ?? eventCardColors.circleBorder;
+  const connectionAccent = accentColor ?? colors.yellow500;
   const eventAccent = eventBorderColor(event.type);
   const toggleBodyExpanded = () => {
     const nextBodyExpanded = !isBodyExpanded;

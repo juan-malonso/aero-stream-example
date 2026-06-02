@@ -5,6 +5,7 @@ import { type Session, type SessionEventEnvelope, SessionEventType } from "../..
 
 import { CONNECTION_LANE_COLORS, createSessionTimelineLayout } from "./SessionTimeline.layout.ts";
 import { createTrafficBucketMetrics } from "./SessionTimeline.metrics.ts";
+import { createStepTimelineSegments } from "./SessionTimeline.steps.ts";
 
 function event(overrides: Partial<SessionEventEnvelope>): SessionEventEnvelope {
   return {
@@ -255,7 +256,7 @@ test("derives traffic buckets from the same grouping range as timeline markers",
   assert.deepEqual(points.map((point) => Number(point.value.toFixed(3))), [3, 4, 5, 2]);
 });
 
-test("uses real elapsed time and ignores out-of-range traffic samples for coarse buckets", () => {
+test("uses real elapsed time, normalizes coarse traffic buckets, and ignores out-of-range samples", () => {
   const events = session([
     event({
       eventId: "a1",
@@ -278,7 +279,7 @@ test("uses real elapsed time and ignores out-of-range traffic samples for coarse
 
   assert.deepEqual(dashedPoints.map((point) => point.offsetPercent), [0, 100]);
   assert.deepEqual(dashedPoints.map((point) => point.value), [5, 5]);
-  assert.deepEqual(points.map((point) => Number(point.value.toFixed(3))), [5, 5]);
+  assert.deepEqual(points.map((point) => Number(point.value.toFixed(3))), [1, 1]);
 });
 
 test("keeps the first traffic rate stable when zooming into smaller buckets", () => {
@@ -303,7 +304,7 @@ test("keeps the first traffic rate stable when zooming into smaller buckets", ()
   const coarsePoint = createTrafficBucketMetrics(samples, coarseLayout).points[0];
   const finePoint = createTrafficBucketMetrics(samples, fineLayout).points[0];
 
-  assert.equal(coarsePoint?.value, 5);
+  assert.equal(coarsePoint?.value, 1);
   assert.equal(finePoint?.value, 5);
 });
 
@@ -328,4 +329,54 @@ test("includes the current grouped bucket in the traffic average", () => {
   ], layout);
 
   assert.deepEqual(points.map((point) => point.value), [2, 5]);
+});
+
+test("creates step timeline segments from step start and ignores repeated renders of the same step", () => {
+  const events = session([
+    event({ eventId: "start", occurredAt: "2026-05-16T00:00:00.000Z" }),
+    event({
+      eventId: "step-a-start",
+      occurredAt: "2026-05-16T00:00:00.500Z",
+      payload: { step: { id: "step-a", name: "Step A", type: "form" } },
+      type: SessionEventType.STEP_START,
+    }),
+    event({
+      eventId: "step-a",
+      occurredAt: "2026-05-16T00:00:01.000Z",
+      payload: { step: { id: "step-a", name: "Step A", type: "form" } },
+      type: SessionEventType.STEP_RENDERED,
+    }),
+    event({
+      eventId: "step-a-rerender",
+      occurredAt: "2026-05-16T00:00:02.000Z",
+      payload: { step: { id: "step-a", name: "Step A", type: "form" } },
+      type: SessionEventType.STEP_RENDERED,
+    }),
+    event({
+      eventId: "step-b",
+      occurredAt: "2026-05-16T00:00:03.000Z",
+      payload: { step: { id: "step-b", name: "Step B", type: "BackendComponent" } },
+      type: SessionEventType.STEP_START,
+    }),
+    event({
+      eventId: "closed",
+      occurredAt: "2026-05-16T00:00:05.000Z",
+      type: SessionEventType.SESSION_CLOSED,
+    }),
+  ]);
+  const layout = createSessionTimelineLayout(events, 1000);
+  const segments = createStepTimelineSegments(events.events, layout);
+
+  assert.deepEqual(segments.map((segment) => segment.stepId), ["step-a", "step-b"]);
+  assert.deepEqual(segments.map((segment) => segment.label), ["Step A", "Step B"]);
+  assert.deepEqual(segments.map((segment) => segment.startOffsetPercent), [0, 60]);
+  assert.deepEqual(segments.map((segment) => segment.endOffsetPercent), [60, 100]);
+  assert.deepEqual(segments.map((segment) => segment.startTimeMs), [
+    new Date("2026-05-16T00:00:00.000Z").getTime(),
+    new Date("2026-05-16T00:00:03.000Z").getTime(),
+  ]);
+  assert.deepEqual(segments.map((segment) => segment.endTimeMs), [
+    new Date("2026-05-16T00:00:03.000Z").getTime(),
+    new Date("2026-05-16T00:00:05.000Z").getTime(),
+  ]);
 });
