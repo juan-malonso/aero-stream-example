@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type WheelEvent } from "react";
+import { type MouseEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type WheelEvent } from "react";
 
 import { type Session, type SessionEventEnvelope, SessionEventType } from "@/lib/sessions/types";
 import { openVideo } from "@/lib/shared/video/downloadService";
@@ -9,13 +9,20 @@ import { colors, radii, shadows, typography } from "@/styles/tokens";
 import { EventCard } from "./EventCard";
 import type { SessionTimelineLayout, TimelineLane, TimelineMarker } from "./SessionTimeline.layout";
 import { createSessionTimelineLayout } from "./SessionTimeline.layout";
+import {
+  connectionMetricLabel,
+  createTrafficSeries,
+  metricOffsetPercent,
+  type MetricPoint,
+  type MetricSeries,
+} from "./SessionTimeline.metrics";
 
 const MIN_CANVAS_WIDTH = 1180;
 const MAX_CANVAS_WIDTH = 80000;
 const PIXELS_PER_EVENT = 42;
 const PIXELS_PER_MINUTE = 220;
 const TRAFFIC_HEIGHT = 210;
-const TRAFFIC_POINT_COUNT = 96;
+const BYTES_PER_MEBIBYTE = 1024 * 1024;
 const LABEL_COLUMN_WIDTH_REM = 12.5;
 const LABEL_COLUMN_WIDTH = `${LABEL_COLUMN_WIDTH_REM}rem`;
 const LABEL_COLUMN_WIDTH_PX = LABEL_COLUMN_WIDTH_REM * 16;
@@ -165,19 +172,19 @@ const panelColors = {
   text: colors.gray900,
 };
 
-type ChartMode = "latency" | "traffic";
+type ChartMode = "latency" | "memory" | "traffic";
 
-const CHART_MODES: ChartMode[] = ["traffic", "latency"];
+const CHART_MODES: ChartMode[] = ["traffic", "latency", "memory"];
 
-interface MetricPoint {
-  offsetPercent: number;
-  value: number;
-}
-
-interface MetricSeries {
-  color: string;
-  id: string;
-  points: MetricPoint[];
+interface ChartHoverState {
+  leftPercent: number;
+  rows: {
+    color: string;
+    label: string;
+    style: "bar" | "dashed" | "solid";
+    value: string;
+  }[];
+  timeLabel: string;
 }
 
 interface EventCardEntry {
@@ -194,22 +201,6 @@ interface PlacedEventCardEntry extends EventCardEntry {
 interface HoveredTimelinePoint {
   eventIds: ReadonlySet<string>;
   markerId: string;
-}
-
-function hashString(value: string): number {
-  let hash = 0;
-  for (let index = 0; index < value.length; index += 1) {
-    hash = ((hash << 5) - hash + value.charCodeAt(index)) | 0;
-  }
-  return hash;
-}
-
-function seededRandom(seed: number) {
-  let state = seed || 1;
-  return () => {
-    state = (state * 16_807) % 2_147_483_647;
-    return (state - 1) / 2_147_483_646;
-  };
 }
 
 function formatElapsed(milliseconds: number): string {
@@ -237,6 +228,12 @@ function formatClockTime(timestamp: number): string {
     second: "2-digit",
     hour12: false,
   });
+}
+
+function formatClockTimeWithMilliseconds(timestamp: number): string {
+  const date = new Date(timestamp);
+  const milliseconds = `${date.getMilliseconds()}`.padStart(3, "0");
+  return `${formatClockTime(timestamp)}.${milliseconds}`;
 }
 
 function formatTimelineDuration(milliseconds: number): string {
@@ -279,60 +276,53 @@ function visualTimelineDuration(durationMs: number, activeWidth: number, visualW
   return Math.max(durationMs, Math.ceil((durationMs * visualWidth) / activeWidth));
 }
 
-function createTrafficSeries(session: Session, layout: SessionTimelineLayout): MetricSeries[] {
+function createMemorySeries(session: Session, layout: SessionTimelineLayout): MetricSeries[] {
   return layout.lanes
-    .filter((lane) => lane.kind === "connection" && lane.endOffsetPercent > lane.startOffsetPercent)
-    .map((lane) => {
-      const random = seededRandom(Math.abs(hashString(`${session.sessionId}:${lane.id}`)));
-      let current = 0.2 + random() * 0.35;
-      const connectionSpanPercent = Math.max(0, lane.endOffsetPercent - lane.startOffsetPercent);
-      const points = Array.from({ length: TRAFFIC_POINT_COUNT }, (_, index) => {
-        const progress = index / (TRAFFIC_POINT_COUNT - 1);
-        const envelope = Math.sin(progress * Math.PI);
-        const waveA = Math.sin(index / 6) * 0.25;
-        const waveB = Math.sin(index / 13) * 0.18;
-        const drift = (random() - 0.46) * 0.34;
-        current = Math.max(0.04, Math.min(1.75, current + waveA * 0.16 + waveB * 0.1 + drift));
+    .filter((lane) => lane.kind === "connection")
+    .flatMap((lane, connectionIndex) => {
+      const connection = session.connections.find((item) => item.connectionId === lane.connectionId);
+      const samples = connection?.metrics["browser.memory_used_bytes"] ?? [];
+      if (samples.length === 0) return [];
+      const points = samples
+        .slice()
+        .sort(([left], [right]) => left - right)
+        .map(([timestampMs, bytes]) => ({
+          offsetPercent: metricOffsetPercent(timestampMs, layout),
+          timestampMs,
+          value: bytes / BYTES_PER_MEBIBYTE,
+        }));
 
-        return {
-          offsetPercent: lane.startOffsetPercent + connectionSpanPercent * progress,
-          value: index === 0 || index === TRAFFIC_POINT_COUNT - 1 ? 0 : current * envelope,
-        };
-      });
-
-      return {
+      return [{
         color: lane.color,
         id: lane.id,
+        label: connectionMetricLabel(connectionIndex),
         points,
-      };
+      }];
     });
 }
 
 function createLatencySeries(session: Session, layout: SessionTimelineLayout): MetricSeries[] {
   return layout.lanes
-    .filter((lane) => lane.kind === "connection" && lane.endOffsetPercent > lane.startOffsetPercent)
-    .map((lane) => {
-      const random = seededRandom(Math.abs(hashString(`latency:${session.sessionId}:${lane.id}`)));
-      let current = 80 + random() * 75;
-      const connectionSpanPercent = Math.max(0, lane.endOffsetPercent - lane.startOffsetPercent);
-      const points = Array.from({ length: TRAFFIC_POINT_COUNT }, (_, index) => {
-        const progress = index / (TRAFFIC_POINT_COUNT - 1);
-        const envelope = Math.sin(progress * Math.PI);
-        const spike = random() > 0.9 ? random() * 80 : 0;
-        const drift = (random() - 0.5) * 28;
-        current = Math.max(28, Math.min(280, current + drift + spike));
+    .filter((lane) => lane.kind === "connection")
+    .flatMap((lane, connectionIndex) => {
+      const connection = session.connections.find((item) => item.connectionId === lane.connectionId);
+      const samples = connection?.metrics["pipe.latency_ms"] ?? [];
+      if (samples.length === 0) return [];
+      const points = samples
+        .slice()
+        .sort(([left], [right]) => left - right)
+        .map(([timestampMs, value]) => ({
+          offsetPercent: metricOffsetPercent(timestampMs, layout),
+          timestampMs,
+          value,
+        }));
 
-        return {
-          offsetPercent: lane.startOffsetPercent + connectionSpanPercent * progress,
-          value: index === 0 || index === TRAFFIC_POINT_COUNT - 1 ? 0 : current * (0.58 + envelope * 0.42),
-        };
-      });
-
-      return {
+      return [{
         color: lane.color,
         id: lane.id,
+        label: connectionMetricLabel(connectionIndex),
         points,
-      };
+      }];
     });
 }
 
@@ -371,30 +361,120 @@ function metricAreaPath(
   return `${line} L ${lastX.toFixed(2)} ${height} L ${firstX.toFixed(2)} ${height} Z`;
 }
 
-function chartValueMax(mode: ChartMode): number {
-  return mode === "latency" ? 300 : 1.8;
+function chartValueMax(mode: ChartMode, observedMax: number): number {
+  const padded = observedMax * 1.2;
+  if (mode === "latency") return Math.max(8, padded);
+  if (mode === "memory") return Math.max(16, padded);
+  return Math.max(0.5, padded);
 }
 
-function chartAxisLabels(mode: ChartMode, height: number) {
-  if (mode === "latency") {
-    return [
-      { label: "240 ms", offsetPercent: 20 },
-      { label: "160 ms", offsetPercent: 45 },
-      { label: "80 ms", offsetPercent: 70 },
-      { label: "0", offsetPercent: ((height - 18) / height) * 100 },
-    ];
-  }
-
-  return [
-    { label: "1.5 MB/s", offsetPercent: 20 },
-    { label: "1.0 MB/s", offsetPercent: 45 },
-    { label: "500 KB/s", offsetPercent: 70 },
-    { label: "0", offsetPercent: ((height - 18) / height) * 100 },
-  ];
+function chartAxisLabels(mode: ChartMode, height: number, valueMax: number) {
+  const usableHeight = height - 18;
+  return [valueMax, valueMax * 0.66, valueMax * 0.33, 0].map((value) => ({
+    label: formatMetricValue(mode, value),
+    offsetPercent: value === 0
+      ? ((height - 18) / height) * 100
+      : ((usableHeight - (value / valueMax) * usableHeight) / height) * 100,
+  }));
 }
 
 function chartModeLabel(mode: ChartMode): string {
-  return mode === "latency" ? "Latency" : "Traffic";
+  if (mode === "latency") return "Pipe Latency";
+  if (mode === "memory") return "Browser Memory";
+  return "Pipe Traffic";
+}
+
+function formatMetricValue(mode: ChartMode, value: number): string {
+  if (mode === "latency") return value <= 0 ? "0" : `${value < 10 ? value.toFixed(1) : Math.round(value)} ms`;
+  if (mode === "memory") return value <= 0 ? "0" : `${value < 100 ? value.toFixed(1) : Math.round(value)} MiB`;
+  if (value <= 0) return "0";
+  return value < 1 ? `${Math.round(value * 1024)} KiB/s` : `${value.toFixed(2)} MiB/s`;
+}
+
+function formatTrafficEventValue(value: number): string {
+  if (value <= 0) return "0";
+  return value < 1 ? `${Math.round(value * 1024)} KiB` : `${value.toFixed(2)} MiB`;
+}
+
+function formatEventCountValue(value: number): string {
+  return `${Math.round(value)} ${value === 1 ? "event" : "events"}`;
+}
+
+function nearestChartHover(
+  series: MetricSeries[],
+  hoverPercent: number,
+  mode: ChartMode,
+  activeEndPercent: number,
+): ChartHoverState | null {
+  const candidates = series.flatMap((metricSeries) =>
+    [...metricSeries.points, ...(metricSeries.dashedPoints ?? [])].map((point) => ({
+      point,
+      xPercent: scaleOffsetPercent(point.offsetPercent, activeEndPercent),
+    })),
+  );
+  if (candidates.length === 0) return null;
+
+  const nearest = candidates.reduce((best, candidate) =>
+    Math.abs(candidate.xPercent - hoverPercent) < Math.abs(best.xPercent - hoverPercent) ? candidate : best,
+  );
+  const timestampMs = nearest.point.timestampMs;
+  const rows = series.map((metricSeries) => {
+    const point = nearestPointAtTime(metricSeries.points, timestampMs, hoverPercent, activeEndPercent);
+    return {
+      color: metricSeries.color,
+      label: metricSeries.label,
+      style: mode === "traffic" ? "bar" as const : "solid" as const,
+      value: point ? formatMetricValue(mode, point.value) : "No data",
+    };
+  }).flatMap((row, index) => {
+    if (mode !== "traffic") return [row];
+    const metricSeries = series[index];
+    const dashedPoint = nearestPointAtTime(metricSeries.dashedPoints ?? [], timestampMs, hoverPercent, activeEndPercent);
+    const eventCountPoint = nearestPointAtTime(metricSeries.eventCountBars ?? [], timestampMs, hoverPercent, activeEndPercent);
+    return [
+      {
+        ...row,
+        label: `${row.label} · average`,
+      },
+      {
+        color: row.color,
+        label: `${row.label} · total weight`,
+        style: "dashed" as const,
+        value: dashedPoint ? formatTrafficEventValue(dashedPoint.value) : "No data",
+      },
+      {
+        color: row.color,
+        label: `${row.label} · events`,
+        style: "bar" as const,
+        value: eventCountPoint ? formatEventCountValue(eventCountPoint.value) : "No data",
+      },
+    ];
+  });
+
+  return {
+    leftPercent: nearest.xPercent,
+    rows,
+    timeLabel: timestampMs ? formatClockTimeWithMilliseconds(timestampMs) : `${Math.round(nearest.point.offsetPercent)}%`,
+  };
+}
+
+function nearestPointAtTime(
+  points: MetricPoint[],
+  timestampMs: number | undefined,
+  hoverPercent: number,
+  activeEndPercent: number,
+): MetricPoint | undefined {
+  if (points.length === 0) return undefined;
+  if (timestampMs !== undefined) {
+    return points.reduce((best, point) =>
+      Math.abs((point.timestampMs ?? 0) - timestampMs) < Math.abs((best.timestampMs ?? 0) - timestampMs) ? point : best,
+    );
+  }
+
+  return points.reduce((best, point) =>
+    Math.abs(scaleOffsetPercent(point.offsetPercent, activeEndPercent) - hoverPercent)
+      < Math.abs(scaleOffsetPercent(best.offsetPercent, activeEndPercent) - hoverPercent) ? point : best,
+  );
 }
 
 function colorWithAlpha(color: string, alpha: number): string {
@@ -774,51 +854,118 @@ function ChartModeSelector({
   mode: ChartMode;
   onModeChange: (mode: ChartMode) => void;
 }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleDocumentMouseDown = (event: globalThis.MouseEvent) => {
+      if (!containerRef.current?.contains(event.target as Node)) setIsOpen(false);
+    };
+
+    document.addEventListener("mousedown", handleDocumentMouseDown);
+    return () => {
+      document.removeEventListener("mousedown", handleDocumentMouseDown);
+    };
+  }, [isOpen]);
+
   return (
     <div
       aria-label="Chart selector"
+      ref={containerRef}
       style={{
         alignItems: "center",
-        background: panelColors.control,
+        background: panelColors.card,
         border: `1px solid ${panelColors.border}`,
         borderRadius: radii.full,
         boxShadow: shadows.md,
-        color: panelColors.text,
-        display: "flex",
-        gap: "0.18rem",
-        left: "3.75rem",
+        color: colors.yellow500,
+        right: "8.25rem",
         padding: FLOATING_CONTROL_PADDING,
         position: "absolute",
         top: FLOATING_BODY_CONTROL_TOP,
         zIndex: 60,
       }}
     >
-      {CHART_MODES.map((chartMode) => {
-        const isActive = chartMode === mode;
-        return (
-          <button
-            aria-pressed={isActive}
-            key={chartMode}
-            onClick={() => { onModeChange(chartMode); }}
-            style={{
-              background: isActive ? panelColors.primarySoft : panelColors.card,
-              border: `1px solid ${isActive ? panelColors.primaryStroke : panelColors.border}`,
-              borderRadius: radii.full,
-              color: isActive ? colors.yellow500 : panelColors.text,
-              cursor: "pointer",
-              fontSize: typography.sizes["2xs"],
-              fontWeight: typography.weights.bold,
-              height: FLOATING_TEXT_BUTTON_HEIGHT,
-              padding: "0 0.55rem",
-              textTransform: "uppercase",
-            }}
-            title={chartModeLabel(chartMode)}
-            type="button"
-          >
-            {chartModeLabel(chartMode)}
-          </button>
-        );
-      })}
+      <button
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
+        aria-label="Chart metric"
+        onClick={() => { setIsOpen((current) => !current); }}
+        style={{
+          alignItems: "center",
+          background: panelColors.primarySoft,
+          border: `1px solid ${panelColors.primaryStroke}`,
+          borderRadius: radii.full,
+          color: colors.yellow500,
+          cursor: "pointer",
+          display: "flex",
+          fontSize: typography.sizes["2xs"],
+          fontWeight: typography.weights.bold,
+          gap: "0.45rem",
+          height: FLOATING_TEXT_BUTTON_HEIGHT,
+          lineHeight: 1,
+          padding: "0 0.65rem",
+          textTransform: "uppercase",
+        }}
+        title="Chart metric"
+        type="button"
+      >
+        <span>{chartModeLabel(mode)}</span>
+        <span aria-hidden="true" style={{ fontSize: typography.sizes["2xs"], transform: isOpen ? "rotate(180deg)" : "none" }}>
+          ▾
+        </span>
+      </button>
+      {isOpen && (
+        <div
+          role="listbox"
+          style={{
+            background: panelColors.card,
+            border: `1px solid ${panelColors.border}`,
+            borderRadius: radii.md,
+            boxShadow: shadows.lg,
+            display: "grid",
+            gap: "0.25rem",
+            left: 0,
+            minWidth: "8.5rem",
+            padding: "0.3rem",
+            position: "absolute",
+            top: "calc(100% + 0.35rem)",
+          }}
+        >
+          {CHART_MODES.map((chartMode) => {
+            const isSelected = chartMode === mode;
+            return (
+              <button
+                aria-selected={isSelected}
+                key={chartMode}
+                onClick={() => {
+                  onModeChange(chartMode);
+                  setIsOpen(false);
+                }}
+                role="option"
+                style={{
+                  background: isSelected ? panelColors.primarySoft : panelColors.card,
+                  border: `1px solid ${isSelected ? panelColors.primaryStroke : "transparent"}`,
+                  borderRadius: radii.sm,
+                  color: isSelected ? colors.yellow500 : panelColors.text,
+                  cursor: "pointer",
+                  fontSize: typography.sizes["2xs"],
+                  fontWeight: typography.weights.bold,
+                  height: FLOATING_TEXT_BUTTON_HEIGHT,
+                  padding: "0 0.65rem",
+                  textAlign: "left",
+                  textTransform: "uppercase",
+                }}
+                type="button"
+              >
+                {chartModeLabel(chartMode)}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -827,27 +974,17 @@ function ChartFloatingControls({
   isCollapsed,
   mode,
   onCollapsedChange,
-  onModeChange,
 }: {
   isCollapsed: boolean;
   mode: ChartMode;
   onCollapsedChange: (isCollapsed: boolean) => void;
-  onModeChange: (mode: ChartMode) => void;
 }) {
   return (
-    <>
-      <TrafficCollapseButton
-        isCollapsed={isCollapsed}
-        mode={mode}
-        onCollapsedChange={onCollapsedChange}
-      />
-      {!isCollapsed && (
-        <ChartModeSelector
-          mode={mode}
-          onModeChange={onModeChange}
-        />
-      )}
-    </>
+    <TrafficCollapseButton
+      isCollapsed={isCollapsed}
+      mode={mode}
+      onCollapsedChange={onCollapsedChange}
+    />
   );
 }
 
@@ -862,11 +999,25 @@ function MetricChart({
   mode: ChartMode;
   series: MetricSeries[];
 }) {
+  const [hover, setHover] = useState<ChartHoverState | null>(null);
   const width = 1000;
   const height = TRAFFIC_HEIGHT;
   const chartHeight = isCollapsed ? 40 : TRAFFIC_HEIGHT;
-  const valueMax = chartValueMax(mode);
-  const yAxisLabels = chartAxisLabels(mode, height);
+  const observedMax = Math.max(0, ...series.flatMap((metricSeries) => [
+    ...metricSeries.points.map((point) => point.value),
+    ...(metricSeries.dashedPoints ?? []).map((point) => point.value),
+  ]));
+  const eventCountMax = Math.max(1, ...series.flatMap((metricSeries) =>
+    (metricSeries.eventCountBars ?? []).map((bar) => bar.value),
+  ));
+  const valueMax = chartValueMax(mode, observedMax);
+  const yAxisLabels = chartAxisLabels(mode, height, valueMax);
+
+  const handlePointerMove = useCallback((event: MouseEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const leftPercent = Math.max(0, Math.min(100, ((event.clientX - rect.left) / rect.width) * 100));
+    setHover(nearestChartHover(series, leftPercent, mode, activeEndPercent));
+  }, [activeEndPercent, mode, series]);
 
   return (
     <div
@@ -905,9 +1056,13 @@ function MetricChart({
           </span>
         ))}
       </div>
-      <div style={{ position: "relative", height: `${chartHeight}px` }}>
+      <div
+        onMouseLeave={() => { setHover(null); }}
+        onMouseMove={handlePointerMove}
+        style={{ position: "relative", height: `${chartHeight}px` }}
+      >
         <svg
-          aria-label={`Synthetic ${mode} chart`}
+          aria-label={`${mode} chart`}
           preserveAspectRatio="none"
           style={{ display: "block", height: "100%", width: "100%" }}
           viewBox={`0 0 ${width} ${height}`}
@@ -927,18 +1082,37 @@ function MetricChart({
               </linearGradient>
             ))}
           </defs>
-          {[0.2, 0.45, 0.7, 0.95].map((position) => (
+          {yAxisLabels.slice(1).map((item) => (
             <line
-              key={position}
+              key={item.label}
               stroke={colorWithAlpha(colors.gray400, 0.18)}
               x1="0"
               x2={width}
-              y1={position * height}
-              y2={position * height}
+              y1={(item.offsetPercent / 100) * height}
+              y2={(item.offsetPercent / 100) * height}
             />
           ))}
           {!isCollapsed && (
             <>
+              {mode === "traffic" && series.flatMap((trafficSeries) => (trafficSeries.eventCountBars ?? []).map((bar, index) => {
+                const centerX = (scaleOffsetPercent(bar.offsetPercent, activeEndPercent) / 100) * width;
+                const barHeight = 12 + (bar.value / eventCountMax) * 30;
+                const y = (height - 18) - barHeight;
+
+                return (
+                  <line
+                    key={`traffic-event-count-${trafficSeries.id}-${bar.timestampMs}-${index}`}
+                    stroke={colorWithAlpha(trafficSeries.color, 0.28)}
+                    strokeLinecap="round"
+                    strokeWidth="6"
+                    vectorEffect="non-scaling-stroke"
+                    x1={centerX}
+                    x2={centerX}
+                    y1={y}
+                    y2={height - 18}
+                  />
+                );
+              }))}
               {series.map((trafficSeries) => (
                 <path
                   d={metricAreaPath(trafficSeries.points, width, height - 18, activeEndPercent, valueMax)}
@@ -946,6 +1120,18 @@ function MetricChart({
                   key={`traffic-area-${trafficSeries.id}`}
                 />
               ))}
+              {series.flatMap((trafficSeries) => (trafficSeries.dashedPoints ?? []).length === 0 ? [] : [
+                <path
+                  d={metricPath(trafficSeries.dashedPoints ?? [], width, height - 18, activeEndPercent, valueMax)}
+                  fill="none"
+                  key={`traffic-raw-line-${trafficSeries.id}`}
+                  opacity="0.34"
+                  stroke={trafficSeries.color}
+                  strokeDasharray="5 6"
+                  strokeWidth="1.6"
+                  vectorEffect="non-scaling-stroke"
+                />,
+              ])}
               {series.map((trafficSeries) => (
                 <path
                   d={metricPath(trafficSeries.points, width, height - 18, activeEndPercent, valueMax)}
@@ -956,9 +1142,77 @@ function MetricChart({
                   vectorEffect="non-scaling-stroke"
                 />
               ))}
+              {hover && (
+                <line
+                  stroke={colorWithAlpha(colors.gray700, 0.36)}
+                  strokeDasharray="4 5"
+                  vectorEffect="non-scaling-stroke"
+                  x1={(hover.leftPercent / 100) * width}
+                  x2={(hover.leftPercent / 100) * width}
+                  y1="0"
+                  y2={height}
+                />
+              )}
             </>
           )}
         </svg>
+        {!isCollapsed && hover && (
+          <div
+            style={{
+              background: colorWithAlpha(colors.gray900, 0.92),
+              border: `1px solid ${colorWithAlpha(colors.white, 0.2)}`,
+              borderRadius: radii.md,
+              boxShadow: shadows.md,
+              color: colors.white,
+              fontSize: typography.sizes.xs,
+              left: `${hover.leftPercent}%`,
+              maxWidth: "15rem",
+              minWidth: "11rem",
+              padding: "0.55rem 0.65rem",
+              pointerEvents: "none",
+              position: "absolute",
+              top: "0.5rem",
+              transform: hover.leftPercent > 78 ? "translateX(-100%)" : "translateX(0.5rem)",
+              zIndex: 30,
+            }}
+          >
+            <div style={{ color: colorWithAlpha(colors.white, 0.72), marginBottom: "0.35rem" }}>
+              {hover.timeLabel}
+            </div>
+            <div style={{ display: "grid", gap: "0.25rem" }}>
+              {hover.rows.map((row) => (
+                <div
+                  key={row.label}
+                  style={{ alignItems: "center", display: "grid", gap: "0.4rem", gridTemplateColumns: "0.85rem 1fr auto" }}
+                >
+                  {row.style === "bar"
+                    ? (
+                      <span
+                        style={{
+                          background: colorWithAlpha(row.color, 0.34),
+                          borderRadius: "2px",
+                          display: "block",
+                          height: "0.6rem",
+                          width: "0.85rem",
+                        }}
+                      />
+                    )
+                    : (
+                      <span
+                        style={{
+                          borderTop: `2px ${row.style === "dashed" ? "dashed" : "solid"} ${row.color}`,
+                          display: "block",
+                          width: "0.85rem",
+                        }}
+                      />
+                    )}
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.label}</span>
+                  <span style={{ fontFamily: "monospace" }}>{row.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1737,15 +1991,21 @@ export function SessionTimeline({ session }: { session: Session }) {
   const layout = useMemo(() => createSessionTimelineLayout(session, zoomLevel.bucketMs), [session, zoomLevel.bucketMs]);
   const traffic = useMemo(() => createTrafficSeries(session, layout), [layout, session]);
   const latency = useMemo(() => createLatencySeries(session, layout), [layout, session]);
-  const chartSeries = chartMode === "latency" ? latency : traffic;
+  const memory = useMemo(() => createMemorySeries(session, layout), [layout, session]);
+  const chartSeries = chartMode === "latency" ? latency : chartMode === "memory" ? memory : traffic;
   const activeWidth = canvasWidth(layout, session.events.length, zoomLevel);
   const visualWidth = activeWidth + POST_SESSION_VISUAL_SPACE_PX;
   const activeEndPercent = (activeWidth / visualWidth) * 100;
   const visualDurationMs = visualTimelineDuration(layout.durationMs, activeWidth, visualWidth);
   const maxChartValue = Math.max(0, ...chartSeries.flatMap((metricSeries) =>
-    metricSeries.points.map((point) => point.value),
+    [
+      ...metricSeries.points.map((point) => point.value),
+      ...(metricSeries.dashedPoints ?? []).map((point) => point.value),
+    ],
   ));
-  const metricSummary = chartMode === "latency" ? `Max ${Math.round(maxChartValue)} ms` : `Max ${maxChartValue.toFixed(2)} MB/s`;
+  const metricSummary = chartSeries.length === 0
+    ? "No metrics"
+    : `Max ${formatMetricValue(chartMode, maxChartValue)}`;
   const timelineBodyPadding = isTrafficCollapsed ? "25px 1.25rem 1.25rem 0" : "1.25rem 1.25rem 1.25rem 0";
   const timelineStackGap = isTrafficCollapsed ? "0.5rem" : "1rem";
 
@@ -1843,8 +2103,13 @@ export function SessionTimeline({ session }: { session: Session }) {
             isCollapsed={isTrafficCollapsed}
             mode={chartMode}
             onCollapsedChange={setIsTrafficCollapsed}
-            onModeChange={setChartMode}
           />
+          {!isTrafficCollapsed && (
+            <ChartModeSelector
+              mode={chartMode}
+              onModeChange={setChartMode}
+            />
+          )}
           <ZoomControls
             canZoomIn={safeZoomIndex < TIMELINE_ZOOM_LEVELS.length - 1}
             canZoomOut={safeZoomIndex > defaultZoomIndex}

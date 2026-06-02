@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { type Session, type SessionEventEnvelope,SessionEventType } from "../../../lib/sessions/types.ts";
+import { type Session, type SessionEventEnvelope, SessionEventType } from "../../../lib/sessions/types.ts";
 
 import { CONNECTION_LANE_COLORS, createSessionTimelineLayout } from "./SessionTimeline.layout.ts";
+import { createTrafficBucketMetrics } from "./SessionTimeline.metrics.ts";
 
 function event(overrides: Partial<SessionEventEnvelope>): SessionEventEnvelope {
   return {
@@ -204,4 +205,127 @@ test("assigns reusable contrasting colors to connection lanes", () => {
 
   assert.deepEqual(connectionColors.slice(0, CONNECTION_LANE_COLORS.length), [...CONNECTION_LANE_COLORS]);
   assert.equal(connectionColors.at(-1), CONNECTION_LANE_COLORS[0]);
+});
+
+test("derives traffic buckets from the same grouping range as timeline markers", () => {
+  const events = session([
+    event({
+      eventId: "a1",
+      occurredAt: "2026-05-16T00:00:00.000Z",
+      connectionId: "connection-a",
+    }),
+    event({
+      eventId: "a2",
+      occurredAt: "2026-05-16T00:00:00.200Z",
+      connectionId: "connection-a",
+    }),
+    event({
+      eventId: "a3",
+      occurredAt: "2026-05-16T00:00:00.500Z",
+      connectionId: "connection-a",
+    }),
+    event({
+      eventId: "a4",
+      occurredAt: "2026-05-16T00:00:01.000Z",
+      connectionId: "connection-a",
+    }),
+    event({
+      eventId: "a5",
+      occurredAt: "2026-05-16T00:00:02.000Z",
+      connectionId: "connection-a",
+    }),
+  ]);
+  const layout = createSessionTimelineLayout(events, 500);
+  const connection = layout.lanes.find((lane) => lane.connectionId === "connection-a");
+  const mebibyte = 1024 * 1024;
+  const { dashedPoints, eventCountBars, points } = createTrafficBucketMetrics([
+    [layout.startMs, mebibyte],
+    [layout.startMs + 200, 2 * mebibyte],
+    [layout.startMs + 500, mebibyte],
+    [layout.startMs + 1000, mebibyte],
+    [layout.startMs + 2000, mebibyte],
+  ], layout);
+
+  assert.deepEqual(
+    dashedPoints.map((point) => point.offsetPercent),
+    connection?.markers.map((marker) => marker.offsetPercent),
+  );
+  assert.deepEqual(eventCountBars.map((bar) => bar.value), [2, 1, 1, 1]);
+  assert.deepEqual(dashedPoints.map((point) => point.value), [3, 1, 1, 1]);
+  assert.deepEqual(points.map((point) => Number(point.value.toFixed(3))), [3, 4, 5, 2]);
+});
+
+test("uses real elapsed time and ignores out-of-range traffic samples for coarse buckets", () => {
+  const events = session([
+    event({
+      eventId: "a1",
+      occurredAt: "2026-05-16T00:00:00.000Z",
+      connectionId: "connection-a",
+    }),
+    event({
+      eventId: "a2",
+      occurredAt: "2026-05-16T00:00:20.000Z",
+      connectionId: "connection-a",
+    }),
+  ]);
+  const layout = createSessionTimelineLayout(events, 5000);
+  const mebibyte = 1024 * 1024;
+  const { dashedPoints, points } = createTrafficBucketMetrics([
+    [layout.startMs, 5 * mebibyte],
+    [layout.startMs + 20_000, 5 * mebibyte],
+    [layout.startMs + 30_000, 100 * mebibyte],
+  ], layout);
+
+  assert.deepEqual(dashedPoints.map((point) => point.offsetPercent), [0, 100]);
+  assert.deepEqual(dashedPoints.map((point) => point.value), [5, 5]);
+  assert.deepEqual(points.map((point) => Number(point.value.toFixed(3))), [5, 5]);
+});
+
+test("keeps the first traffic rate stable when zooming into smaller buckets", () => {
+  const events = session([
+    event({
+      eventId: "a1",
+      occurredAt: "2026-05-16T00:00:00.000Z",
+      connectionId: "connection-a",
+    }),
+    event({
+      eventId: "a2",
+      occurredAt: "2026-05-16T00:00:10.000Z",
+      connectionId: "connection-a",
+    }),
+  ]);
+  const mebibyte = 1024 * 1024;
+  const samples: [number, number][] = [
+    [new Date("2026-05-16T00:00:00.000Z").getTime(), 5 * mebibyte],
+  ];
+  const coarseLayout = createSessionTimelineLayout(events, 5000);
+  const fineLayout = createSessionTimelineLayout(events, 5);
+  const coarsePoint = createTrafficBucketMetrics(samples, coarseLayout).points[0];
+  const finePoint = createTrafficBucketMetrics(samples, fineLayout).points[0];
+
+  assert.equal(coarsePoint?.value, 5);
+  assert.equal(finePoint?.value, 5);
+});
+
+test("includes the current grouped bucket in the traffic average", () => {
+  const events = session([
+    event({
+      eventId: "a1",
+      occurredAt: "2026-05-16T00:00:00.000Z",
+      connectionId: "connection-a",
+    }),
+    event({
+      eventId: "a2",
+      occurredAt: "2026-05-16T00:00:01.000Z",
+      connectionId: "connection-a",
+    }),
+  ]);
+  const layout = createSessionTimelineLayout(events, 1000);
+  const mebibyte = 1024 * 1024;
+  const { points } = createTrafficBucketMetrics([
+    [layout.startMs, 2 * mebibyte],
+    [layout.startMs + 1000, 3 * mebibyte],
+  ], layout);
+
+  assert.deepEqual(points.map((point) => point.value), [2, 5]);
 });

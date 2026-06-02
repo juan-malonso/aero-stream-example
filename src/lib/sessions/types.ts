@@ -41,11 +41,22 @@ export interface SessionEventEnvelope {
   payload: Record<string, unknown>;
 }
 
+export type PipeMetricKey =
+  | 'browser.memory_used_bytes'
+  | 'pipe.encrypted_bytes'
+  | 'pipe.latency_ms'
+  | 'pipe.message_count';
+
+export type PipeMetricPoint = [number, number];
+
+export type PipeMetrics = Record<PipeMetricKey, PipeMetricPoint[]>;
+
 export interface ConnectionGroup {
   connectionId: string;
   connectedAt: string;
   device: Record<string, unknown> | null;
   events: SessionEventEnvelope[];
+  metrics: PipeMetrics;
 }
 
 export interface Session {

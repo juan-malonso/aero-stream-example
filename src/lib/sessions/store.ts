@@ -1,5 +1,6 @@
 import type {
   ConnectionGroup,
+  PipeMetrics,
   Session,
   SessionEventEnvelope,
   SessionResult,
@@ -19,7 +20,19 @@ interface StoredSession {
   events: SessionEventEnvelope[];
 }
 
-export function deriveConnectionGroups(events: SessionEventEnvelope[]): ConnectionGroup[] {
+export function emptyPipeMetrics(): PipeMetrics {
+  return {
+    'browser.memory_used_bytes': [],
+    'pipe.encrypted_bytes': [],
+    'pipe.latency_ms': [],
+    'pipe.message_count': [],
+  };
+}
+
+export function deriveConnectionGroups(
+  events: SessionEventEnvelope[],
+  metricsByConnectionId: Record<string, PipeMetrics> = {},
+): ConnectionGroup[] {
   const groupMap = new Map<string, ConnectionGroup>();
 
   for (const event of events) {
@@ -31,6 +44,7 @@ export function deriveConnectionGroups(events: SessionEventEnvelope[]): Connecti
         connectedAt: event.occurredAt,
         device: null,
         events: [],
+        metrics: metricsByConnectionId[event.connectionId] ?? emptyPipeMetrics(),
       });
     }
 
@@ -106,12 +120,16 @@ export function getSessionSummariesFromEvents(events: SessionEventEnvelope[]): S
   return summariesFromStore(buildSessionsFromEvents(events));
 }
 
-export function getSessionDetailFromEvents(events: SessionEventEnvelope[], sessionId: string): Session | null {
+export function getSessionDetailFromEvents(
+  events: SessionEventEnvelope[],
+  sessionId: string,
+  metricsByConnectionId: Record<string, PipeMetrics> = {},
+): Session | null {
   const session = buildSessionsFromEvents(events).get(sessionId);
   if (!session) return null;
 
   return {
     ...session,
-    connections: deriveConnectionGroups(session.events),
+    connections: deriveConnectionGroups(session.events, metricsByConnectionId),
   };
 }

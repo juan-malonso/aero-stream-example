@@ -34,6 +34,7 @@ export interface TimelineLane {
 }
 
 export interface SessionTimelineLayout {
+  bucketMs: number;
   durationMs: number;
   startMs: number;
   endMs: number;
@@ -165,6 +166,7 @@ export function createSessionTimelineLayout(
   });
 
   return {
+    bucketMs,
     durationMs,
     startMs,
     endMs,

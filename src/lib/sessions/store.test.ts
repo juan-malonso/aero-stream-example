@@ -90,3 +90,25 @@ test('derives summaries and detail from persisted event lists', () => {
   const detail = getSessionDetailFromEvents(events, 'session-1');
   assert.equal(detail?.connections[0]?.device?.browser, 'test');
 });
+
+test('adds connection metrics to session detail', () => {
+  const events = [
+    event(),
+    event({
+      eventId: 'event-2',
+      type: SessionEventType.SESSION_CONNECTED,
+      occurredAt: '2026-05-16T00:01:00.000Z',
+      connectionId: 'connection-1',
+    }),
+  ];
+
+  const detail = getSessionDetailFromEvents(events, 'session-1', {
+    'connection-1': {
+      'pipe.encrypted_bytes': [[1_780_401_600_000, 1536]],
+      'pipe.latency_ms': [[1_780_401_600_000, 42]],
+      'pipe.message_count': [[1_780_401_600_000, 1]],
+    },
+  });
+
+  assert.deepEqual(detail?.connections[0]?.metrics['pipe.encrypted_bytes'], [[1_780_401_600_000, 1536]]);
+});

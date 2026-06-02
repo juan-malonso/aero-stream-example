@@ -2,11 +2,36 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-import type { Session, SessionSummary } from '@/lib/sessions/types';
+import type { PipeMetrics, Session, SessionSummary } from '@/lib/sessions/types';
 import { colors, shadows, typography } from '@/styles/tokens';
 
 import { SessionDetail } from './SessionDetail';
 import { SessionList } from './SessionList';
+
+async function fetchConnectionMetrics(sessionId: string, connectionId: string): Promise<PipeMetrics | null> {
+  const response = await fetch(
+    `/api/sessions/${encodeURIComponent(sessionId)}/metrics/${encodeURIComponent(connectionId)}`,
+  );
+  if (!response.ok) return null;
+  const json = await response.json() as { data?: PipeMetrics };
+  return json.data ?? null;
+}
+
+async function hydrateSessionMetrics(session: Session): Promise<Session> {
+  const entries = await Promise.all(session.connections.map(async connection => [
+    connection.connectionId,
+    await fetchConnectionMetrics(session.sessionId, connection.connectionId),
+  ] as const));
+  const metricsByConnectionId = new Map(entries);
+
+  return {
+    ...session,
+    connections: session.connections.map(connection => ({
+      ...connection,
+      metrics: metricsByConnectionId.get(connection.connectionId) ?? connection.metrics,
+    })),
+  };
+}
 
 export function SessionsViewer() {
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
@@ -39,7 +64,7 @@ export function SessionsViewer() {
       const response = await fetch(`/api/sessions/${sessionId}`);
       if (!response.ok) return;
       const json = (await response.json()) as { data: Session };
-      setSelectedSession(json.data);
+      setSelectedSession(await hydrateSessionMetrics(json.data));
     } catch (error: unknown) {
       console.error('Failed to fetch session detail:', error);
     } finally {

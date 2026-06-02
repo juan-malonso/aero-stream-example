@@ -1,5 +1,5 @@
-import { getSessionDetailFromEvents, getSessionSummariesFromEvents } from './store.ts';
-import type { Session, SessionEventEnvelope, SessionSummary } from './types.ts';
+import { emptyPipeMetrics, getSessionDetailFromEvents, getSessionSummariesFromEvents } from './store.ts';
+import type { PipeMetricKey, PipeMetricPoint, PipeMetrics, Session, SessionEventEnvelope, SessionSummary } from './types.ts';
 
 const EVENT_PREFIX = 'events/';
 const LIST_LIMIT = 1000;
@@ -52,6 +52,35 @@ export async function addEventToR2(bucket: SessionsEventBucket, event: SessionEv
   });
 }
 
+function isMetricKey(value: string): value is PipeMetricKey {
+  return value === 'browser.memory_used_bytes' || value === 'pipe.encrypted_bytes' || value === 'pipe.latency_ms' || value === 'pipe.message_count';
+}
+
+function parseMetricPoint(value: unknown): PipeMetricPoint | null {
+  if (!Array.isArray(value) || value.length !== 2) return null;
+  const timestamp: unknown = value[0];
+  const metricValue: unknown = value[1];
+  if (typeof timestamp !== 'number' || !Number.isFinite(timestamp)) return null;
+  if (typeof metricValue !== 'number' || !Number.isFinite(metricValue)) return null;
+  return [timestamp, metricValue];
+}
+
+export function parsePipeMetrics(value: unknown): PipeMetrics | null {
+  if (typeof value !== 'object' || value === null) return null;
+
+  const input = value as Record<string, unknown>;
+  const metrics = emptyPipeMetrics();
+
+  for (const [key, points] of Object.entries(input)) {
+    if (!isMetricKey(key) || !Array.isArray(points)) continue;
+    metrics[key] = points
+      .map(parseMetricPoint)
+      .filter((point): point is PipeMetricPoint => point !== null);
+  }
+
+  return metrics;
+}
+
 async function listEventKeys(bucket: SessionsEventBucket, sessionId?: string): Promise<string[]> {
   const prefix = sessionId ? `${EVENT_PREFIX}${safeKeyPart(sessionId)}/` : EVENT_PREFIX;
   const keys: string[] = [];
@@ -84,5 +113,13 @@ export async function getSessionSummariesFromR2(bucket: SessionsEventBucket): Pr
 }
 
 export async function getSessionDetailFromR2(bucket: SessionsEventBucket, sessionId: string): Promise<Session | null> {
-  return getSessionDetailFromEvents(await getEventsFromR2(bucket, sessionId), sessionId);
+  const events = await getEventsFromR2(bucket, sessionId);
+  const connectionIds = Array.from(new Set(events.flatMap(event => event.connectionId ? [event.connectionId] : [])));
+  const metricsByConnectionId: Record<string, PipeMetrics> = {};
+
+  for (const connectionId of connectionIds) {
+    metricsByConnectionId[connectionId] = emptyPipeMetrics();
+  }
+
+  return getSessionDetailFromEvents(events, sessionId, metricsByConnectionId);
 }
