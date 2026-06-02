@@ -7,7 +7,6 @@ export const ACCESS_COOKIE_NAME = 'aerostream_access_token';
 
 const DEPLOY_COOKIE_DOMAIN = '.aerostream.deploy.men';
 const DEPLOY_HOST_SUFFIX = 'aerostream.deploy.men';
-const LOCAL_TEST_TOKEN = 'admin';
 const LOCAL_HOSTNAMES = new Set(['localhost', '127.0.0.1', '::1']);
 
 interface AccessEnv {
@@ -32,10 +31,6 @@ function getConfiguredAccessToken(): string {
   const env = getRuntimeEnv();
   const token = env.AEROSTREAM_ACCESS_TOKEN?.trim();
   if (token) return token;
-
-  if (env.ENVIRONMENT === 'development' || env.ENVIRONMENT === 'test' || env.NODE_ENV !== 'production') {
-    return LOCAL_TEST_TOKEN;
-  }
 
   throw new Error('AEROSTREAM_ACCESS_TOKEN is required');
 }

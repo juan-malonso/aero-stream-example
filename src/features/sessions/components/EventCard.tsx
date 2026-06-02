@@ -1,19 +1,22 @@
 "use client";
 
-import { type CSSProperties, useState } from "react";
+import { type CSSProperties, type KeyboardEvent, type MouseEvent, useState } from "react";
 
 import type { SessionEventEnvelope } from "@/lib/sessions/types";
 import { SessionEventType } from "@/lib/sessions/types";
 import { formatDisplayValue } from "@/lib/shared/display";
-import { downloadVideo, openVideo } from "@/lib/shared/video/downloadService";
 import { colors, radii, shadows, typography } from "@/styles/tokens";
 
 interface EventCardProperties {
+  accentColor?: string;
+  bodyExpanded?: boolean;
+  defaultBodyExpanded?: boolean;
   event: SessionEventEnvelope;
   index: number;
+  onBodyExpandedChange?: (isExpanded: boolean) => void;
 }
 
-interface EventTheme {
+export interface EventTheme {
   accent: string;
   background: string;
   label: string;
@@ -27,7 +30,41 @@ interface EventStepSummary {
   type: string;
 }
 
-const EVENT_THEMES: Record<SessionEventType, EventTheme> = {
+const eventCardColors = {
+  border: colors.gray200,
+  circleBorder: colors.gray300,
+  header: colors.gray200,
+  headerText: colors.gray900,
+  headerTextMuted: colors.gray600,
+  rawPayload: colors.gray100,
+  shell: colors.white,
+  text: colors.gray900,
+  textMuted: colors.gray600,
+};
+
+const EVENT_BORDER_COLORS: Record<SessionEventType, string> = {
+  [SessionEventType.SESSION_CREATE]: colors.gray700,
+  [SessionEventType.SESSION_CONNECTED]: colors.green600,
+  [SessionEventType.SESSION_CLOSED]: colors.green600,
+  [SessionEventType.SESSION_REQUESTED]: colors.cyan600,
+  [SessionEventType.FINISH_RENDER]: colors.violet600,
+  [SessionEventType.STEP_RENDERED]: colors.violet600,
+  [SessionEventType.STEP_CONDITION]: colors.gray700,
+  [SessionEventType.STEP_START]: colors.violet600,
+  [SessionEventType.STEP_RESPONSE]: colors.cyan600,
+  [SessionEventType.STEP_SUBMITTED]: colors.red600,
+  [SessionEventType.ALERT_RENDERED]: colors.amber600,
+  [SessionEventType.ALERT_SUBMITTED]: colors.amber600,
+  [SessionEventType.SESSION_RESULT]: colors.gray700,
+  [SessionEventType.TAILING_RENDERED]: colors.gray700,
+  [SessionEventType.TAILING_CLOSED]: colors.gray700,
+};
+
+function eventBorderColor(type: SessionEventType): string {
+  return EVENT_BORDER_COLORS[type] ?? EVENT_BORDER_COLORS[SessionEventType.SESSION_CREATE];
+}
+
+export const EVENT_THEMES: Record<SessionEventType, EventTheme> = {
   [SessionEventType.SESSION_CREATE]: {
     accent: colors.gray800,
     background: colors.gray100,
@@ -135,7 +172,7 @@ const EVENT_THEMES: Record<SessionEventType, EventTheme> = {
   },
 };
 
-function DirectionIcon({ type, color }: { type: "in" | "out"; color: string }) {
+export function DirectionIcon({ type, color }: { type: "in" | "out"; color: string }) {
   if (type === "out") {
     // Arrow exiting the server box leftward (tower → pilot)
     return (
@@ -244,11 +281,67 @@ function formatCondition(condition: unknown): { left?: string; operator?: string
   return { text: JSON.stringify(condition) };
 }
 
-export function EventCard({ event, index }: EventCardProperties) {
-  const [isExpanded, setIsExpanded] = useState(false);
+function eventSubtitle(event: SessionEventEnvelope, step: EventStepSummary | null): string {
+  if (step) return `${step.type} - ${step.name} · ${step.id}`;
+  if (event.connectionId) return `${event.type} · connection ${event.connectionId}`;
+  if (event.sessionId) return `${event.type} · session ${event.sessionId}`;
+  return `${event.type} · ${event.source}`;
+}
+
+function EventIndexBadge({ color, index }: { color: string; index: number }) {
+  return (
+    <span
+      style={{
+        alignItems: "center",
+        background: color,
+        border: `1px solid color-mix(in srgb, ${colors.white} 32%, transparent)`,
+        borderRadius: radii.full,
+        color: colors.white,
+        display: "flex",
+        flexShrink: 0,
+        fontSize: typography.sizes.md,
+        fontWeight: typography.weights.extrabold,
+        height: "1.35rem",
+        justifyContent: "center",
+        lineHeight: 1,
+        width: "1.35rem",
+      }}
+    >
+      {index + 1}
+    </span>
+  );
+}
+
+export function EventCard({
+  accentColor,
+  bodyExpanded,
+  defaultBodyExpanded = true,
+  event,
+  index,
+  onBodyExpandedChange,
+}: EventCardProperties) {
+  const [internalBodyExpanded, setInternalBodyExpanded] = useState(defaultBodyExpanded);
+  const [isRawExpanded, setIsRawExpanded] = useState(false);
   const theme =
     EVENT_THEMES[event.type] ?? EVENT_THEMES[SessionEventType.SESSION_CREATE];
   const step = readEventStep(event.payload);
+  const subtitle = eventSubtitle(event, step);
+  const isBodyExpanded = bodyExpanded ?? internalBodyExpanded;
+  const connectionAccent = accentColor ?? eventCardColors.circleBorder;
+  const eventAccent = eventBorderColor(event.type);
+  const toggleBodyExpanded = () => {
+    const nextBodyExpanded = !isBodyExpanded;
+    setInternalBodyExpanded(nextBodyExpanded);
+    onBodyExpandedChange?.(nextBodyExpanded);
+  };
+  const handleCardKeyDown = (keyboardEvent: KeyboardEvent<HTMLDivElement>) => {
+    if (keyboardEvent.key !== "Enter" && keyboardEvent.key !== " ") return;
+    keyboardEvent.preventDefault();
+    toggleBodyExpanded();
+  };
+  const stopCardToggle = (mouseEvent: MouseEvent<HTMLElement>) => {
+    mouseEvent.stopPropagation();
+  };
 
   const dateLabel = new Date(event.occurredAt);
   const timeLabel =
@@ -261,136 +354,149 @@ export function EventCard({ event, index }: EventCardProperties) {
 
   return (
     <div
+      aria-expanded={isBodyExpanded}
+      onClick={toggleBodyExpanded}
+      onKeyDown={handleCardKeyDown}
+      role="button"
       style={{
-        background: colors.white,
-        border: `1px solid ${colors.gray200}`,
-        borderLeft: `3px solid ${theme.accent}`,
+        background: eventCardColors.shell,
+        border: `1px solid ${eventCardColors.border}`,
+        borderLeft: `5px solid ${eventAccent}`,
         borderRadius: radii.lg,
         boxShadow: shadows.xs,
+        cursor: "pointer",
         overflow: "hidden",
       }}
+      tabIndex={0}
     >
       {/* Card Header */}
       <div
         style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: "0.5rem 1rem",
-          background: theme.background,
-          borderBottom: `1px solid ${colors.gray100}`,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <span
-            style={{
-              fontSize: typography.sizes.xs,
-              fontWeight: typography.weights.bold,
-              color: colors.gray400,
-              width: "18px",
-            }}
-          >
-            #{index + 1}
-          </span>
-          {theme.messageType && (
-            <DirectionIcon type={theme.messageType} color={theme.accent} />
-          )}
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "0.125rem",
-            }}
-          >
+        display: "grid",
+        gap: "0.35rem",
+        padding: "0.5rem 1rem",
+        background: eventCardColors.header,
+        borderBottom: `1px solid ${eventCardColors.border}`,
+      }}
+    >
+        <div
+          style={{
+            alignItems: "center",
+            display: "grid",
+            gap: "0.75rem",
+            gridTemplateColumns: "minmax(0, 1fr) auto",
+            minWidth: 0,
+          }}
+        >
+          <div style={{ alignItems: "center", display: "flex", gap: "0.5rem", minWidth: 0 }}>
+            <EventIndexBadge color={connectionAccent} index={index} />
+            {theme.messageType && (
+              <span style={{ display: "flex", flexShrink: 0 }}>
+                <DirectionIcon type={theme.messageType} color={eventCardColors.headerTextMuted} />
+              </span>
+            )}
             <span
               style={{
+                color: eventCardColors.headerText,
                 fontSize: typography.sizes.sm,
                 fontWeight: typography.weights.bold,
-                color: theme.accent,
-                textTransform: "uppercase",
                 letterSpacing: "0.03em",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                textTransform: "uppercase",
+                whiteSpace: "nowrap",
               }}
             >
               {theme.label}
             </span>
-            {step && (
-              <span
-                style={{
-                  color: colors.gray600,
-                  display: "flex",
-                  gap: "0.5rem",
-                  alignItems: "center",
-                  fontSize: typography.sizes.xs,
-                  fontWeight: typography.weights.medium,
-                  letterSpacing: 0,
-                  textTransform: "none",
-                }}
-              >
-                <span>{step.type} - {step.name}</span>
-                <span style={{ color: colors.gray400 }}>{step.id}</span>
-              </span>
-            )}
+          </div>
+          <div style={{ alignItems: "center", display: "flex", gap: "0.75rem" }}>
+            <span
+              style={{
+                color: eventCardColors.headerText,
+                fontSize: typography.sizes.xs,
+                fontWeight: typography.weights.bold,
+                whiteSpace: "nowrap",
+              }}
+            >
+              {timeLabel}
+            </span>
           </div>
         </div>
-        <span
+        <div
           style={{
+            color: eventCardColors.headerTextMuted,
             fontSize: typography.sizes.xs,
-            fontWeight: typography.weights.bold,
-          }}
-        >
-          {timeLabel}
-        </span>
-      </div>
-
-      {/* Card Body — Event-specific rendering */}
-      <div style={{ padding: "0.75rem 1rem" }}>
-        <EventPayloadSummary event={event} />
-      </div>
-
-      {/* Expandable Raw Payload */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          borderTop: `1px solid ${colors.gray100}`,
-          padding: "0.5rem",
-          gap: "0.5rem",
-        }}
-      >
-        <button
-          onClick={() => { setIsExpanded(!isExpanded); }}
-          style={{
-            border: "none",
-            background: "none",
-            cursor: "pointer",
-            fontSize: typography.sizes.xs,
-            color: colors.gray400,
             fontWeight: typography.weights.medium,
-            width: "100%",
-            textAlign: "left",
+            letterSpacing: 0,
+            minWidth: 0,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
           }}
+          title={subtitle}
         >
-          {isExpanded ? "Hide raw payload" : "Show raw payload"}
-        </button>
-        {isExpanded && (
-          <pre
+          {subtitle}
+        </div>
+      </div>
+
+      {isBodyExpanded && (
+        <>
+          {/* Card Body — Event-specific rendering */}
+          <div style={{ padding: "0.75rem 1rem" }}>
+            <EventPayloadSummary event={event} />
+          </div>
+
+          {/* Expandable Raw Payload */}
+          <div
             style={{
-              fontSize: typography.sizes.xs,
-              color: colors.gray600,
-              background: colors.gray50,
+              display: "flex",
+              flexDirection: "column",
+              borderTop: `1px solid ${eventCardColors.border}`,
               padding: "0.5rem",
-              margin: 0,
-              borderRadius: radii.md,
-              overflow: "auto",
-              maxHeight: "200px",
-              whiteSpace: "pre-wrap",
-              wordBreak: "break-all",
+              gap: "0.5rem",
             }}
           >
-            {JSON.stringify(event.payload, null, 2)}
-          </pre>
-        )}
-      </div>
+            <button
+              onClick={(mouseEvent) => {
+                stopCardToggle(mouseEvent);
+                setIsRawExpanded(!isRawExpanded);
+              }}
+              style={{
+                border: "none",
+                background: "none",
+                cursor: "pointer",
+                fontSize: typography.sizes.xs,
+                color: eventCardColors.textMuted,
+                fontWeight: typography.weights.medium,
+                width: "100%",
+                textAlign: "left",
+              }}
+              type="button"
+            >
+              {isRawExpanded ? "Hide raw payload" : "Show raw payload"}
+            </button>
+            {isRawExpanded && (
+              <pre
+                style={{
+                  fontSize: typography.sizes.xs,
+                  color: eventCardColors.text,
+                  background: eventCardColors.rawPayload,
+                  padding: "0.5rem",
+                  margin: 0,
+                  borderRadius: radii.md,
+                  overflow: "auto",
+                  maxHeight: "200px",
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-all",
+                }}
+              >
+                {JSON.stringify(event.payload, null, 2)}
+              </pre>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -405,7 +511,7 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
   };
 
   const labelStyle: CSSProperties = {
-    color: colors.gray400,
+    color: eventCardColors.textMuted,
     fontWeight: typography.weights.semibold,
     fontSize: typography.sizes["2xs"],
     textTransform: "uppercase",
@@ -414,7 +520,7 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
   };
 
   const valueStyle: CSSProperties = {
-    color: colors.gray700,
+    color: eventCardColors.text,
     fontFamily: "monospace",
     fontSize: typography.sizes.xs,
     wordBreak: "break-all",
@@ -432,22 +538,6 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
 
     case SessionEventType.SESSION_CONNECTED: {
       const device = payload.device as Record<string, unknown> | null;
-      const { sessionId, connectionId } = event;
-      const videoButtonStyle: CSSProperties = {
-        flexShrink: 0,
-        padding: "0.25rem 0.625rem",
-        border: `1px solid ${colors.green700}`,
-        borderRadius: radii.md,
-        background: colors.green100,
-        color: colors.green700,
-        fontSize: typography.sizes.xs,
-        fontWeight: typography.weights.semibold,
-        cursor: "pointer",
-        display: "flex",
-        alignItems: "center",
-        gap: "0.3rem",
-        whiteSpace: "nowrap",
-      };
 
       return (
         <div
@@ -487,61 +577,10 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
                 </div>
               </>
             ) : (
-              <span style={{ ...valueStyle, color: colors.gray400 }}>
+              <span style={{ ...valueStyle, color: eventCardColors.textMuted }}>
                 No device info
               </span>
             )}
-          </div>
-          <div
-            style={{
-              display: "flex",
-
-              gap: "0.5rem",
-              flexShrink: 0,
-              flexWrap: "wrap",
-              justifyContent: "flex-end",
-            }}
-          >
-            <button
-              onClick={() => { openVideo(sessionId, connectionId); }}
-              style={videoButtonStyle}
-            >
-              <svg
-                width="11"
-                height="11"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                <polyline points="15 3 21 3 21 9" />
-                <line x1="10" y1="14" x2="21" y2="3" />
-              </svg>
-              Preview
-            </button>
-            <button
-              onClick={() => { downloadVideo(sessionId, connectionId); }}
-              style={videoButtonStyle}
-            >
-              <svg
-                width="11"
-                height="11"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
-              Download
-            </button>
           </div>
         </div>
       );
@@ -612,7 +651,7 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
                 }}
               >
                 <span>{condition.left}</span>
-                <span style={{ color: colors.gray400 }}>{condition.operator}</span>
+                <span style={{ color: eventCardColors.textMuted }}>{condition.operator}</span>
                 <span>{condition.right}</span>
               </span>
             ) : (
@@ -658,7 +697,7 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
               </div>
             </>
           ) : (
-            <span style={{ ...valueStyle, color: colors.gray400 }}>
+            <span style={{ ...valueStyle, color: eventCardColors.textMuted }}>
               No device info
             </span>
           )}
@@ -777,7 +816,7 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
 
     case SessionEventType.TAILING_CLOSED: {
       return (
-        <span style={{ ...valueStyle, color: colors.gray400 }}>
+        <span style={{ ...valueStyle, color: eventCardColors.textMuted }}>
           Session ended for tailing connection
         </span>
       );
@@ -816,7 +855,7 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
 
     default:
       return (
-        <span style={{ ...valueStyle, color: colors.gray400 }}>
+        <span style={{ ...valueStyle, color: eventCardColors.textMuted }}>
           Unknown event
         </span>
       );

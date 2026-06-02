@@ -94,7 +94,7 @@ export function SessionsViewer() {
       <main style={{
         flex: 1,
         minHeight: 0,
-        overflowY: 'auto',
+        overflow: 'hidden',
       }}>
         <SessionDetail
           session={selectedSession}
