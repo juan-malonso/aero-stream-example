@@ -12,6 +12,7 @@ import {
   NODE_TYPE_TO_EXECUTION,
 } from "./componentRegistry";
 import {
+  normalizeWorkflowConfig,
   type TowerWorkflow,
   type WorkflowConfig,
   type WorkflowStep,
@@ -419,10 +420,7 @@ export function parseReactFlowToTower(
     start: startStepId,
     steps,
     globals: {},
-    config: config ?? {
-      allowedOrigins: ["http://localhost:3000"],
-      secret: "my-super-secret-token",
-    },
+    config: normalizeWorkflowConfig(config),
   };
 }
 

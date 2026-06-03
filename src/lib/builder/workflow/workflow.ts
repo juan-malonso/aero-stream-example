@@ -23,7 +23,29 @@ export interface WorkflowStep {
 
 export interface WorkflowConfig {
   allowedOrigins: string[];
+  expirationTimeout?: number;
+  inactivityTimeout?: number;
+  maxConnections?: number;
+  resumeConnection?: boolean;
   secret: string;
+}
+
+export const DEFAULT_WORKFLOW_CONFIG: WorkflowConfig = {
+  allowedOrigins: ["http://localhost:3000"],
+  secret: "my-super-secret-token",
+};
+
+export function normalizeWorkflowConfig(config?: Partial<WorkflowConfig> | null): WorkflowConfig {
+  return {
+    allowedOrigins: Array.isArray(config?.allowedOrigins)
+      ? config.allowedOrigins.filter((origin): origin is string => typeof origin === "string")
+      : [...DEFAULT_WORKFLOW_CONFIG.allowedOrigins],
+    expirationTimeout: config?.expirationTimeout,
+    inactivityTimeout: config?.inactivityTimeout,
+    maxConnections: config?.maxConnections,
+    resumeConnection: config?.resumeConnection,
+    secret: typeof config?.secret === "string" ? config.secret : DEFAULT_WORKFLOW_CONFIG.secret,
+  };
 }
 
 export interface TowerWorkflow {

@@ -844,36 +844,33 @@ function InputImportBrowser({
 
         {pane === 'envs' ? (
           <Column align="stretch" gap="0.25rem" style={importBrowserColumnStyle}>
-            <ImportValueButton
-              actionLabel={mode === 'copy' ? 'Copiar' : 'Usar'}
-              hasChildren={false}
-              isSelected={activeValue === '{{env.allowedOrigins}}'}
-              label="allowedOrigins"
-              onClick={() => {
-                const binding = '{{env.allowedOrigins}}';
-                if (mode === 'copy') {
-                  onCopy(binding);
-                  return;
-                }
+            {[
+              'allowedOrigins',
+              'expirationTimeout',
+              'inactivityTimeout',
+              'maxConnections',
+              'resumeConnection',
+              'secret',
+            ].map((field) => {
+              const binding = `{{env.${field}}}`;
+              return (
+                <ImportValueButton
+                  actionLabel={mode === 'copy' ? 'Copiar' : 'Usar'}
+                  hasChildren={false}
+                  isSelected={activeValue === binding}
+                  key={field}
+                  label={field}
+                  onClick={() => {
+                    if (mode === 'copy') {
+                      onCopy(binding);
+                      return;
+                    }
 
-                onInsert('allowedOrigins', binding);
-              }}
-            />
-            <ImportValueButton
-              actionLabel={mode === 'copy' ? 'Copiar' : 'Usar'}
-              hasChildren={false}
-              isSelected={activeValue === '{{env.secret}}'}
-              label="secret"
-              onClick={() => {
-                const binding = '{{env.secret}}';
-                if (mode === 'copy') {
-                  onCopy(binding);
-                  return;
-                }
-
-                onInsert('secret', binding);
-              }}
-            />
+                    onInsert(field, binding);
+                  }}
+                />
+              );
+            })}
           </Column>
         ) : null}
         </div>

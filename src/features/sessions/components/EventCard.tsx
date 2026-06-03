@@ -46,6 +46,7 @@ const EVENT_BORDER_COLORS: Record<SessionEventType, string> = {
   [SessionEventType.SESSION_CREATE]: colors.gray700,
   [SessionEventType.SESSION_CONNECTED]: colors.green600,
   [SessionEventType.SESSION_CLOSED]: colors.green600,
+  [SessionEventType.CONNECTION_REJECTED]: colors.red600,
   [SessionEventType.SESSION_REQUESTED]: colors.cyan600,
   [SessionEventType.FINISH_RENDER]: colors.violet600,
   [SessionEventType.STEP_RENDERED]: colors.violet600,
@@ -84,6 +85,13 @@ export const EVENT_THEMES: Record<SessionEventType, EventTheme> = {
     background: colors.green100,
     label: "Session Closed",
     icon: "×",
+    messageType: "in",
+  },
+  [SessionEventType.CONNECTION_REJECTED]: {
+    accent: colors.red800,
+    background: colors.red100,
+    label: "Connection Rejected",
+    icon: "!",
     messageType: "in",
   },
   [SessionEventType.SESSION_REQUESTED]: {
@@ -597,6 +605,15 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
               </span>
             )}
           </div>
+        </div>
+      );
+    }
+
+    case SessionEventType.CONNECTION_REJECTED: {
+      return (
+        <div style={fieldStyle}>
+          <span style={labelStyle}>Reason</span>
+          <span style={valueStyle}>{formatDisplayValue(payload.reason)}</span>
         </div>
       );
     }

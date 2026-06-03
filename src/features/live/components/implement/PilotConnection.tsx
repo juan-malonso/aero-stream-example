@@ -80,12 +80,48 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
   const [currentStep, setCurrentStep] = useState<React.ReactNode | null>(null);
   const [currentAlert, setCurrentAlert] = useState<React.ReactNode | null>(null);
   const [completionState, setCompletionState] = useState<'error' | 'none' | 'success'>('none');
+  const [cameraWarning, setCameraWarning] = useState<string | null>(null);
 
   useEffect(() => {
     onStatusChange(status);
   }, [status, onStatusChange]);
 
   const pilotReference = useRef<AeroStreamPilot | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const detectCamera = async () => {
+      if (!navigator.mediaDevices?.enumerateDevices) {
+        if (isMounted) setCameraWarning('Camera unavailable in this browser window');
+        return;
+      }
+
+      try {
+        if (navigator.permissions?.query) {
+          const permission = await navigator.permissions.query({ name: 'camera' as PermissionName });
+          if (!isMounted) return;
+          if (permission.state === 'denied') {
+            setCameraWarning('Camera permission is denied');
+            return;
+          }
+        }
+
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        if (!isMounted) return;
+        const hasCamera = devices.some(device => device.kind === 'videoinput');
+        setCameraWarning(hasCamera ? null : 'No camera detected');
+      } catch {
+        if (isMounted) setCameraWarning('Camera availability could not be checked');
+      }
+    };
+
+    void detectCamera();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const resetConnectionState = ({ clearScreen = true }: { clearScreen?: boolean } = {}) => {
     if (timerReference.current) {
@@ -253,6 +289,27 @@ export const PilotConnection = forwardRef<PilotConnectionHandle, PilotConnection
         ) : (currentStep ?? <ReadySyncPlaceholder />)}
 
         {currentAlert}
+        {cameraWarning ? (
+          <div
+            style={{
+              background: 'rgba(245, 158, 11, 0.94)',
+              border: `1px solid ${colors.yellow600}`,
+              borderRadius: '0.75rem',
+              boxShadow: '0 12px 30px rgba(146, 64, 14, 0.2)',
+              color: colors.gray900,
+              fontSize: typography.sizes.sm,
+              fontWeight: typography.weights.semibold,
+              left: '1rem',
+              maxWidth: 'calc(100% - 2rem)',
+              padding: '0.625rem 0.75rem',
+              position: 'absolute',
+              top: '1rem',
+              zIndex: 4,
+            }}
+          >
+            {cameraWarning}
+          </div>
+        ) : null}
       </div>
     </div>
   );

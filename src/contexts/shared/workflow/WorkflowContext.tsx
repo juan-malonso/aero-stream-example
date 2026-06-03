@@ -3,7 +3,7 @@
 import { applyEdgeChanges, applyNodeChanges, type Edge, type Node, type OnEdgesChange, type OnNodesChange } from '@xyflow/react';
 import React, { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 
-import { type WorkflowConfig, type WorkflowMetadata } from '@/lib/builder/workflow/workflow';
+import { DEFAULT_WORKFLOW_CONFIG, normalizeWorkflowConfig, type WorkflowConfig, type WorkflowMetadata } from '@/lib/builder/workflow/workflow';
 import { workflowService } from '@/lib/builder/workflow/workflow.service';
 import {
   parseReactFlowToTower,
@@ -45,10 +45,7 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
   const [activeWorkflowName, setActiveWorkflowName] = useState('New Workflow');
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
-  const [security, setSecurity] = useState({
-    allowedOrigins: ['http://localhost:3000'],
-    secret: 'my-super-secret-token',
-  });
+  const [security, setSecurity] = useState(DEFAULT_WORKFLOW_CONFIG);
   const [isDraftWorkflow, setIsDraftWorkflow] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -93,10 +90,7 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
       setActiveWorkflowId(towerWorkflow.id ?? id);
       setActiveWorkflowName(towerWorkflow.name);
       setIsDraftWorkflow(false);
-      setSecurity({
-        allowedOrigins: towerWorkflow.config?.allowedOrigins ?? ['http://localhost:3000'],
-        secret: towerWorkflow.config?.secret ?? 'my-super-secret-token',
-      });
+      setSecurity(normalizeWorkflowConfig(towerWorkflow.config));
     } catch (error) {
       console.error('Error selecting workflow:', error);
     } finally {
@@ -125,7 +119,7 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
     setActiveWorkflowId(null);
     setActiveWorkflowName('New Workflow');
     setIsDraftWorkflow(true);
-    setSecurity({ allowedOrigins: ['http://localhost:3000'], secret: 'my-super-secret-token' });
+    setSecurity(DEFAULT_WORKFLOW_CONFIG);
     setNodes([]);
     setEdges([]);
   }, []);

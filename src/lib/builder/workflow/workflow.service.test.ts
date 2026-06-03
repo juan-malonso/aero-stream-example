@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { createWorkflowService } from './workflow.service.ts';
-import type { TowerWorkflow } from './workflow.ts';
+import { DEFAULT_WORKFLOW_CONFIG, type TowerWorkflow } from './workflow.ts';
 
 const sampleWorkflow: TowerWorkflow = {
   id: 'workflow-1',
@@ -12,6 +12,7 @@ const sampleWorkflow: TowerWorkflow = {
   steps: {},
   globals: {},
   config: {
+    ...DEFAULT_WORKFLOW_CONFIG,
     allowedOrigins: ['http://localhost:3000'],
     secret: 'test-secret',
   },

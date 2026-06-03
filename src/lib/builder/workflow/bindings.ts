@@ -199,7 +199,14 @@ export function isValidBinding(
   if (!COMPLETE_BINDING_PATTERN.test(value)) return false;
 
   const path = value.slice(2, -2);
-  if (path === 'env.allowedOrigins' || path === 'env.secret') return true;
+  if (
+    path === 'env.allowedOrigins'
+    || path === 'env.expirationTimeout'
+    || path === 'env.inactivityTimeout'
+    || path === 'env.maxConnections'
+    || path === 'env.resumeConnection'
+    || path === 'env.secret'
+  ) return true;
 
   const parts = path.split('.');
   if (parts.length < 3 || parts[0] !== 'steps' || parts[2] !== 'result') return false;

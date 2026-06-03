@@ -25,6 +25,7 @@ import {
   useWorkflowGraph,
   useWorkflowMetadata,
 } from '@/contexts/shared/workflow/useWorkflow';
+import type { WorkflowConfig } from '@/lib/builder/workflow/workflow';
 import { resolveWorkflowNodeOverlaps } from '@/lib/builder/workflow/workflowAdapter';
 import { generateId } from '@/lib/shared/uuid';
 import { edgeFieldStyle, edgeFlowStyle } from '@/styles/theme';
@@ -496,6 +497,17 @@ function WorkflowSettingsDrawer({
     setSecurity(current => ({ ...current, allowedOrigins: nextOrigins }));
   };
 
+  const setOptionalPositiveInteger = (
+    field: 'expirationTimeout' | 'inactivityTimeout' | 'maxConnections',
+    value: string,
+  ) => {
+    const parsed = Number.parseInt(value, 10);
+    setSecurity(current => ({
+      ...current,
+      [field]: value.length > 0 && Number.isFinite(parsed) && parsed > 0 ? parsed : undefined,
+    }));
+  };
+
   return (
     <div
       onMouseDown={onClose}
@@ -600,8 +612,93 @@ function WorkflowSettingsDrawer({
             value={security.secret}
           />
         </Column>
+
+        <Column align="stretch" gap="0.375rem">
+          <div style={toolbarLabelStyle}>Max Connections</div>
+          <OptionalNumberSetting
+            onChange={(value) => { setOptionalPositiveInteger('maxConnections', value); }}
+            value={security.maxConnections}
+          />
+        </Column>
+
+        <Column align="stretch" gap="0.375rem">
+          <div style={toolbarLabelStyle}>Expiration Timeout</div>
+          <OptionalNumberSetting
+            onChange={(value) => { setOptionalPositiveInteger('expirationTimeout', value); }}
+            value={security.expirationTimeout}
+          />
+        </Column>
+
+        <Column align="stretch" gap="0.375rem">
+          <div style={toolbarLabelStyle}>Inactivity Timeout</div>
+          <OptionalNumberSetting
+            onChange={(value) => { setOptionalPositiveInteger('inactivityTimeout', value); }}
+            value={security.inactivityTimeout}
+          />
+        </Column>
+
+        <Column align="stretch" gap="0.375rem">
+          <div style={toolbarLabelStyle}>Resume Connection</div>
+          <ResumeConnectionSetting
+            onChange={(value) => {
+              setSecurity(current => ({ ...current, resumeConnection: value }));
+            }}
+            value={security.resumeConnection}
+          />
+        </Column>
       </Column>
     </div>
+  );
+}
+
+function OptionalNumberSetting({
+  onChange,
+  value,
+}: {
+  onChange: (value: string) => void;
+  value?: number;
+}) {
+  return (
+    <Input
+      min={1}
+      onChange={(event) => { onChange(event.target.value); }}
+      placeholder="Default"
+      style={{
+        fontSize: typography.sizes.md,
+      }}
+      type="number"
+      value={value ?? ''}
+    />
+  );
+}
+
+function ResumeConnectionSetting({
+  onChange,
+  value,
+}: {
+  onChange: (value: boolean | undefined) => void;
+  value?: boolean;
+}) {
+  return (
+    <select
+      onChange={(event) => {
+        onChange(event.target.value === 'default' ? undefined : event.target.value === 'enabled');
+      }}
+      style={{
+        background: colors.gray50,
+        border: `1px solid ${colors.gray200}`,
+        borderRadius: radii.md,
+        color: colors.gray700,
+        fontSize: typography.sizes.md,
+        minHeight: '38px',
+        padding: '0.5rem 0.75rem',
+      }}
+      value={value === undefined ? 'default' : value ? 'enabled' : 'disabled'}
+    >
+      <option value="default">Default</option>
+      <option value="enabled">Enabled</option>
+      <option value="disabled">Disabled</option>
+    </select>
   );
 }
 
@@ -715,7 +812,4 @@ const toolbarActionButtonStyle: React.CSSProperties = {
   padding: '0 0.75rem',
 };
 
-interface WorkflowSecurity {
-  allowedOrigins: string[];
-  secret: string;
-}
+type WorkflowSecurity = WorkflowConfig;
