@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 
-import { requireAccessApi } from '@/lib/auth/access-token';
-import { parsePipeMetrics } from '@/lib/sessions/r2-store';
-import { emptyPipeMetrics } from '@/lib/sessions/store';
-import { getControllerApiUrl } from '@/lib/shared/config/workerEndpoints';
+import { getControllerApiUrl } from '@/libs/config/workerEndpoints';
+import { requireAccessApi } from '@/libs/security/access-token';
+import { parsePipeMetrics } from '@/modules/aero-stream-tracker/lib/sessions/r2-store';
+import { emptyPipeMetrics } from '@/modules/aero-stream-tracker/lib/sessions/store';
 
 export async function GET(
   request: Request,

@@ -1,5 +1,5 @@
-import { WorkflowBuilder } from '@/features/builder';
+import { BuilderApp } from '@/modules/aero-stream-builder/app';
 
 export default function BuilderPage() {
-  return <WorkflowBuilder />;
+  return <BuilderApp />;
 }

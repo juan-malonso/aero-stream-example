@@ -14,7 +14,7 @@
     "deps": "node ../aero-stream/scripts/dependency-analysis.mjs src --name example",
     "start": "next start",
     "lint": "eslint .",
-    "test": "node --experimental-strip-types --test src/aero-stream-example-library/builder.test.ts src/features/sessions/components/SessionTimeline.test.ts src/lib/sessions/ingest.test.ts src/lib/shared/config/workerEndpoints.test.ts src/lib/shared/display.test.ts src/lib/sessions/store.test.ts src/lib/live/tower/towerRuntime.service.test.ts src/lib/shared/video/downloadService.test.ts src/lib/builder/workflow/bindings.test.ts src/lib/builder/workflow/conditionEvaluator.test.ts src/lib/builder/workflow/previewRuntime.test.ts src/lib/builder/workflow/workflow.service.test.ts"
+    "test": "node --experimental-strip-types --test src/modules/aero-stream-builder/lib/steps/builder.test.ts src/modules/aero-stream-tracker/components/SessionTimeline.test.ts src/modules/aero-stream-tracker/lib/sessions/ingest.test.ts src/libs/config/workerEndpoints.test.ts src/libs/ui/display.test.ts src/modules/aero-stream-tracker/lib/sessions/store.test.ts src/modules/aero-stream-runner/lib/tower/towerRuntime.service.test.ts src/modules/aero-stream-tracker/lib/video/downloadService.test.ts src/modules/aero-stream-builder/lib/workflow/bindings.test.ts src/modules/aero-stream-builder/lib/workflow/conditionEvaluator.test.ts src/modules/aero-stream-builder/lib/workflow/previewRuntime.test.ts src/modules/aero-stream-builder/lib/workflow/workflow.service.test.ts"
   },
   "dependencies": {
     "@xyflow/react": "^12.10.2",

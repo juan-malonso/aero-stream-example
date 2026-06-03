@@ -5,7 +5,7 @@ import {
   isSecureCookieRequest,
   isValidAccessToken,
   resolveAccessCookieDomain,
-} from '@/lib/auth/access-token';
+} from '@/libs/security/access-token';
 
 const ACCESS_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24;
 

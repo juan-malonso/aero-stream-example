@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 
-import { requireAccessApi } from '@/lib/auth/access-token';
-import { getDestinationEventsBucket } from '@/lib/sessions/cloudflare';
-import { getSessionDetailFromR2 } from '@/lib/sessions/r2-store';
+import { requireAccessApi } from '@/libs/security/access-token';
+import { getDestinationEventsBucket } from '@/modules/aero-stream-tracker/lib/sessions/event-bucket';
+import { getSessionDetailFromR2 } from '@/modules/aero-stream-tracker/lib/sessions/r2-store';
 
 export async function GET(
   _request: Request,

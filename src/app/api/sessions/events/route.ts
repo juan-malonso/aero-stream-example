@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 
-import { getDestinationEventsBucket } from '../../../../lib/sessions/cloudflare';
-import { parseSessionEvent } from '../../../../lib/sessions/ingest';
-import { addEventToR2 } from '../../../../lib/sessions/r2-store';
+import { getDestinationEventsBucket } from '@/modules/aero-stream-tracker/lib/sessions/event-bucket';
+import { parseSessionEvent } from '@/modules/aero-stream-tracker/lib/sessions/ingest';
+import { addEventToR2 } from '@/modules/aero-stream-tracker/lib/sessions/r2-store';
 
 export async function POST(request: Request): Promise<NextResponse> {
   let body: unknown;

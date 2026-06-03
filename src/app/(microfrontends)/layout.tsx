@@ -1,11 +1,12 @@
 import type { ReactNode } from 'react';
 
-import { requireAccessPage } from '@/lib/auth/access-token';
-
-import { MicrofrontendShell } from './MicrofrontendShell';
+import { SecurityProvider } from '@/libs/security';
+import { AppRouteFrame } from '@/modules/home/app';
 
 export default async function MicrofrontendsLayout({ children }: { children: ReactNode }) {
-  await requireAccessPage();
-
-  return <MicrofrontendShell>{children}</MicrofrontendShell>;
+  return (
+    <SecurityProvider>
+      <AppRouteFrame>{children}</AppRouteFrame>
+    </SecurityProvider>
+  );
 }

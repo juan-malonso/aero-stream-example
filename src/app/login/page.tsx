@@ -70,7 +70,7 @@ export default function LoginPage() {
     });
 
     if (response.ok) {
-      window.location.replace('/live');
+      window.location.replace('/home');
       return;
     }
 

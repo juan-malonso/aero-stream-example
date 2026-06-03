@@ -1,4 +1,4 @@
-import { AuthRefresh } from '@/components/AuthRefresh';
+import { AuthRefresh } from '@/libs/security';
 
 import '../styles/global.css';
 

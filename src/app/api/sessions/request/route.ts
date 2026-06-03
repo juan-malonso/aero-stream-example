@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { requireAccessApi } from '@/lib/auth/access-token';
+import { requireAccessApi } from '@/libs/security/access-token';
 
 const firstNames = ['Ada', 'Grace', 'Linus', 'Margaret', 'Alan', 'Katherine', 'Barbara', 'Ken'];
 const lastNames = ['Lovelace', 'Hopper', 'Torvalds', 'Hamilton', 'Turing', 'Johnson', 'Liskov', 'Thompson'];
