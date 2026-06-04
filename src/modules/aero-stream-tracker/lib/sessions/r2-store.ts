@@ -55,6 +55,7 @@ export async function addEventToR2(bucket: SessionsEventBucket, event: SessionEv
 function isMetricKey(value: string): value is PipeMetricKey {
   return value === 'browser.inbound_latency_ms'
     || value === 'browser.interaction_count'
+    || value === 'browser.buffered_bytes'
     || value === 'browser.memory_used_bytes'
     || value === 'pipe.encrypted_bytes'
     || value === 'pipe.latency_ms'

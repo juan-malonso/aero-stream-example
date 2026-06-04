@@ -129,6 +129,7 @@ test('adds connection metrics to session detail', () => {
     'connection-1': {
       'browser.inbound_latency_ms': [],
       'browser.interaction_count': [],
+      'browser.buffered_bytes': [],
       'browser.memory_used_bytes': [],
       'pipe.encrypted_bytes': [[1_780_401_600_000, 1536]],
       'pipe.latency_ms': [[1_780_401_600_000, 42]],

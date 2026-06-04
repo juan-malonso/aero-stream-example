@@ -3386,22 +3386,22 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"aero-stream-pilot-core@file:lib/aero-stream-pilot-core/pkg::locator=aero-stream-pilot%40file%3A..%2Faero-stream%2Fapps%2Faero-stream-pilot%23..%2Faero-stream%2Fapps%2Faero-stream-pilot%3A%3Ahash%3Dc50a81%26locator%3Daero-stream-example%2540workspace%253A.":
+"aero-stream-pilot-core@file:lib/aero-stream-pilot-core/pkg::locator=aero-stream-pilot%40file%3A..%2Faero-stream%2Fapps%2Faero-stream-pilot%23..%2Faero-stream%2Fapps%2Faero-stream-pilot%3A%3Ahash%3D0c394c%26locator%3Daero-stream-example%2540workspace%253A.":
   version: 0.1.0
-  resolution: "aero-stream-pilot-core@file:lib/aero-stream-pilot-core/pkg#lib/aero-stream-pilot-core/pkg::hash=fb545b&locator=aero-stream-pilot%40file%3A..%2Faero-stream%2Fapps%2Faero-stream-pilot%23..%2Faero-stream%2Fapps%2Faero-stream-pilot%3A%3Ahash%3Dc50a81%26locator%3Daero-stream-example%2540workspace%253A."
-  checksum: 10c0/5d979b7bb137f3488ea6b22993aac0a5c7943c026e13e839b38d6c5df7981cc14060258ecd5dd37c05a8d2a065bb54cc5bf7ea8f502566cfbe295a5d9e4617e1
+  resolution: "aero-stream-pilot-core@file:lib/aero-stream-pilot-core/pkg#lib/aero-stream-pilot-core/pkg::hash=d28933&locator=aero-stream-pilot%40file%3A..%2Faero-stream%2Fapps%2Faero-stream-pilot%23..%2Faero-stream%2Fapps%2Faero-stream-pilot%3A%3Ahash%3D0c394c%26locator%3Daero-stream-example%2540workspace%253A."
+  checksum: 10c0/f50e975d4166d3211e926b032e172f70cefe08f7e4cc61da9445ef07a1e4a4c38c96ac1d3cc1c4a95a9a3bac88cdd0830ec677f558e823281ddd6290ccd6b505
   languageName: node
   linkType: hard
 
 "aero-stream-pilot@file:../aero-stream/apps/aero-stream-pilot::locator=aero-stream-example%40workspace%3A.":
   version: 1.0.0
-  resolution: "aero-stream-pilot@file:../aero-stream/apps/aero-stream-pilot#../aero-stream/apps/aero-stream-pilot::hash=c50a81&locator=aero-stream-example%40workspace%3A."
+  resolution: "aero-stream-pilot@file:../aero-stream/apps/aero-stream-pilot#../aero-stream/apps/aero-stream-pilot::hash=0c394c&locator=aero-stream-example%40workspace%3A."
   dependencies:
     aero-stream-pilot-core: "file:lib/aero-stream-pilot-core/pkg"
   peerDependencies:
     react: "*"
     react-dom: "*"
-  checksum: 10c0/3eb5c52a3011a9ded10f032c1c2684fc7a8d47587d2eb0076dab64cc0f9df39a06d44a79d7d5c1f73aed5d9875670579f22966cab630f9d99651f1f4d017f5f0
+  checksum: 10c0/a16ed40c4e4d1f9d1457dddfe93c2dbf78c42bc7aff0006748f3ffb4ad1fc2221857bb944923fa21b4a88876388cd9252dc1b0eb9f8dbf267c5bcbe3c8a635b3
   languageName: node
   linkType: hard
 

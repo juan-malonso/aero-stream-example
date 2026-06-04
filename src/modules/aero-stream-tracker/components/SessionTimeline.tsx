@@ -174,9 +174,9 @@ const panelColors = {
   text: colors.gray900,
 };
 
-type ChartMode = "activity" | "latency" | "memory" | "traffic";
+type ChartMode = "activity" | "buffer" | "latency" | "memory" | "traffic";
 
-const CHART_MODES: ChartMode[] = ["traffic", "latency", "activity", "memory"];
+const CHART_MODES: ChartMode[] = ["traffic", "buffer", "latency", "activity", "memory"];
 
 interface ChartHoverState {
   leftPercent: number;
@@ -298,6 +298,31 @@ function createMemorySeries(session: Session, layout: SessionTimelineLayout): Me
         color: lane.color,
         id: lane.id,
         label: connectionMetricLabel(connectionIndex),
+        points,
+      }];
+    });
+}
+
+function createBufferSeries(session: Session, layout: SessionTimelineLayout): MetricSeries[] {
+  return layout.lanes
+    .filter((lane) => lane.kind === "connection")
+    .flatMap((lane, connectionIndex) => {
+      const connection = session.connections.find((item) => item.connectionId === lane.connectionId);
+      const samples = connection?.metrics["browser.buffered_bytes"] ?? [];
+      if (samples.length === 0) return [];
+      const points = samples
+        .slice()
+        .sort(([left], [right]) => left - right)
+        .map(([timestampMs, bytes]) => ({
+          offsetPercent: metricOffsetPercent(timestampMs, layout),
+          timestampMs,
+          value: bytes / BYTES_PER_MEBIBYTE,
+        }));
+
+      return [{
+        color: lane.color,
+        id: `${lane.id}-buffer`,
+        label: `${connectionMetricLabel(connectionIndex)} · buffered`,
         points,
       }];
     });
@@ -429,6 +454,7 @@ function metricAreaPath(
 function chartValueMax(mode: ChartMode, observedMax: number): number {
   const padded = observedMax * 1.2;
   if (mode === "activity") return Math.max(1, Math.ceil(padded));
+  if (mode === "buffer") return Math.max(0.25, padded);
   if (mode === "latency") return Math.max(8, padded);
   if (mode === "memory") return Math.max(16, padded);
   return Math.max(0.5, padded);
@@ -446,6 +472,7 @@ function chartAxisLabels(mode: ChartMode, height: number, valueMax: number) {
 
 function chartModeLabel(mode: ChartMode): string {
   if (mode === "activity") return "User Activity";
+  if (mode === "buffer") return "Socket Buffer";
   if (mode === "latency") return "Pipe Latency";
   if (mode === "memory") return "Browser Memory";
   return "Pipe Traffic";
@@ -453,10 +480,16 @@ function chartModeLabel(mode: ChartMode): string {
 
 function formatMetricValue(mode: ChartMode, value: number): string {
   if (mode === "activity") return formatEventCountValue(value);
+  if (mode === "buffer") return formatByteSizeValue(value);
   if (mode === "latency") return value <= 0 ? "0" : `${value < 10 ? value.toFixed(1) : Math.round(value)} ms`;
   if (mode === "memory") return value <= 0 ? "0" : `${value < 100 ? value.toFixed(1) : Math.round(value)} MiB`;
   if (value <= 0) return "0";
   return value < 1 ? `${Math.round(value * 1024)} KiB/s` : `${value.toFixed(2)} MiB/s`;
+}
+
+function formatByteSizeValue(value: number): string {
+  if (value <= 0) return "0";
+  return value < 1 ? `${Math.round(value * 1024)} KiB` : `${value.toFixed(2)} MiB`;
 }
 
 function formatTrafficEventValue(value: number): string {
@@ -2146,11 +2179,12 @@ export function SessionTimeline({ session }: { session: Session }) {
   const zoomLevel = TIMELINE_ZOOM_LEVELS[safeZoomIndex] ?? TIMELINE_ZOOM_LEVELS.at(-1)!;
   const layout = useMemo(() => createSessionTimelineLayout(session, zoomLevel.bucketMs), [session, zoomLevel.bucketMs]);
   const traffic = useMemo(() => createTrafficSeries(session, layout), [layout, session]);
+  const buffer = useMemo(() => createBufferSeries(session, layout), [layout, session]);
   const latency = useMemo(() => createLatencySeries(session, layout), [layout, session]);
   const activity = useMemo(() => createActivitySeries(session, layout), [layout, session]);
   const memory = useMemo(() => createMemorySeries(session, layout), [layout, session]);
   const stepSegments = useMemo(() => createStepTimelineSegments(session.events, layout), [layout, session.events]);
-  const chartSeries = chartMode === "latency" ? latency : chartMode === "activity" ? activity : chartMode === "memory" ? memory : traffic;
+  const chartSeries = chartMode === "buffer" ? buffer : chartMode === "latency" ? latency : chartMode === "activity" ? activity : chartMode === "memory" ? memory : traffic;
   const activeWidth = canvasWidth(layout, session.events.length, zoomLevel);
   const visualWidth = activeWidth + POST_SESSION_VISUAL_SPACE_PX;
   const activeEndPercent = (activeWidth / visualWidth) * 100;

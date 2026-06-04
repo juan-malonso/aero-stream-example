@@ -24,6 +24,7 @@ export function emptyPipeMetrics(): PipeMetrics {
   return {
     'browser.inbound_latency_ms': [],
     'browser.interaction_count': [],
+    'browser.buffered_bytes': [],
     'browser.memory_used_bytes': [],
     'pipe.encrypted_bytes': [],
     'pipe.latency_ms': [],

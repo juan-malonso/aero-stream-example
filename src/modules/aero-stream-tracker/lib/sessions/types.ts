@@ -43,6 +43,7 @@ export interface SessionEventEnvelope {
 }
 
 export type PipeMetricKey =
+  | 'browser.buffered_bytes'
   | 'browser.inbound_latency_ms'
   | 'browser.interaction_count'
   | 'browser.memory_used_bytes'
