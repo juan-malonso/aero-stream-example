@@ -1,54 +1,25 @@
 'use client';
 
-import React from 'react';
+import type { CSSProperties } from 'react';
 
-import { colors, radii, shadows, typography } from '@/styles/tokens';
+import { colors, radii, typography } from '@/styles/tokens';
 
 interface CompletionScreenProperties {
   ok: boolean;
 }
 
 export function CompletionScreen({ ok }: CompletionScreenProperties) {
-  const accent = ok ? colors.green700 : colors.amber600;
-  const bg = ok ? colors.green100 : colors.amber50;
+  const accent = ok ? colors.green400 : colors.amber400;
+  const bg = ok ? 'rgba(34, 197, 94, 0.14)' : 'rgba(245, 158, 11, 0.14)';
   const title = ok ? 'Proceso completado' : 'Proceso finalizado con error';
   const subtitle = ok
     ? 'La sesión ha concluido correctamente.'
     : 'La sesión terminó de forma inesperada.';
 
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      height: '100%',
-      padding: '2rem',
-    }}>
-      <div style={{
-        background: colors.white,
-        border: `1px solid ${colors.gray100}`,
-        borderTop: `4px solid ${accent}`,
-        borderRadius: radii.xl,
-        boxShadow: shadows.lg,
-        padding: '2.5rem 2rem',
-        width: '100%',
-        maxWidth: '20rem',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '1.25rem',
-        textAlign: 'center',
-      }}>
-        <div style={{
-          width: '3.5rem',
-          height: '3.5rem',
-          background: bg,
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
-        }}>
+    <div style={screenStyle}>
+      <div style={{ ...panelStyle, borderTop: `4px solid ${accent}` }}>
+        <div style={{ ...iconStyle, background: bg, border: `1px solid ${accent}` }}>
           {ok ? (
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12" />
@@ -62,38 +33,80 @@ export function CompletionScreen({ ok }: CompletionScreenProperties) {
           )}
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
-          <span style={{
-            fontSize: typography.sizes.base,
-            fontWeight: typography.weights.bold,
-            color: colors.gray900,
-          }}>
-            {title}
-          </span>
-          <span style={{
-            fontSize: typography.sizes.sm,
-            color: colors.gray500,
-            lineHeight: 1.5,
-          }}>
-            {subtitle}
-          </span>
+        <div style={copyStyle}>
+          <span style={titleStyle}>{title}</span>
+          <span style={subtitleStyle}>{subtitle}</span>
         </div>
 
-        <div style={{
-          width: '100%',
-          height: '1px',
-          background: colors.gray100,
-        }} />
+        <div style={dividerStyle} />
 
-        <span style={{
-          fontSize: typography.sizes.xs,
-          color: colors.gray400,
-          fontFamily: 'monospace',
-          letterSpacing: '0.03em',
-        }}>
-          {ok ? 'SESSION COMPLETED' : 'SESSION ENDED'}
-        </span>
+        <span style={statusStyle}>{ok ? 'SESSION COMPLETED' : 'SESSION ENDED'}</span>
       </div>
     </div>
   );
 }
+
+const screenStyle: CSSProperties = {
+  alignItems: 'center',
+  background: colors.gray300,
+  display: 'flex',
+  height: '100%',
+  justifyContent: 'center',
+  padding: '2rem',
+};
+
+const panelStyle: CSSProperties = {
+  alignItems: 'center',
+  background: '#111827',
+  border: `1px solid ${colors.gray700}`,
+  borderRadius: radii.xl,
+  boxShadow: '0 24px 70px rgba(15, 23, 42, 0.28)',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '1.1rem',
+  maxWidth: '22rem',
+  padding: '2.25rem 2rem',
+  textAlign: 'center',
+  width: '100%',
+};
+
+const iconStyle: CSSProperties = {
+  alignItems: 'center',
+  borderRadius: '50%',
+  display: 'flex',
+  flexShrink: 0,
+  height: '3.5rem',
+  justifyContent: 'center',
+  width: '3.5rem',
+};
+
+const copyStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '0.375rem',
+};
+
+const titleStyle: CSSProperties = {
+  color: colors.white,
+  fontSize: typography.sizes.base,
+  fontWeight: typography.weights.bold,
+};
+
+const subtitleStyle: CSSProperties = {
+  color: colors.gray300,
+  fontSize: typography.sizes.sm,
+  lineHeight: 1.5,
+};
+
+const dividerStyle: CSSProperties = {
+  background: colors.gray700,
+  height: '1px',
+  width: '100%',
+};
+
+const statusStyle: CSSProperties = {
+  color: colors.gray400,
+  fontFamily: 'monospace',
+  fontSize: typography.sizes.xs,
+  letterSpacing: '0.03em',
+};

@@ -139,7 +139,7 @@ function GenericAlert({ alertType, data, submit, reject }: AlertProperties) {
             margin: 0,
             fontSize: typography.sizes.lg,
             fontWeight: typography.weights.bold,
-            color: colors.white,
+            color: colors.gray900,
           }}
         >
           {alertType}
@@ -148,8 +148,9 @@ function GenericAlert({ alertType, data, submit, reject }: AlertProperties) {
           style={{
             margin: 0,
             fontSize: typography.sizes.xs,
-            color: "rgba(255,255,255,0.8)",
-            background: "rgba(0,0,0,0.15)",
+            color: colors.gray700,
+            background: colors.gray50,
+            border: `1px solid ${colors.gray200}`,
             borderRadius: radii.md,
             padding: "0.75rem",
             overflow: "auto",
@@ -195,7 +196,7 @@ function DeviceRow({
       <span
         style={{
           fontSize: typography.sizes.xs,
-          color: "rgba(255,255,255,0.5)",
+          color: colors.gray500,
           fontWeight: typography.weights.semibold,
           textTransform: "uppercase" as const,
           letterSpacing: "0.05em",
@@ -207,7 +208,7 @@ function DeviceRow({
       <span
         style={{
           fontSize: typography.sizes.sm,
-          color: "rgba(255,255,255,0.9)",
+          color: colors.gray800,
           fontFamily: mono ? "monospace" : undefined,
           textAlign: "right" as const,
           wordBreak: "break-all" as const,

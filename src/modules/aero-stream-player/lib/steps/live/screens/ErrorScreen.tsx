@@ -1,13 +1,14 @@
 import { type AeroStreamErrorScreen } from 'aero-stream-pilot';
 import React from 'react';
 
-import { Column, Row } from '@/libs/ui';
+import { Button, Column, Row } from '@/libs/ui';
 import { colors, typography } from '@/styles/tokens';
 
 import { StepCard } from '../StepCard';
 
 export const ErrorScreen: AeroStreamErrorScreen<React.ReactNode> = ({
   data,
+  submit,
 }) => {
   return (
     <StepCard title="Session Interrupted">
@@ -60,6 +61,10 @@ export const ErrorScreen: AeroStreamErrorScreen<React.ReactNode> = ({
         }}>
           {data.code}
         </span>
+
+        <Button onClick={submit} variant="primary" size="lg">
+          Finish session
+        </Button>
       </Column>
     </StepCard>
   );
