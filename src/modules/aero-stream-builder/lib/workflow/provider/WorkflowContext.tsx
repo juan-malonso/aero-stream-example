@@ -3,7 +3,7 @@
 import { applyEdgeChanges, applyNodeChanges, type Edge, type Node, type OnEdgesChange, type OnNodesChange } from '@xyflow/react';
 import React, { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 
-import { DEFAULT_WORKFLOW_CONFIG, normalizeWorkflowConfig, type WorkflowConfig, type WorkflowMetadata } from '../workflow';
+import { DEFAULT_WORKFLOW_CONFIG, type WorkflowConfig, type WorkflowMetadata } from '../workflow';
 import { workflowService } from '../workflow.service';
 import {
   parseReactFlowToTower,
@@ -13,7 +13,7 @@ import {
 
 interface WorkflowMetadataContextProperties {
   workflows: WorkflowMetadata[];
-  activeWorkflowId: string | null;
+  activeWorkflowId: string | undefined;
   activeWorkflowName: string;
   security: WorkflowConfig;
   setSecurity: React.Dispatch<React.SetStateAction<WorkflowConfig>>;
@@ -41,7 +41,7 @@ export const WorkflowGraphContext = createContext<WorkflowGraphContextProperties
 
 export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
   const [workflows, setWorkflows] = useState<WorkflowMetadata[]>([]);
-  const [activeWorkflowId, setActiveWorkflowId] = useState<string | null>(null);
+  const [activeWorkflowId, setActiveWorkflowId] = useState<string | undefined>(undefined);
   const [activeWorkflowName, setActiveWorkflowName] = useState('New Workflow');
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
@@ -90,7 +90,7 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
       setActiveWorkflowId(towerWorkflow.id ?? id);
       setActiveWorkflowName(towerWorkflow.name);
       setIsDraftWorkflow(false);
-      setSecurity(normalizeWorkflowConfig(towerWorkflow.config));
+      setSecurity(towerWorkflow.config);
     } catch (error) {
       console.error('Error selecting workflow:', error);
     } finally {
@@ -105,7 +105,7 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
       if (activeWorkflowId) payload.id = activeWorkflowId;
 
       const saved = await workflowService.upsertWorkflow(payload);
-      setActiveWorkflowId(saved.id ?? null);
+      setActiveWorkflowId(saved.id ?? undefined);
       setIsDraftWorkflow(false);
       await loadWorkflows();
     } catch (error) {
@@ -116,7 +116,7 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
   }, [nodes, edges, activeWorkflowName, activeWorkflowId, security, loadWorkflows]);
 
   const createNewWorkflow = useCallback(() => {
-    setActiveWorkflowId(null);
+    setActiveWorkflowId(undefined);
     setActiveWorkflowName('New Workflow');
     setIsDraftWorkflow(true);
     setSecurity(DEFAULT_WORKFLOW_CONFIG);

@@ -34,12 +34,12 @@ function compareEvents(left: SessionEventEnvelope, right: SessionEventEnvelope):
   return left.eventId.localeCompare(right.eventId);
 }
 
-function readStep(event: SessionEventEnvelope): EventStep | null {
+function readStep(event: SessionEventEnvelope): EventStep | undefined {
   const step = event.payload.step;
-  if (typeof step !== "object" || step === null) return null;
+  if (typeof step !== "object" || step === null) return undefined;
 
   const candidate = step as Record<string, unknown>;
-  if (typeof candidate.id !== "string" || typeof candidate.name !== "string" || typeof candidate.type !== "string") return null;
+  if (typeof candidate.id !== "string" || typeof candidate.name !== "string" || typeof candidate.type !== "string") return undefined;
 
   return {
     id: candidate.id,
@@ -59,7 +59,7 @@ function isSessionCloseEvent(event: SessionEventEnvelope): boolean {
 export function createStepTimelineSegments(events: SessionEventEnvelope[], layout: SessionTimelineLayout): StepTimelineSegment[] {
   const sortedEvents = [...events].sort(compareEvents);
   const segments: StepTimelineSegment[] = [];
-  let activeStep: EventStep | null = null;
+  let activeStep: EventStep | undefined = undefined;
   let activeStartMs = layout.startMs;
 
   const closeActiveStep = (endMs: number) => {
@@ -87,7 +87,7 @@ export function createStepTimelineSegments(events: SessionEventEnvelope[], layou
 
     if (isSessionCloseEvent(event)) {
       closeActiveStep(eventBucketStartMs);
-      activeStep = null;
+      activeStep = undefined;
       break;
     }
 

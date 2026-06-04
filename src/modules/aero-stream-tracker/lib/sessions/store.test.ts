@@ -79,7 +79,7 @@ test('derives summaries and detail from persisted event lists', () => {
       type: SessionEventType.SESSION_CONNECTED,
       occurredAt: '2026-05-16T00:01:00.000Z',
       connectionId: 'connection-1',
-      payload: { device: { browser: 'test' } },
+      payload: { device: { browser: 'test' }, metadata: { termsVersion: '1.0.0' } },
     }),
   ];
 
@@ -89,6 +89,29 @@ test('derives summaries and detail from persisted event lists', () => {
 
   const detail = getSessionDetailFromEvents(events, 'session-1');
   assert.equal(detail?.connections[0]?.device?.browser, 'test');
+  assert.deepEqual(detail?.connections[0]?.metadata, { termsVersion: '1.0.0' });
+});
+
+test('keeps request data from session requested events', () => {
+  const request = {
+    forwardedIp: '198.51.100.25',
+    ip: '198.51.100.25',
+    origin: 'https://client.example',
+    referer: 'https://client.example/live/session-1',
+  };
+  const events = [
+    event(),
+    event({
+      eventId: 'event-2',
+      type: SessionEventType.SESSION_REQUESTED,
+      occurredAt: '2026-05-16T00:01:00.000Z',
+      connectionId: 'connection-1',
+      payload: { device: {}, metadata: {}, request },
+    }),
+  ];
+
+  const detail = getSessionDetailFromEvents(events, 'session-1');
+  assert.deepEqual(detail?.connections[0]?.request, request);
 });
 
 test('adds connection metrics to session detail', () => {

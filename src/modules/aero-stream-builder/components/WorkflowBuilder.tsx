@@ -52,12 +52,12 @@ function WorkflowCanvas({
   onSelectStep,
   selectedStepId,
 }: {
-  onSelectStep: (stepId: string | null) => void;
-  selectedStepId: string | null;
+  onSelectStep: (stepId: string | undefined) => void;
+  selectedStepId: string | undefined;
 }) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { nodes, edges, onNodesChange, onEdgesChange, setNodes, setEdges } = useWorkflowGraph();
-  const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
+  const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | undefined>(undefined);
   const decoratedNodes = useMemo(
     () => decorateWorkflowNodes(nodes, edges, selectedStepId),
     [edges, nodes, selectedStepId]
@@ -183,7 +183,7 @@ function WorkflowCanvas({
           const nodeData = node.data as unknown as Partial<StepNodeData>;
           onSelectStep(nodeData.execution ? node.id : null);
         }}
-        onPaneClick={() => { onSelectStep(null); }}
+        onPaneClick={() => { onSelectStep(undefined); }}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         fitView
@@ -198,7 +198,7 @@ function WorkflowCanvas({
 function decorateWorkflowNodes(
   nodes: Node[],
   edges: Edge[],
-  selectedStepId: string | null,
+  selectedStepId: string | undefined,
 ): Node[] {
   const nameCounts = new Map<string, number>();
 
@@ -263,7 +263,7 @@ export const WorkflowBuilder = () => {
   } = useWorkflowMetadata();
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
+  const [selectedStepId, setSelectedStepId] = useState<string | undefined>(undefined);
 
   const handleCreate = useCallback(() => {
     createNewWorkflow();
@@ -283,7 +283,7 @@ export const WorkflowBuilder = () => {
 
   const handleCloseEditor = useCallback(() => {
     setIsEditorOpen(false);
-    setSelectedStepId(null);
+    setSelectedStepId(undefined);
 
     if (!activeWorkflowId && workflows[0]?.id) {
       void selectWorkflow(workflows[0].id);

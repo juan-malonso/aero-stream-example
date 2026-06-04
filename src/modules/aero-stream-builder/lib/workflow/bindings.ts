@@ -18,7 +18,7 @@ export type BindingBrowserPane = 'envs' | 'root' | 'steps';
 
 export interface BindingBrowserTarget {
   pane: BindingBrowserPane;
-  stepId: string | null;
+  stepId: string | undefined;
 }
 
 const COMPLETE_BINDING_PATTERN = /^\{\{[^{}\s]+(?:\.[^{}\s]+)*\}\}$/;
@@ -31,9 +31,9 @@ export function formatStepResultBinding(stepId: string, path?: string): string {
     : `{{steps.${stepId}.result}}`;
 }
 
-export function parseStepResultBinding(value: string): StepResultBinding | null {
+export function parseStepResultBinding(value: string): StepResultBinding | undefined {
   const match = FULL_STEP_RESULT_BINDING_PATTERN.exec(value);
-  if (!match) return null;
+  if (!match) return undefined;
 
   const pathText = match[2] ?? '';
   return {
@@ -43,9 +43,9 @@ export function parseStepResultBinding(value: string): StepResultBinding | null 
   };
 }
 
-export function findFirstStepResultBinding(value: string): StepResultBinding | null {
+export function findFirstStepResultBinding(value: string): StepResultBinding | undefined {
   const match = STEP_RESULT_BINDING_PATTERN.exec(value);
-  if (!match) return null;
+  if (!match) return undefined;
 
   const pathText = match[2] ?? '';
   return {
@@ -126,7 +126,7 @@ export function normalizeRanges(
 export function findBindingRange(
   value: string,
   selection: BindingTextRange,
-): BindingTextRange | null {
+): BindingTextRange | undefined {
   if (selection.start !== selection.end) {
     const selectedText = value.slice(selection.start, selection.end);
     if (/^\{\{[^{}]*\}\}$/.test(selectedText)) {
@@ -136,16 +136,16 @@ export function findBindingRange(
 
   const cursor = selection.end;
   const openIndex = value.lastIndexOf('{{', cursor);
-  if (openIndex < 0) return null;
+  if (openIndex < 0) return undefined;
 
   const closeIndex = value.indexOf('}}', openIndex + 2);
-  if (closeIndex < 0) return null;
+  if (closeIndex < 0) return undefined;
 
   const end = closeIndex + 2;
-  if (cursor < openIndex || cursor > end) return null;
+  if (cursor < openIndex || cursor > end) return undefined;
 
   const innerValue = value.slice(openIndex + 2, closeIndex);
-  if (innerValue.includes('{{') || innerValue.includes('\n')) return null;
+  if (innerValue.includes('{{') || innerValue.includes('\n')) return undefined;
 
   return {
     end,
@@ -159,20 +159,20 @@ export function parseBindingPath(value: string): BindingBrowserTarget {
   if (path.startsWith('steps.')) {
     return {
       pane: 'steps',
-      stepId: path.split('.')[1] ?? null,
+      stepId: path.split('.')[1] ?? undefined,
     };
   }
 
   if (path.startsWith('env.')) {
     return {
       pane: 'envs',
-      stepId: null,
+      stepId: undefined,
     };
   }
 
   return {
     pane: 'root',
-    stepId: null,
+    stepId: undefined,
   };
 }
 
@@ -181,14 +181,14 @@ export function validateBindings(
   previousSteps: readonly BindingStepOption[],
 ): {
   invalidRanges: BindingTextRange[];
-  message: string | null;
+  message: string | undefined;
 } {
   const invalidRanges = extractBindingRanges(value)
     .filter(range => !isValidBinding(value.slice(range.start, range.end), previousSteps));
 
   return {
     invalidRanges,
-    message: invalidRanges.length > 0 ? 'Binding incompleto o inválido' : null,
+    message: invalidRanges.length > 0 ? 'Binding incompleto o inválido' : undefined,
   };
 }
 

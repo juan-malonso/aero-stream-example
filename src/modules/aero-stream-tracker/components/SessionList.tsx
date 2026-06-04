@@ -7,7 +7,7 @@ import { colors, radii, typography } from '@/styles/tokens';
 
 interface SessionListProperties {
   sessions: SessionSummary[];
-  selectedSessionId: string | null;
+  selectedSessionId: string | undefined;
   isLoading: boolean;
   onSelectSession: (sessionId: string) => void;
 }

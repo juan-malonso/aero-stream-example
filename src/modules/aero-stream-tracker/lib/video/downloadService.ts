@@ -4,41 +4,41 @@ export function getVideoUrl(sessionId: string, connectionId: string): string {
   return `${getControllerApiUrl()}/videos/${encodeURIComponent(sessionId)}/${encodeURIComponent(connectionId)}/url`;
 }
 
-export async function getControllerVideoUrl(sessionId: string, connectionId: string, download = false): Promise<string | null> {
+export async function getControllerVideoUrl(sessionId: string, connectionId: string, download = false): Promise<string | undefined> {
   const parameters = download ? '?download=1' : '';
   const res = await fetch(`${getVideoUrl(sessionId, connectionId)}${parameters}`, {
     credentials: 'include',
   });
-  if (!res.ok) return null;
+  if (!res.ok) return undefined;
   const data = await res.json() as { url?: string };
-  return typeof data.url === 'string' ? data.url : null;
+  return typeof data.url === 'string' ? data.url : undefined;
 }
 
-export async function fetchControllerResourceUrl(resourcePath: string): Promise<string | null> {
+export async function fetchControllerResourceUrl(resourcePath: string): Promise<string | undefined> {
   const res = await fetch(`${getControllerApiUrl()}/resources/${resourcePath}`, {
     credentials: 'include',
   });
-  if (!res.ok) return null;
+  if (!res.ok) return undefined;
   const data = await res.json() as { url?: string };
-  return typeof data.url === 'string' ? data.url : null;
+  return typeof data.url === 'string' ? data.url : undefined;
 }
 
-export async function fetchControllerResourceJson<T>(resourcePath: string): Promise<T | null> {
+export async function fetchControllerResourceJson<T>(resourcePath: string): Promise<T | undefined> {
   const url = await fetchControllerResourceUrl(resourcePath);
-  if (!url) return null;
+  if (!url) return undefined;
   const res = await fetch(url);
-  if (!res.ok) return null;
+  if (!res.ok) return undefined;
   return await res.json() as T;
 }
 
-export async function fetchControllerVideoSegmentBuffer(viewingId: string, segment: string): Promise<ArrayBuffer | null> {
+export async function fetchControllerVideoSegmentBuffer(viewingId: string, segment: string): Promise<ArrayBuffer | undefined> {
   const presignedRes = await fetch(`${getControllerApiUrl()}/resources/${viewingId}/video/${segment}`, {
     credentials: 'include',
   });
-  if (!presignedRes.ok) return null;
+  if (!presignedRes.ok) return undefined;
   const json = await presignedRes.json() as { url: string };
   const segmentRes = await fetch(json.url);
-  if (!segmentRes.ok) return null;
+  if (!segmentRes.ok) return undefined;
   return segmentRes.arrayBuffer();
 }
 

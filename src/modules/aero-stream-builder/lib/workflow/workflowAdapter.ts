@@ -13,7 +13,7 @@ import {
   NODE_TYPE_TO_EXECUTION,
 } from "./componentRegistry";
 import {
-  normalizeWorkflowConfig,
+  DEFAULT_WORKFLOW_CONFIG,
   type TowerWorkflow,
   type WorkflowConfig,
   type WorkflowStep,
@@ -99,7 +99,7 @@ export function parseTowerToReactFlow(towerWorkflow: TowerWorkflow): {
 
       if (
         typeof transition.condition === "object" &&
-        transition.condition !== null
+        transition.condition !== undefined
       ) {
         const opKeys = Object.keys(transition.condition);
         if (opKeys.length > 0) {
@@ -421,7 +421,7 @@ export function parseReactFlowToTower(
     start: startStepId,
     steps,
     globals: {},
-    config: normalizeWorkflowConfig(config),
+    config: config ?? DEFAULT_WORKFLOW_CONFIG,
   };
 }
 

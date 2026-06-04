@@ -57,7 +57,9 @@ export type PipeMetrics = Record<PipeMetricKey, PipeMetricPoint[]>;
 export interface ConnectionGroup {
   connectionId: string;
   connectedAt: string;
-  device: Record<string, unknown> | null;
+  device?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+  request?: Record<string, unknown>;
   events: SessionEventEnvelope[];
   metrics: PipeMetrics;
 }

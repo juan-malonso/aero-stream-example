@@ -473,7 +473,7 @@ function nearestChartHover(
   hoverPercent: number,
   mode: ChartMode,
   activeEndPercent: number,
-): ChartHoverState | null {
+): ChartHoverState | undefined {
   const candidates = series.flatMap((metricSeries) =>
     [...metricSeries.points, ...(metricSeries.dashedPoints ?? [])].map((point) => ({
       point,
@@ -1065,7 +1065,7 @@ function MetricChart({
   mode: ChartMode;
   series: MetricSeries[];
 }) {
-  const [hover, setHover] = useState<ChartHoverState | null>(null);
+  const [hover, setHover] = useState<ChartHoverState | undefined>(undefined);
   const width = 1000;
   const height = TRAFFIC_HEIGHT;
   const chartHeight = isCollapsed ? 40 : TRAFFIC_HEIGHT;
@@ -1123,7 +1123,7 @@ function MetricChart({
         ))}
       </div>
       <div
-        onMouseLeave={() => { setHover(null); }}
+        onMouseLeave={() => { setHover(undefined); }}
         onMouseMove={handlePointerMove}
         style={{ position: "relative", height: `${chartHeight}px` }}
       >
@@ -1552,7 +1552,7 @@ function TimelineMarkerGuide({
   marker,
 }: {
   activeEndPercent: number;
-  hoveredPoint: HoveredTimelinePoint | null;
+  hoveredPoint: HoveredTimelinePoint | undefined;
   marker: TimelineMarker;
 }) {
   const isHovered = hoveredPoint?.markerId === marker.event.eventId;
@@ -1772,7 +1772,7 @@ function TimelineRails({
   zoomLevel,
 }: {
   activeEndPercent: number;
-  hoveredPoint: HoveredTimelinePoint | null;
+  hoveredPoint: HoveredTimelinePoint | undefined;
   layout: SessionTimelineLayout;
   onHoverPoint: (markerId: string, events: SessionEventEnvelope[]) => void;
   onSelect: (eventId: string) => void;
@@ -1994,7 +1994,7 @@ function EventCardStrip({
   timelineWidth,
 }: {
   activeEndPercent: number;
-  hoveredPoint: HoveredTimelinePoint | null;
+  hoveredPoint: HoveredTimelinePoint | undefined;
   layout: SessionTimelineLayout;
   sessionEvents: SessionEventEnvelope[];
   timelineWidth: number;
@@ -2136,11 +2136,11 @@ function EventCardStrip({
 
 export function SessionTimeline({ session }: { session: Session }) {
   const [chartMode, setChartMode] = useState<ChartMode>("traffic");
-  const [hoveredPoint, setHoveredPoint] = useState<HoveredTimelinePoint | null>(null);
+  const [hoveredPoint, setHoveredPoint] = useState<HoveredTimelinePoint | undefined>(undefined);
   const [isTrafficCollapsed, setIsTrafficCollapsed] = useState(false);
   const [zoomIndex, setZoomIndex] = useState(() => coarsestAllowedZoomIndex(createSessionTimelineLayout(session).durationMs));
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const pendingZoomAnchorRef = useRef<{ ratio: number; viewportOffset: number } | null>(null);
+  const pendingZoomAnchorRef = useRef<{ ratio: number; viewportOffset: number } | undefined>(null);
   const defaultZoomIndex = useMemo(() => coarsestAllowedZoomIndex(createSessionTimelineLayout(session).durationMs), [session]);
   const safeZoomIndex = Math.max(defaultZoomIndex, Math.min(TIMELINE_ZOOM_LEVELS.length - 1, zoomIndex));
   const zoomLevel = TIMELINE_ZOOM_LEVELS[safeZoomIndex] ?? TIMELINE_ZOOM_LEVELS.at(-1)!;
@@ -2168,7 +2168,7 @@ export function SessionTimeline({ session }: { session: Session }) {
   const timelineStackGap = isTrafficCollapsed ? "0.5rem" : "1rem";
 
   useEffect(() => {
-    setHoveredPoint(null);
+    setHoveredPoint(undefined);
     pendingZoomAnchorRef.current = null;
     setZoomIndex(defaultZoomIndex);
   }, [defaultZoomIndex, session.sessionId]);
@@ -2218,7 +2218,7 @@ export function SessionTimeline({ session }: { session: Session }) {
 
   const handleHoverPoint = useCallback((markerId: string, events: SessionEventEnvelope[]) => {
     if (events.length === 0) {
-      setHoveredPoint(null);
+      setHoveredPoint(undefined);
       return;
     }
 

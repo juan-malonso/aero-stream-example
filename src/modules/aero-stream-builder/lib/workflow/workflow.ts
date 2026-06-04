@@ -35,19 +35,6 @@ export const DEFAULT_WORKFLOW_CONFIG: WorkflowConfig = {
   secret: "my-super-secret-token",
 };
 
-export function normalizeWorkflowConfig(config?: Partial<WorkflowConfig> | null): WorkflowConfig {
-  return {
-    allowedOrigins: Array.isArray(config?.allowedOrigins)
-      ? config.allowedOrigins.filter((origin): origin is string => typeof origin === "string")
-      : [...DEFAULT_WORKFLOW_CONFIG.allowedOrigins],
-    expirationTimeout: config?.expirationTimeout,
-    inactivityTimeout: config?.inactivityTimeout,
-    maxConnections: config?.maxConnections,
-    resumeConnection: config?.resumeConnection,
-    secret: typeof config?.secret === "string" ? config.secret : DEFAULT_WORKFLOW_CONFIG.secret,
-  };
-}
-
 export interface TowerWorkflow {
   id?: string;
   name: string;

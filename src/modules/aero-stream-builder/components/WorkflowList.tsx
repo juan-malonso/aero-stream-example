@@ -23,7 +23,7 @@ export function WorkflowList({
     isLoading,
     workflows,
   } = useWorkflowMetadata();
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | undefined>(undefined);
 
   return (
     <Column
@@ -154,7 +154,7 @@ export function WorkflowList({
                         <Button
                           onClick={(event) => {
                             event.stopPropagation();
-                            setConfirmDeleteId(null);
+                            setConfirmDeleteId(undefined);
                           }}
                           size="md"
                           style={{ fontSize: tableFontSize }}
@@ -172,7 +172,7 @@ export function WorkflowList({
                             return;
                           }
 
-                          setConfirmDeleteId(null);
+                          setConfirmDeleteId(undefined);
                           void deleteWorkflow(workflow.id);
                         }}
                         size="md"

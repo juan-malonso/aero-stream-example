@@ -32,8 +32,8 @@ import { getLiveStepByExecutionType } from '@/modules/aero-stream-player/lib/ste
 import { colors, typography } from '@/styles/tokens';
 
 interface WorkflowStepPanelProperties {
-  onSelectStep: (stepId: string | null) => void;
-  selectedStepId: string | null;
+  onSelectStep: (stepId: string | undefined) => void;
+  selectedStepId: string | undefined;
 }
 
 type CodeFormat = 'json' | 'ts';
@@ -79,7 +79,7 @@ function SelectedStepPanel({
   onSelectStep,
   selectedNode,
 }: {
-  onSelectStep: (stepId: string | null) => void;
+  onSelectStep: (stepId: string | undefined) => void;
   selectedNode: Node;
 }) {
   const { edges, nodes, setNodes } = useWorkflowGraph();
@@ -90,23 +90,23 @@ function SelectedStepPanel({
   const [importBrowserMode, setImportBrowserMode] = useState<ImportBrowserMode>('copy');
   const [importBrowserPane, setImportBrowserPane] = useState<ImportBrowserPane>('root');
   const [importBrowserPosition, setImportBrowserPosition] = useState({ left: 0, top: 0 });
-  const [bindingEditRange, setBindingEditRange] = useState<EditorSelectionRange | null>(null);
-  const [selectedImportStepId, setSelectedImportStepId] = useState<string | null>(null);
+  const [bindingEditRange, setBindingEditRange] = useState<EditorSelectionRange | undefined>(undefined);
+  const [selectedImportStepId, setSelectedImportStepId] = useState<string | undefined>(undefined);
   const [isMockHydrationOpen, setIsMockHydrationOpen] = useState(false);
   const [mockHydrationPosition, setMockHydrationPosition] = useState({ left: 0, top: 0 });
   const [mockHydrationValues, setMockHydrationValues] = useState<Record<string, string>>({});
   const [outputText, setOutputText] = useState(formatJson({ status: 'idle' }));
-  const [previewAction, setPreviewAction] = useState<PreviewAction | null>(null);
+  const [previewAction, setPreviewAction] = useState<PreviewAction | undefined>(undefined);
 
   useEffect(() => {
     setInputText(formatJson(stepData.props ?? {}));
     setCodeText(formatStepCodeSource(stepData.code?.source ?? ''));
-    setBindingEditRange(null);
+    setBindingEditRange(undefined);
     setImportBrowserMode('copy'); setImportBrowserPane('root');
     setIsImportBrowserOpen(false);
-    setSelectedImportStepId(null); setIsMockHydrationOpen(false); setMockHydrationValues({});
+    setSelectedImportStepId(undefined); setIsMockHydrationOpen(false); setMockHydrationValues({});
     setOutputText(formatJson({ status: 'idle' }));
-    setPreviewAction(null);
+    setPreviewAction(undefined);
   }, [selectedNode.id]);
 
   const parsedInput = useMemo(() => parseJsonObject(inputText), [inputText]);
@@ -225,8 +225,8 @@ function SelectedStepPanel({
   const openCopyImportBrowser = (position: ImportBrowserPosition) => {
     if (!isImportBrowserOpen) setImportBrowserPosition(position);
     setIsImportBrowserOpen(current => !current);
-    setBindingEditRange(null);
-    setImportBrowserMode('copy'); setImportBrowserPane('root'); setSelectedImportStepId(null);
+    setBindingEditRange(undefined);
+    setImportBrowserMode('copy'); setImportBrowserPane('root'); setSelectedImportStepId(undefined);
   };
 
   const openMockHydration = (position: ImportBrowserPosition) => {
@@ -266,7 +266,7 @@ function SelectedStepPanel({
       />
 
       <OutputPanel
-        canEvaluateConditions={previewAction !== null} onEvaluateConditions={evaluateConditions}
+        canEvaluateConditions={previewAction !== undefined} onEvaluateConditions={evaluateConditions}
         value={parsedInput.ok ? outputText : formatJson({ error: parsedInput.error })}
       />
     </>
@@ -329,7 +329,7 @@ function InputEditorArea({
   previousSteps,
   selectedImportStepId,
 }: {
-  activeBindingValue: string | null;
+  activeBindingValue: string | undefined;
   bindingValidation: ReturnType<typeof validateBindings>;
   importBrowserMode: ImportBrowserMode;
   importBrowserPane: ImportBrowserPane;
@@ -345,14 +345,14 @@ function InputEditorArea({
   onCopy: (value: string) => void;
   onInsert: (key: string, value: string) => void;
   onSelectPane: (pane: ImportBrowserPane) => void;
-  onSelectStep: (stepId: string | null) => void;
+  onSelectStep: (stepId: string | undefined) => void;
   onSelectionChange: (
     value: string,
     selection: EditorSelectionRange,
     position?: ImportBrowserPosition,
   ) => void;
   previousSteps: StepImportOption[];
-  selectedImportStepId: string | null;
+  selectedImportStepId: string | undefined;
 }) {
   return (
     <div style={inputPanelBodyStyle}>
@@ -498,7 +498,7 @@ function CodePreviewPanel({
   onPreviewAction: (action: PreviewAction) => void;
   stepData: StepNodeData;
 }) {
-  const [runError, setRunError] = useState<string | null>(null);
+  const [runError, setRunError] = useState<string | undefined>(undefined);
 
   const runPreviewCode = async () => {
     try {
@@ -508,7 +508,7 @@ function CodePreviewPanel({
         stepData,
       });
 
-      setRunError(null);
+      setRunError(undefined);
       onPreviewAction({
         emitted: 'submit',
         value: normalizePreviewCodeResult(result),
@@ -530,7 +530,7 @@ function CodePreviewPanel({
         <div style={codePreviewErrorBannerStyle}>
           <button
             aria-label="Cerrar error"
-            onClick={() => { setRunError(null); }}
+            onClick={() => { setRunError(undefined); }}
             style={codePreviewErrorCloseStyle}
             type="button"
           >
@@ -735,17 +735,17 @@ function InputImportBrowser({
   position,
   selectedStepId,
 }: {
-  activeValue: string | null;
+  activeValue: string | undefined;
   mode: ImportBrowserMode;
   onClose: () => void;
   onCopy: (value: string) => void;
   onInsert: (key: string, value: string) => void;
   onSelectPane: (pane: ImportBrowserPane) => void;
-  onSelectStep: (stepId: string | null) => void;
+  onSelectStep: (stepId: string | undefined) => void;
   pane: ImportBrowserPane;
   previousSteps: StepImportOption[];
   position: ImportBrowserPosition;
-  selectedStepId: string | null;
+  selectedStepId: string | undefined;
 }) {
   const selectedStep = previousSteps.find(step => step.id === selectedStepId);
   const selectedStepResultBinding = selectedStep ? `{{steps.${selectedStep.id}.result}}` : '';
@@ -771,7 +771,7 @@ function InputImportBrowser({
               if (previousSteps.length === 0) return;
 
               onSelectPane('steps');
-              onSelectStep(null);
+              onSelectStep(undefined);
             }}
           />
           <ImportFolderButton
@@ -780,7 +780,7 @@ function InputImportBrowser({
             label="envs"
             onClick={() => {
               onSelectPane('envs');
-              onSelectStep(null);
+              onSelectStep(undefined);
             }}
           />
         </Column>
@@ -1339,7 +1339,7 @@ function buildPreviousStepImports(
         name: nodeData.stepName ?? nodeData.label ?? nodeData.execution.type,
       };
     })
-    .filter((step): step is StepImportOption => step !== null)
+    .filter((step): step is StepImportOption => step !== undefined)
     .sort((left, right) => left.name.localeCompare(right.name));
 }
 

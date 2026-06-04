@@ -23,7 +23,7 @@ export interface SessionsEventBucket {
       customMetadata?: Record<string, string>;
     },
   ): Promise<unknown>;
-  get(key: string): Promise<{ json<T>(): Promise<T> } | null>;
+  get(key: string): Promise<{ json<T>(): Promise<T> } | undefined>;
   list(options?: { prefix?: string; limit?: number; cursor?: string }): Promise<R2ListResult>;
 }
 
@@ -61,17 +61,17 @@ function isMetricKey(value: string): value is PipeMetricKey {
     || value === 'pipe.message_count';
 }
 
-function parseMetricPoint(value: unknown): PipeMetricPoint | null {
-  if (!Array.isArray(value) || value.length !== 2) return null;
+function parseMetricPoint(value: unknown): PipeMetricPoint | undefined {
+  if (!Array.isArray(value) || value.length !== 2) return undefined;
   const timestamp: unknown = value[0];
   const metricValue: unknown = value[1];
-  if (typeof timestamp !== 'number' || !Number.isFinite(timestamp)) return null;
-  if (typeof metricValue !== 'number' || !Number.isFinite(metricValue)) return null;
+  if (typeof timestamp !== 'number' || !Number.isFinite(timestamp)) return undefined;
+  if (typeof metricValue !== 'number' || !Number.isFinite(metricValue)) return undefined;
   return [timestamp, metricValue];
 }
 
-export function parsePipeMetrics(value: unknown): PipeMetrics | null {
-  if (typeof value !== 'object' || value === null) return null;
+export function parsePipeMetrics(value: unknown): PipeMetrics | undefined {
+  if (typeof value !== 'object' || value === null) return undefined;
 
   const input = value as Record<string, unknown>;
   const metrics = emptyPipeMetrics();
@@ -80,7 +80,7 @@ export function parsePipeMetrics(value: unknown): PipeMetrics | null {
     if (!isMetricKey(key) || !Array.isArray(points)) continue;
     metrics[key] = points
       .map(parseMetricPoint)
-      .filter((point): point is PipeMetricPoint => point !== null);
+      .filter((point): point is PipeMetricPoint => point !== undefined);
   }
 
   return metrics;
@@ -117,7 +117,7 @@ export async function getSessionSummariesFromR2(bucket: SessionsEventBucket): Pr
   return getSessionSummariesFromEvents(await getEventsFromR2(bucket));
 }
 
-export async function getSessionDetailFromR2(bucket: SessionsEventBucket, sessionId: string): Promise<Session | null> {
+export async function getSessionDetailFromR2(bucket: SessionsEventBucket, sessionId: string): Promise<Session | undefined> {
   const events = await getEventsFromR2(bucket, sessionId);
   const connectionIds = Array.from(new Set(events.flatMap(event => event.connectionId ? [event.connectionId] : [])));
   const metricsByConnectionId: Record<string, PipeMetrics> = {};

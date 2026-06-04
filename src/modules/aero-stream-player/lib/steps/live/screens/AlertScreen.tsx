@@ -45,6 +45,9 @@ function SessionSwitchAlert({ data, submit, reject }: AlertProperties) {
   const osName = data.osName ? formatDisplayValue(data.osName) : null;
   const browserName = data.browserName ? formatDisplayValue(data.browserName) : null;
   const connectionId = formatDisplayValue(data.connectionId, "");
+  const connection = data.connection as Record<string, unknown> | undefined;
+  const ip = formatDisplayValue(connection?.ip, "Unknown");
+  const sameIp = connection?.sameIp === true;
 
   const deviceLabel = [brand, model].filter(Boolean).join(" ") || deviceType;
   const platformLabel = [osName, browserName].filter(Boolean).join(" / ");
@@ -102,6 +105,8 @@ function SessionSwitchAlert({ data, submit, reject }: AlertProperties) {
           {platformLabel && (
             <DeviceRow label="Plataforma" value={platformLabel} />
           )}
+          <DeviceRow label="IP" value={ip} mono />
+          <DeviceRow label="Same IP" value={sameIp ? "Yes" : "No"} />
           <DeviceRow label="ID" value={`${connectionId.slice(0, 8)  }…`} mono />
         </div>
 

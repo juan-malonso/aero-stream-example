@@ -72,7 +72,7 @@ function extractImplicitEdges(nodes: Node[]): Edge[] {
   return edges;
 }
 
-function mergeImplicitEdges(existing: Edge[], implicit: Edge[]): Edge[] | null {
+function mergeImplicitEdges(existing: Edge[], implicit: Edge[]): Edge[] | undefined {
   let changed = false;
   let merged = [...existing];
 
@@ -87,7 +87,7 @@ function mergeImplicitEdges(existing: Edge[], implicit: Edge[]): Edge[] | null {
     }
   });
 
-  return changed ? merged : null;
+  return changed ? merged : undefined;
 }
 
 export function useImplicitEdges(nodes: Node[], setEdges: React.Dispatch<React.SetStateAction<Edge[]>>) {

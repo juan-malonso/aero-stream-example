@@ -3,11 +3,10 @@
 import type { Session } from "@/modules/aero-stream-tracker/lib/sessions/types";
 import { colors, typography } from "@/styles/tokens";
 
-import { SessionReplay } from "./SessionReplay";
 import { SessionTimeline } from "./SessionTimeline";
 
 interface SessionDetailProperties {
-  session: Session | null;
+  session: Session | undefined;
   isLoading: boolean;
 }
 
@@ -57,7 +56,6 @@ export function SessionDetail({ session, isLoading }: SessionDetailProperties) {
         padding: "1.25rem",
       }}
     >
-      <SessionReplay sessionId={session.sessionId} />
       <SessionTimeline session={session} />
     </div>
   );

@@ -8,13 +8,13 @@ import { colors, shadows, typography } from '@/styles/tokens';
 import { SessionDetail } from './SessionDetail';
 import { SessionList } from './SessionList';
 
-async function fetchConnectionMetrics(sessionId: string, connectionId: string): Promise<PipeMetrics | null> {
+async function fetchConnectionMetrics(sessionId: string, connectionId: string): Promise<PipeMetrics | undefined> {
   const response = await fetch(
     `/api/sessions/${encodeURIComponent(sessionId)}/metrics/${encodeURIComponent(connectionId)}`,
   );
-  if (!response.ok) return null;
+  if (!response.ok) return undefined;
   const json = await response.json() as { data?: PipeMetrics };
-  return json.data ?? null;
+  return json.data ?? undefined;
 }
 
 async function hydrateSessionMetrics(session: Session): Promise<Session> {
@@ -35,8 +35,8 @@ async function hydrateSessionMetrics(session: Session): Promise<Session> {
 
 export function SessionsViewer() {
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
-  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
-  const [selectedSession, setSelectedSession] = useState<Session | null>(null);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | undefined>(undefined);
+  const [selectedSession, setSelectedSession] = useState<Session | undefined>(undefined);
   const [isLoadingList, setIsLoadingList] = useState(true);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
 

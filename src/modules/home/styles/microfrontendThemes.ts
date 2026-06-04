@@ -13,6 +13,6 @@ export const MICROFRONTEND_THEMES: readonly MicrofrontendTheme[] = [
   trackerTheme,
 ] as const;
 
-export function getMicrofrontendTheme(pathname: string | null): MicrofrontendTheme {
+export function getMicrofrontendTheme(pathname: string | undefined): MicrofrontendTheme {
   return MICROFRONTEND_THEMES.find((theme) => pathname?.startsWith(theme.href)) ?? homeTheme;
 }

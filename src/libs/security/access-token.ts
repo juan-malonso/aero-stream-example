@@ -64,7 +64,7 @@ export async function requireAccessPage(): Promise<void> {
   }
 }
 
-export async function requireAccessApi(): Promise<NextResponse | null> {
+export async function requireAccessApi(): Promise<NextResponse | undefined> {
   return (await hasValidAccessCookie()) ? null : new NextResponse(null, { status: 401 });
 }
 

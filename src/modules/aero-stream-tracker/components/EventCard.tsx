@@ -21,7 +21,7 @@ export interface EventTheme {
   background: string;
   label: string;
   icon: string;
-  messageType: "in" | "out" | null;
+  messageType?: "in" | "out";
 }
 
 interface EventStepSummary {
@@ -71,7 +71,7 @@ export const EVENT_THEMES: Record<SessionEventType, EventTheme> = {
     background: colors.gray100,
     label: "Session Created",
     icon: "+",
-    messageType: null,
+    messageType: undefined,
   },
   [SessionEventType.SESSION_CONNECTED]: {
     accent: colors.green800,
@@ -219,9 +219,9 @@ export function DirectionIcon({ type, color }: { type: "in" | "out"; color: stri
   );
 }
 
-function readEventStep(payload: Record<string, unknown>): EventStepSummary | null {
+function readEventStep(payload: Record<string, unknown>): EventStepSummary | undefined {
   const step = payload.step;
-  if (typeof step !== "object" || step === null) return null;
+  if (typeof step !== "object" || step === null) return undefined;
 
   const candidate = step as Record<string, unknown>;
   if (
@@ -229,7 +229,7 @@ function readEventStep(payload: Record<string, unknown>): EventStepSummary | nul
     || typeof candidate.type !== "string"
     || typeof candidate.name !== "string"
   ) {
-    return null;
+    return undefined;
   }
 
   return {
@@ -289,11 +289,67 @@ function formatCondition(condition: unknown): { left?: string; operator?: string
   return { text: JSON.stringify(condition) };
 }
 
-function eventSubtitle(event: SessionEventEnvelope, step: EventStepSummary | null): string {
+function eventSubtitle(event: SessionEventEnvelope, step: EventStepSummary | undefined): string {
   if (step) return `${step.type} - ${step.name} · ${step.id}`;
   if (event.connectionId) return `${event.type} · connection ${event.connectionId}`;
   if (event.sessionId) return `${event.type} · session ${event.sessionId}`;
   return `${event.type} · ${event.source}`;
+}
+
+function MetadataRow({
+  fieldStyle,
+  labelStyle,
+  metadata,
+  valueStyle,
+}: {
+  fieldStyle: CSSProperties;
+  labelStyle: CSSProperties;
+  metadata: Record<string, unknown> | undefined;
+  valueStyle: CSSProperties;
+}) {
+  if (!metadata) return null;
+
+  return (
+    <div style={fieldStyle}>
+      <span style={labelStyle}>Metadata</span>
+      <span style={valueStyle}>{JSON.stringify(metadata)}</span>
+    </div>
+  );
+}
+
+function RequestRows({
+  fieldStyle,
+  labelStyle,
+  request,
+  valueStyle,
+}: {
+  fieldStyle: CSSProperties;
+  labelStyle: CSSProperties;
+  request: Record<string, unknown> | undefined;
+  valueStyle: CSSProperties;
+}) {
+  if (!request || Object.keys(request).length === 0) return null;
+
+  const requestRows = [
+    ["IP", request.ip],
+    ["Forwarded IP", request.forwardedIp],
+    ["Origin", request.origin],
+    ["Referer", request.referer],
+    ["Forwarded For", request.forwardedFor],
+  ] as const;
+
+  return (
+    <>
+      {requestRows.map(([label, value]) => (
+        value ? (
+          <div key={label} style={fieldStyle}>
+            <span style={labelStyle}>{label}</span>
+            <span style={valueStyle}>{formatDisplayValue(value)}</span>
+          </div>
+        ) : null
+      ))}
+    </>
+  );
 }
 
 function EventIndexBadge({ color, index }: { color: string; index: number }) {
@@ -560,7 +616,9 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
     }
 
     case SessionEventType.SESSION_CONNECTED: {
-      const device = payload.device as Record<string, unknown> | null;
+      const device = payload.device as Record<string, unknown> | undefined;
+      const metadata = payload.metadata as Record<string, unknown> | undefined;
+      const request = payload.request as Record<string, unknown> | undefined;
 
       return (
         <div
@@ -598,11 +656,39 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
                     {device.model ? ` (${formatDisplayValue(device.model)})` : ""}
                   </span>
                 </div>
+                <MetadataRow
+                  fieldStyle={fieldStyle}
+                  labelStyle={labelStyle}
+                  metadata={metadata}
+                  valueStyle={valueStyle}
+                />
+                <RequestRows
+                  fieldStyle={fieldStyle}
+                  labelStyle={labelStyle}
+                  request={request}
+                  valueStyle={valueStyle}
+                />
               </>
             ) : (
               <span style={{ ...valueStyle, color: eventCardColors.textMuted }}>
                 No device info
               </span>
+            )}
+            {!device && (
+              <MetadataRow
+                fieldStyle={fieldStyle}
+                labelStyle={labelStyle}
+                metadata={metadata}
+                valueStyle={valueStyle}
+              />
+            )}
+            {!device && (
+              <RequestRows
+                fieldStyle={fieldStyle}
+                labelStyle={labelStyle}
+                request={request}
+                valueStyle={valueStyle}
+              />
             )}
           </div>
         </div>
@@ -701,7 +787,9 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
     }
 
     case SessionEventType.SESSION_REQUESTED: {
-      const device = payload.device as Record<string, unknown> | null;
+      const device = payload.device as Record<string, unknown> | undefined;
+      const metadata = payload.metadata as Record<string, unknown> | undefined;
+      const request = payload.request as Record<string, unknown> | undefined;
       return (
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           {device ? (
@@ -727,11 +815,39 @@ function EventPayloadSummary({ event }: { event: SessionEventEnvelope }) {
                   {device.model ? ` (${formatDisplayValue(device.model)})` : ""}
                 </span>
               </div>
+              <MetadataRow
+                fieldStyle={fieldStyle}
+                labelStyle={labelStyle}
+                metadata={metadata}
+                valueStyle={valueStyle}
+              />
+              <RequestRows
+                fieldStyle={fieldStyle}
+                labelStyle={labelStyle}
+                request={request}
+                valueStyle={valueStyle}
+              />
             </>
           ) : (
             <span style={{ ...valueStyle, color: eventCardColors.textMuted }}>
               No device info
             </span>
+          )}
+          {!device && (
+            <MetadataRow
+              fieldStyle={fieldStyle}
+              labelStyle={labelStyle}
+              metadata={metadata}
+              valueStyle={valueStyle}
+            />
+          )}
+          {!device && (
+            <RequestRows
+              fieldStyle={fieldStyle}
+              labelStyle={labelStyle}
+              request={request}
+              valueStyle={valueStyle}
+            />
           )}
         </div>
       );

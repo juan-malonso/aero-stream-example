@@ -111,8 +111,8 @@ function ConditionsSection({
     index: number;
     pane: ConditionMenuPane;
     position: ReferenceMenuPosition;
-    selectedStepId: string | null;
-  } | null>(null);
+    selectedStepId: string | undefined;
+  } | undefined>(undefined);
 
   if (hideOutputs) return null;
 
@@ -136,7 +136,7 @@ function ConditionsSection({
     if (!activeMenu) return;
 
     updateOutput(activeMenu.index, "field", `{{steps.${stepId}.result.${field}}}`);
-    setActiveMenu(null);
+    setActiveMenu(undefined);
   };
 
   return (
@@ -243,17 +243,17 @@ function ConditionsSection({
 
       {activeMenu ? (
         <ConditionReferenceMenu
-          onClose={() => { setActiveMenu(null); }}
+          onClose={() => { setActiveMenu(undefined); }}
           onSelect={selectReference}
           position={activeMenu.position}
           references={references}
           pane={activeMenu.pane}
           selectedStepId={activeMenu.selectedStepId}
           setPane={(pane) => {
-            setActiveMenu(current => current ? { ...current, pane } : null);
+            setActiveMenu(current => current ? { ...current, pane } : undefined);
           }}
           setSelectedStepId={(stepId) => {
-            setActiveMenu(current => current ? { ...current, selectedStepId: stepId } : null);
+            setActiveMenu(current => current ? { ...current, selectedStepId: stepId } : undefined);
           }}
         />
       ) : null}
@@ -308,7 +308,7 @@ function ConditionReferenceMenu({
   pane: ConditionMenuPane;
   position: ReferenceMenuPosition;
   references: ConditionReferenceOption[];
-  selectedStepId: string | null;
+  selectedStepId: string | undefined;
   setPane: (pane: ConditionMenuPane) => void;
   setSelectedStepId: (stepId: string) => void;
 }) {
@@ -435,7 +435,7 @@ function buildConditionReferences(
         name: nodeData.stepName ?? nodeData.label ?? nodeData.execution.type,
       };
     })
-    .filter((reference): reference is ConditionReferenceOption => reference !== null);
+    .filter((reference): reference is ConditionReferenceOption => reference !== undefined);
 }
 
 function collectAncestorStepIds(currentNodeId: string, edges: Edge[]): Set<string> {
@@ -460,15 +460,15 @@ function collectAncestorStepIds(currentNodeId: string, edges: Edge[]): Set<strin
 }
 
 function parseReference(value: string | undefined): {
-  field: string | null;
-  stepId: string | null;
+  field: string | undefined;
+  stepId: string | undefined;
 } {
-  if (!value) return { field: null, stepId: null };
+  if (!value) return { field: undefined, stepId: undefined };
 
   const binding = parseStepResultBinding(value);
-  if (!binding) return { field: null, stepId: null };
+  if (!binding) return { field: undefined, stepId: undefined };
 
-  return { field: binding.pathText || null, stepId: binding.stepId };
+  return { field: binding.pathText || undefined, stepId: binding.stepId };
 }
 
 function formatConditionReference(

@@ -15,12 +15,12 @@ const uuidPattern =
 
 export function RunnerApp() {
   const [workflows, setWorkflows] = useState<RunnerWorkflowMetadata[]>([]);
-  const [activeWorkflowId, setActiveWorkflowId] = useState<string | null>(null);
+  const [activeWorkflowId, setActiveWorkflowId] = useState<string | undefined>(undefined);
   const [sessionId, setSessionId] = useState('');
   const [emulatorUrl, setEmulatorUrl] = useState('');
   const [isLoadingWorkflows, setIsLoadingWorkflows] = useState(false);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | undefined>(undefined);
 
   const sessionUrl = useMemo(() => (
     uuidPattern.test(sessionId) && activeWorkflowId
@@ -33,12 +33,12 @@ export function RunnerApp() {
 
     async function loadWorkflows() {
       try {
-        setError(null);
+        setError(undefined);
         setIsLoadingWorkflows(true);
         const data = await runnerWorkflowReader.getWorkflows();
         if (!isMounted) return;
         setWorkflows(data);
-        setActiveWorkflowId(currentId => currentId ?? data[0]?.id ?? null);
+        setActiveWorkflowId(currentId => currentId ?? data[0]?.id ?? undefined);
       } catch (error_) {
         if (isMounted) {
           setError(error_ instanceof Error ? error_.message : 'Unable to load workflows');
@@ -59,7 +59,7 @@ export function RunnerApp() {
     if (!activeWorkflowId || isCreatingSession) return;
 
     try {
-      setError(null);
+      setError(undefined);
       setIsCreatingSession(true);
       const data = await towerRuntimeService.createSession(activeWorkflowId);
       if (!data.sessionId || !uuidPattern.test(data.sessionId)) {
@@ -87,7 +87,7 @@ export function RunnerApp() {
             value={activeWorkflowId ?? ''}
             disabled={isLoadingWorkflows || isCreatingSession}
             onChange={(event) => {
-              setActiveWorkflowId(event.target.value || null);
+              setActiveWorkflowId(event.target.value || undefined);
               setSessionId('');
               setEmulatorUrl('');
             }}

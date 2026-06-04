@@ -44,7 +44,6 @@ export function deriveConnectionGroups(
       groupMap.set(event.connectionId, {
         connectionId: event.connectionId,
         connectedAt: event.occurredAt,
-        device: null,
         events: [],
         metrics: metricsByConnectionId[event.connectionId] ?? emptyPipeMetrics(),
       });
@@ -55,11 +54,15 @@ export function deriveConnectionGroups(
 
     if (event.type === SessionEventType.SESSION_CONNECTED) {
       group.connectedAt = event.occurredAt;
-      group.device = (event.payload.device as Record<string, unknown> | null) ?? null;
+      group.device = event.payload.device as Record<string, unknown> | undefined;
+      group.metadata = event.payload.metadata as Record<string, unknown> | undefined;
+      group.request = event.payload.request as Record<string, unknown> | undefined;
     }
 
     if (event.type === SessionEventType.SESSION_REQUESTED && !group.device) {
-      group.device = (event.payload.device as Record<string, unknown> | null) ?? null;
+      group.device = event.payload.device as Record<string, unknown> | undefined;
+      group.metadata = event.payload.metadata as Record<string, unknown> | undefined;
+      group.request = event.payload.request as Record<string, unknown> | undefined;
     }
   }
 
@@ -126,9 +129,9 @@ export function getSessionDetailFromEvents(
   events: SessionEventEnvelope[],
   sessionId: string,
   metricsByConnectionId: Record<string, PipeMetrics> = {},
-): Session | null {
+): Session | undefined {
   const session = buildSessionsFromEvents(events).get(sessionId);
-  if (!session) return null;
+  if (!session) return undefined;
 
   return {
     ...session,

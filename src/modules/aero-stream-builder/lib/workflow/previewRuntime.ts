@@ -137,7 +137,7 @@ function parsePreviewMappings(
       const [input, output] = pair.split(':').map(part => part.trim());
       return input && output ? { input, output } : null;
     })
-    .filter((pair): pair is { input: string; output: string } => pair !== null);
+    .filter((pair): pair is { input: string; output: string } => pair !== undefined);
 }
 
 function previewDataFromRecord(value: Record<string, unknown>): Record<string, unknown> {

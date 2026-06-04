@@ -17,7 +17,7 @@ export function PlayerApp({ sessionId }: PlayerAppProperties) {
   const searchParameters = useSearchParams();
   const workflowId = searchParameters.get('workflowId');
   const [secret, setSecret] = useState('');
-  const [workflowError, setWorkflowError] = useState<string | null>(null);
+  const [workflowError, setWorkflowError] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     let isMounted = true;
@@ -30,7 +30,7 @@ export function PlayerApp({ sessionId }: PlayerAppProperties) {
       }
 
       try {
-        setWorkflowError(null);
+        setWorkflowError(undefined);
         const workflow = await runnerWorkflowReader.getWorkflowById(workflowId);
         if (!isMounted) return;
         setSecret(workflow.config.secret);

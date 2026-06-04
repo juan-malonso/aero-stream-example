@@ -22,7 +22,7 @@ export function resolveNextStepId({
   previewAction: PreviewActionResult;
   selectedNodeId: string;
   stepData: StepNodeData;
-}): string | null {
+}): string | undefined {
   const matchedOutput = (stepData.outputs ?? []).find(output =>
     evaluateConditionOutput({
       inputValue,
@@ -42,7 +42,7 @@ export function resolveNextStepId({
     edge.source === selectedNodeId && edge.sourceHandle === 'default',
   );
 
-  return matchedEdge?.target ?? defaultEdge?.target ?? null;
+  return matchedEdge?.target ?? defaultEdge?.target ?? undefined;
 }
 
 export function evaluateConditionOutput({
